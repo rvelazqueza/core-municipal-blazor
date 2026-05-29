@@ -1,0 +1,50 @@
+@using MudBlazor
+@using BlazorApp.Models
+
+<MudCard Outlined="true">
+    <MudCardContent>
+        <div class="d-flex flex-wrap justify-space-between align-center gap-2 mb-3">
+            <div>
+                <MudText Typo="Typo.h6">Consulta de contribuyentes</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Resultados filtrados del padrón maestro tributario.</MudText>
+            </div>
+            <MudChip T="string" Text="@($"{Items.Count} registros")" Color="Color.Primary" Variant="Variant.Outlined" />
+        </div>
+
+        <MudTable Items="Items" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Identificación</MudTh>
+                <MudTh>Nombre o razón social</MudTh>
+                <MudTh>Tipo</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh>Teléfono</MudTh>
+                <MudTh>Correo</MudTh>
+                <MudTh>Distrito</MudTh>
+                <MudTh>Última actualización</MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Identificación">@context.NumeroIdentificacion</MudTd>
+                <MudTd DataLabel="Nombre o razón social">@context.NombreCompleto</MudTd>
+                <MudTd DataLabel="Tipo">@context.TipoPersona</MudTd>
+                <MudTd DataLabel="Estado"><StatusBadge Text="@context.EstadoContribuyente" /></MudTd>
+                <MudTd DataLabel="Teléfono">@context.Telefono</MudTd>
+                <MudTd DataLabel="Correo">@context.Correo</MudTd>
+                <MudTd DataLabel="Distrito">@context.DireccionFiscal.Distrito</MudTd>
+                <MudTd DataLabel="Última actualización">@context.UltimaActualizacion.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                <MudTd DataLabel="Acciones">
+                    <div class="d-flex flex-wrap gap-1">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => ViewRequested.InvokeAsync(context.Id))">Ver</MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="@(() => EditRequested.InvokeAsync(context.Id))">Editar</MudButton>
+                    </div>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public List<ContribuyenteDto> Items { get; set; } = new();
+    [Parameter] public EventCallback<int> ViewRequested { get; set; }
+    [Parameter] public EventCallback<int> EditRequested { get; set; }
+}

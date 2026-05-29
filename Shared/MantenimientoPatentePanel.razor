@@ -1,0 +1,82 @@
+@using BlazorApp.Models
+
+@if (Model.Id == 0)
+{
+    <EmptyState Title="Sin licencia seleccionada" Description="Seleccione una licencia desde la consulta para ejecutar mantenimiento básico." Icon="@Icons.Material.Filled.Storefront" />
+}
+else
+{
+    <MudPaper Class="pa-4">
+        <ValidationSummaryPanel Errors="validationErrors" />
+
+        <MudAlert Severity="Severity.Info" Class="mb-4">
+            Puede modificar datos básicos y ejecutar suspensión o cancelación simple con trazabilidad de auditoría.
+        </MudAlert>
+
+        <MudTabs Outlined="true">
+            <MudTabPanel Text="Datos básicos" Icon="@Icons.Material.Filled.EditNote">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="4"><MudTextField T="string" Value="@Model.NumeroLicencia" Label="Número de licencia" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" Value="@Model.ContribuyenteNombre" Label="Contribuyente" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                    <MudItem xs="12" md="4"><MudChip T="string" Color="Color.Primary">Estado actual: @Model.Estado</MudChip></MudItem>
+                    <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.NombreComercial" Label="Nombre comercial" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.DireccionLocal" Label="Dirección del local" Variant="Variant.Outlined" MaxLines="3" AutoGrow="true" /></MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.Distrito" Label="Distrito" Variant="Variant.Outlined">
+                            @foreach (var item in distritos)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.TipoPatente" Label="Tipo de patente" Variant="Variant.Outlined">
+                            @foreach (var item in tiposPatente)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.Responsable" Label="Responsable" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12"><MudTextField T="string" @bind-Value="Model.Observaciones" Label="Observaciones" Variant="Variant.Outlined" MaxLines="4" AutoGrow="true" /></MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Acciones de mantenimiento" Icon="@Icons.Material.Filled.SettingsSuggest">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="usuarioResponsable" Label="Usuario responsable" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" Value="@fechaMovimientoInput" ValueChanged="OnFechaChanged" Label="Fecha del movimiento (AAAA-MM-DD)" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" Value="@(Model.FechaVencimiento?.ToString("yyyy-MM-dd") ?? string.Empty)" Label="Fecha de vencimiento" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                    <MudItem xs="12"><MudTextField T="string" @bind-Value="motivoMovimiento" Label="Motivo del mantenimiento" Variant="Variant.Outlined" MaxLines="4" AutoGrow="true" /></MudItem>
+                    <MudItem xs="12" md="4"><MudChip T="string" Color="@(Model.UsoSuelo.EsConforme ? Color.Success : Color.Warning)">@($"Uso de suelo: {Model.UsoSuelo.Estado}")</MudChip></MudItem>
+                    <MudItem xs="12" md="4"><MudChip T="string" Color="@(Model.EmisionSemestralPendiente ? Color.Warning : Color.Success)">@(Model.EmisionSemestralPendiente ? "Emisión semestral pendiente" : "Emisión al día")</MudChip></MudItem>
+                    <MudItem xs="12" md="4"><MudChip T="string" Color="@(Model.NotificacionPendiente ? Color.Warning : Color.Success)">@(Model.NotificacionPendiente ? "Notificación pendiente" : "Notificaciones al día")</MudChip></MudItem>
+                </MudGrid>
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveBasicAsync">Guardar cambios</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SuspendAsync">Suspender licencia</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="CancelAsync">Cancelar licencia</MudButton>
+                </div>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Trazabilidad" Icon="@Icons.Material.Filled.FactCheck">
+                <MudTable Items="RecentMovements" Hover="true" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
+                        <MudTh>Fecha</MudTh>
+                        <MudTh>Movimiento</MudTh>
+                        <MudTh>Motivo</MudTh>
+                        <MudTh>Usuario</MudTh>
+                        <MudTh>Estado</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Fecha">@context.FechaHora.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                        <MudTd DataLabel="Movimiento">@context.TipoMovimiento</MudTd>
+                        <MudTd DataLabel="Motivo">@context.Motivo</MudTd>
+                        <MudTd DataLabel="Usuario">@context.Usuario</MudTd>
+                        <MudTd DataLabel="Estado"><StatusBadge Text="@context.EstadoResultante" /></MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+        </MudTabs>
+    </MudPaper>
+}

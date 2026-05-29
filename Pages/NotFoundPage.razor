@@ -1,0 +1,18 @@
+@page "/not-found"
+@using BlazorApp.Shared
+
+<PageTitleBar Title="Página no encontrada" Subtitle="La ruta solicitada no existe en este entorno de demostración." Breadcrumbs="breadcrumbs" />
+
+<MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-4">
+    La navegación no encontró una coincidencia válida. Verifica la dirección o vuelve a un módulo operativo.
+</MudAlert>
+
+<EmptyState Title="Sin coincidencias" Description="Verifica la dirección o vuelve al módulo RUC para continuar con la operación." Icon="@Icons.Material.Filled.SearchOff" PrimaryActionText="Ir al RUC" PrimaryActionHref="/ruc" />
+
+@code {
+    private readonly List<BreadcrumbItem> breadcrumbs = new()
+    {
+        new("Inicio", href: "/"),
+        new("No encontrado", href: null, disabled: true)
+    };
+}

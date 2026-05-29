@@ -1,0 +1,67 @@
+@page "/auditoria"
+@inject BlazorApp.Services.IAuditoriaService AuditoriaService
+@using BlazorApp.Models
+@using BlazorApp.Shared
+
+<PageTitleBar Title="Auditoría" Subtitle="Trazabilidad operativa de cambios y acciones de usuarios." Breadcrumbs="breadcrumbs" />
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+    Bitácora preparada para evolucionar hacia auditoría formal, evidencias y cumplimiento institucional.
+</MudAlert>
+
+@if (isLoading)
+{
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="220px" Height="32px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" Class="mt-4" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" Class="mt-2" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" Class="mt-2" />
+    </MudPaper>
+}
+else
+{
+    <MudCard Outlined="true">
+        <MudCardContent>
+            <div class="d-flex flex-wrap justify-space-between align-center gap-2 mb-3">
+                <div>
+                    <MudText Typo="Typo.h6">Eventos recientes</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Registro visible de usuario, fecha, origen y nuevo valor.</MudText>
+                </div>
+                <MudChip T="string" Text="@($"{auditoria.Count} eventos")" Color="Color.Primary" Variant="Variant.Outlined" />
+            </div>
+            <MudTable Items="auditoria" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>Usuario</MudTh>
+                    <MudTh>Fecha y hora</MudTh>
+                    <MudTh>Campo</MudTh>
+                    <MudTh>Origen</MudTh>
+                    <MudTh>Nuevo valor</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Usuario">@context.Usuario</MudTd>
+                    <MudTd DataLabel="Fecha y hora">@context.FechaHora.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                    <MudTd DataLabel="Campo">@context.CampoModificado</MudTd>
+                    <MudTd DataLabel="Origen">@context.Origen</MudTd>
+                    <MudTd DataLabel="Nuevo valor">@context.ValorNuevo</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private readonly List<BreadcrumbItem> breadcrumbs = new()
+    {
+        new("Inicio", href: "/"),
+        new("Auditoría", href: null, disabled: true)
+    };
+
+    private List<AuditoriaCambioDto> auditoria = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        auditoria = await AuditoriaService.GetRecentAsync();
+        isLoading = false;
+    }
+}

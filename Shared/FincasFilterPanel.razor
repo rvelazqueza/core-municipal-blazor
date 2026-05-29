@@ -1,0 +1,98 @@
+@using BlazorApp.Services
+@inject IMaestroDatosService MaestroDatosService
+
+<MudPaper Class="pa-4 mb-4">
+    <MudText Typo="Typo.h6" Class="mb-3">Filtros de consulta predial</MudText>
+    <MudGrid>
+        <MudItem xs="12" md="6" lg="2">
+            <MudTextField T="string" Value="@NumeroFinca" ValueChanged="OnNumeroFincaChanged" Label="Número de finca" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudTextField T="string" Value="@IdPredial" ValueChanged="OnIdPredialChanged" Label="ID predial" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudTextField T="string" Value="@Propietario" ValueChanged="OnPropietarioChanged" Label="Propietario / RUC" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudSelect T="string" Value="@Distrito" ValueChanged="OnDistritoValueChanged" Label="Distrito" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var item in distritos)
+                {
+                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudSelect T="string" Value="@Estado" ValueChanged="OnEstadoValueChanged" Label="Estado" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var item in estados)
+                {
+                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudTextField T="string" Value="@ValorFiscalMinimo" ValueChanged="OnValorFiscalMinimoChanged" Label="Valor fiscal mínimo" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="6" lg="3">
+            <MudSelect T="string" Value="@Condicion" ValueChanged="OnCondicionValueChanged" Label="Condición" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var item in condiciones)
+                {
+                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+    <div class="d-flex flex-wrap gap-2 mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchRequested">Buscar fincas</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="ResetFilters">Limpiar</MudButton>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter] public string NumeroFinca { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> NumeroFincaChanged { get; set; }
+    [Parameter] public string IdPredial { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> IdPredialChanged { get; set; }
+    [Parameter] public string Propietario { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> PropietarioChanged { get; set; }
+    [Parameter] public string Distrito { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> DistritoChanged { get; set; }
+    [Parameter] public string Estado { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> EstadoChanged { get; set; }
+    [Parameter] public string ValorFiscalMinimo { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValorFiscalMinimoChanged { get; set; }
+    [Parameter] public string Condicion { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> CondicionChanged { get; set; }
+    [Parameter] public EventCallback OnSearch { get; set; }
+
+    private List<string> distritos = new();
+    private List<string> estados = new();
+    private List<string> condiciones = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        distritos = await MaestroDatosService.GetDistritosAsync();
+        estados = await MaestroDatosService.GetEstadosBienInmuebleAsync();
+        condiciones = await MaestroDatosService.GetCondicionesBienInmuebleAsync();
+    }
+
+    private Task OnNumeroFincaChanged(string value) => NumeroFincaChanged.InvokeAsync(value ?? string.Empty);
+    private Task OnIdPredialChanged(string value) => IdPredialChanged.InvokeAsync(value ?? string.Empty);
+    private Task OnPropietarioChanged(string value) => PropietarioChanged.InvokeAsync(value ?? string.Empty);
+    private Task OnDistritoValueChanged(string value) => DistritoChanged.InvokeAsync(value ?? string.Empty);
+    private Task OnEstadoValueChanged(string value) => EstadoChanged.InvokeAsync(value ?? string.Empty);
+    private Task OnValorFiscalMinimoChanged(string value) => ValorFiscalMinimoChanged.InvokeAsync(value ?? string.Empty);
+    private Task OnCondicionValueChanged(string value) => CondicionChanged.InvokeAsync(value ?? string.Empty);
+    private Task SearchRequested() => OnSearch.InvokeAsync();
+
+    private async Task ResetFilters()
+    {
+        await NumeroFincaChanged.InvokeAsync(string.Empty);
+        await IdPredialChanged.InvokeAsync(string.Empty);
+        await PropietarioChanged.InvokeAsync(string.Empty);
+        await DistritoChanged.InvokeAsync(string.Empty);
+        await EstadoChanged.InvokeAsync(string.Empty);
+        await ValorFiscalMinimoChanged.InvokeAsync(string.Empty);
+        await CondicionChanged.InvokeAsync(string.Empty);
+        await OnSearch.InvokeAsync();
+    }
+}

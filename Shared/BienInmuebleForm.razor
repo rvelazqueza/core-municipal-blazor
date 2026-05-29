@@ -1,0 +1,473 @@
+@using System.ComponentModel.DataAnnotations
+@using BlazorApp.Models
+@using BlazorApp.Services
+@inject IMaestroDatosService MaestroDatosService
+@inject IContribuyentesService ContribuyentesService
+@inject IBienesInmueblesService BienesInmueblesService
+@inject IValoracionService ValoracionService
+@inject IFiscalizacionService FiscalizacionService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <ValidationSummaryPanel Errors="validationErrors" />
+
+    <MudAlert Severity="Severity.Info" Class="mb-4">
+        Expediente preparado para integraciones simuladas con Registro Público, Ministerio de Hacienda, GIS, RUC y Cobro.
+    </MudAlert>
+
+    <MudForm @ref="form">
+        <MudTabs Outlined="true">
+            <MudTabPanel Text="Datos generales" Icon="@Icons.Material.Filled.Domain">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.NumeroFinca" Label="Número de finca" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.IdPredial" Label="ID predial" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.TipoFinca" Label="Tipo de finca" Variant="Variant.Outlined">
+                            @foreach (var item in tiposFinca)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.EstadoRegistral" Label="Estado registral" Variant="Variant.Outlined">
+                            @foreach (var item in estadosRegistrales)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.Distrito" Label="Distrito" Variant="Variant.Outlined">
+                            @foreach (var item in distritos)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.Estado" Label="Estado" Variant="Variant.Outlined">
+                            @foreach (var item in estadosBien)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12"><MudTextField T="string" @bind-Value="Model.DireccionExacta" Label="Dirección exacta" Variant="Variant.Outlined" MaxLines="4" AutoGrow="true" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="Model.AreaTerreno" Label="Área terreno m²" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="int" Value="@Model.PropietarioPrincipalId" ValueChanged="OnPropietarioChanged" Label="Propietario principal" Variant="Variant.Outlined">
+                            @foreach (var item in propietariosRuc)
+                            {
+                                <MudSelectItem T="int" Value="@item.Id">@item.NombreCompleto</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="Model.PorcentajeDerecho" Label="Porcentaje de derecho" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="6" Class="d-flex align-center">
+                        <MudChip T="string" Color="Color.Secondary">@(string.IsNullOrWhiteSpace(Model.PropietarioPrincipal) ? "Seleccione un propietario vinculado a RUC" : $"{Model.PropietarioPrincipal} · {Model.PropietarioPrincipalIdentificacion}")</MudChip>
+                    </MudItem>
+                    <MudItem xs="12" md="6" Class="d-flex align-center">
+                        <MudChip T="string" Color="Color.Info">@(string.IsNullOrWhiteSpace(Model.CuentaTributaria) ? "Cuenta tributaria pendiente" : Model.CuentaTributaria)</MudChip>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Valoración y uso" Icon="@Icons.Material.Filled.PriceCheck">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="Model.ValorTerreno" Label="Valor terreno" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="Model.ValorConstruccion" Label="Valor construcción" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" Value="@CalculatedValorFiscalTotal" Label="Valor fiscal total calculado" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.ZonaHomogenea" Label="Zona homogénea" Variant="Variant.Outlined">
+                            @foreach (var item in zonasHomogeneas)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.TipologiaConstructiva" Label="Tipología constructiva" Variant="Variant.Outlined">
+                            @foreach (var item in tipologias)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.UsoInmueble" Label="Uso del inmueble" Variant="Variant.Outlined">
+                            @foreach (var item in usos)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.Condicion" Label="Condición" Variant="Variant.Outlined">
+                            @foreach (var item in condiciones)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="8"><MudTextField T="string" @bind-Value="Model.Observaciones" Label="Observaciones" Variant="Variant.Outlined" MaxLines="4" AutoGrow="true" /></MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Vínculos e integraciones" Icon="@Icons.Material.Filled.Link">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" lg="6">
+                        <MudCard Class="h-100">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1" GutterBottom="true">Titularidad y derechos</MudText>
+                                @if (Model.DerechosPropiedad.Any())
+                                {
+                                    <MudTable Items="Model.DerechosPropiedad" Hover="true" Breakpoint="Breakpoint.None">
+                                        <HeaderContent><MudTh>Titular</MudTh><MudTh>Tipo</MudTh><MudTh>Porcentaje</MudTh><MudTh>Estado</MudTh></HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd DataLabel="Titular">@context.Titular</MudTd>
+                                            <MudTd DataLabel="Tipo">@context.TipoDerecho</MudTd>
+                                            <MudTd DataLabel="Porcentaje">@context.Porcentaje.ToString("N2")%</MudTd>
+                                            <MudTd DataLabel="Estado"><StatusBadge Text="@context.Estado" /></MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Se completará al seleccionar el propietario principal.</MudText>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" lg="6">
+                        <MudCard Class="h-100">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1" GutterBottom="true">Estado de integraciones</MudText>
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="d-flex justify-space-between align-center"><MudText>Registro Público</MudText><StatusBadge Text="@(Model.RegistroPublicoSincronizado ? "Activo" : "Pendiente revision")" /></div>
+                                    <div class="d-flex justify-space-between align-center"><MudText>Ministerio de Hacienda</MudText><StatusBadge Text="@(Model.RemitidoHacienda ? "Activo" : "Pendiente revision")" /></div>
+                                    <div class="d-flex justify-space-between align-center"><MudText>GIS</MudText><MudChip T="string" Color="Color.Info">@(string.IsNullOrWhiteSpace(Model.UbicacionGis) ? "Pendiente" : "Validado")</MudChip></div>
+                                    <div class="d-flex justify-space-between align-center"><MudText>Cobro</MudText><MudChip T="string" Color="Color.Secondary">@(string.IsNullOrWhiteSpace(Model.CuentaTributaria) ? "Sin cuenta" : "Cuenta creada")</MudChip></div>
+                                </div>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Declaraciones, exoneraciones y fiscalización" Icon="@Icons.Material.Filled.Assignment">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" lg="4">
+                        <MudCard Class="h-100">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1" GutterBottom="true">Declaraciones</MudText>
+                                @if (Model.Declaraciones.Any())
+                                {
+                                    @foreach (var item in Model.Declaraciones)
+                                    {
+                                        <div class="mb-2">
+                                            <MudText Typo="Typo.body1">Periodo @item.Periodo</MudText>
+                                            <StatusBadge Text="@item.Estado" />
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Sin declaraciones cargadas.</MudText>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" lg="4">
+                        <MudCard Class="h-100">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1" GutterBottom="true">Exoneraciones</MudText>
+                                @if (Model.Exoneraciones.Any())
+                                {
+                                    @foreach (var item in Model.Exoneraciones)
+                                    {
+                                        <div class="mb-2">
+                                            <MudText Typo="Typo.body1">@item.TipoExoneracion</MudText>
+                                            <MudChip T="string" Color="Color.Success">@item.Porcentaje.ToString("N0")%</MudChip>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Sin beneficios activos.</MudText>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" lg="4">
+                        <MudCard Class="h-100">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1" GutterBottom="true">Fiscalización</MudText>
+                                @if (Model.Fiscalizaciones.Any())
+                                {
+                                    @foreach (var item in Model.Fiscalizaciones.OrderByDescending(x => x.FechaProgramada))
+                                    {
+                                        <div class="mb-2">
+                                            <MudText Typo="Typo.body1">@item.NumeroCaso</MudText>
+                                            <StatusBadge Text="@item.Estado" />
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Sin fiscalizaciones programadas.</MudText>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+        </MudTabs>
+    </MudForm>
+
+    <div class="d-flex flex-wrap gap-2 mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">Guardar finca</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="RecalcularValoracionAsync">Recalcular valoración</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="SyncRegistroPublicoAsync">Registro Público</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="SyncGisAsync">GIS</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="SyncHaciendaAsync">Hacienda</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="SyncCobroAsync">Cobro</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" OnClick="ProgramarFiscalizacionAsync">Programar fiscalización</MudButton>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter] public BienInmuebleDto Model { get; set; } = new();
+    [Parameter] public EventCallback<BienInmuebleDto> ModelChanged { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+
+    private MudForm form = null!;
+    private List<string> distritos = new();
+    private List<string> estadosBien = new();
+    private List<string> condiciones = new();
+    private List<string> tiposFinca = new();
+    private List<string> estadosRegistrales = new();
+    private List<string> usos = new();
+    private List<string> zonasHomogeneas = new();
+    private List<string> tipologias = new();
+    private List<ContribuyenteDto> propietariosRuc = new();
+    private List<string> validationErrors = new();
+
+    private string CalculatedValorFiscalTotal => (Model.ValorTerreno + Model.ValorConstruccion).ToString("N2");
+
+    protected override async Task OnInitializedAsync()
+    {
+        distritos = await MaestroDatosService.GetDistritosAsync();
+        estadosBien = await MaestroDatosService.GetEstadosBienInmuebleAsync();
+        condiciones = await MaestroDatosService.GetCondicionesBienInmuebleAsync();
+        tiposFinca = await MaestroDatosService.GetTiposFincaAsync();
+        estadosRegistrales = await MaestroDatosService.GetEstadosRegistralesAsync();
+        usos = await MaestroDatosService.GetUsosInmuebleAsync();
+        zonasHomogeneas = await MaestroDatosService.GetZonasHomogeneasAsync();
+        tipologias = await MaestroDatosService.GetTipologiasConstructivasAsync();
+        propietariosRuc = await ContribuyentesService.GetAllAsync();
+        SyncCalculatedFields();
+        SyncOwnershipRecord();
+    }
+
+    protected override Task OnParametersSetAsync()
+    {
+        SyncCalculatedFields();
+        SyncOwnershipRecord();
+        return Task.CompletedTask;
+    }
+
+    private async Task OnPropietarioChanged(int ownerId)
+    {
+        Model.PropietarioPrincipalId = ownerId;
+        var owner = propietariosRuc.FirstOrDefault(x => x.Id == ownerId);
+        if (owner is not null)
+        {
+            Model.PropietarioPrincipal = owner.NombreCompleto;
+            Model.PropietarioPrincipalIdentificacion = owner.NumeroIdentificacion;
+        }
+
+        SyncOwnershipRecord();
+        await ModelChanged.InvokeAsync(Model);
+    }
+
+    private async Task SaveAsync()
+    {
+        await form.Validate();
+        SyncCalculatedFields();
+        SyncOwnershipRecord();
+        validationErrors = ValidateModel();
+        if (validationErrors.Any())
+        {
+            Snackbar.Add("Existen validaciones pendientes en la finca.", Severity.Warning);
+            return;
+        }
+
+        Model.HistorialCambios.Insert(0, new AuditoriaCambioDto
+        {
+            Usuario = "analista.bienes",
+            FechaHora = DateTime.Now,
+            CampoModificado = "Expediente de finca",
+            ValorAnterior = "N/A",
+            ValorNuevo = string.IsNullOrWhiteSpace(Model.NumeroFinca) ? Model.IdPredial : Model.NumeroFinca,
+            Origen = "Formulario Bienes Inmuebles"
+        });
+
+        await BienesInmueblesService.SaveAsync(Model);
+        await ModelChanged.InvokeAsync(Model);
+        await OnSaved.InvokeAsync();
+        Snackbar.Add("Finca guardada correctamente.", Severity.Success);
+    }
+
+    private async Task RecalcularValoracionAsync()
+    {
+        SyncCalculatedFields();
+        await ValoracionService.RecalcularAsync(Model);
+        var nueva = await ValoracionService.GenerarNuevaValoracionAsync(Model);
+        Model.Valoraciones.Insert(0, nueva);
+        Model.HistorialCambios.Insert(0, new AuditoriaCambioDto
+        {
+            Usuario = "valoracion.sistema",
+            FechaHora = DateTime.Now,
+            CampoModificado = "Valor fiscal",
+            ValorAnterior = "Revisión previa",
+            ValorNuevo = Model.ValorFiscalTotal.ToString("N2"),
+            Origen = "Valoración"
+        });
+        await ModelChanged.InvokeAsync(Model);
+        Snackbar.Add("Valoración recalculada.", Severity.Info);
+    }
+
+    private async Task SyncRegistroPublicoAsync()
+    {
+        await BienesInmueblesService.SimularRegistroPublicoAsync(Model);
+        Model.HistorialCambios.Insert(0, new AuditoriaCambioDto
+        {
+            Usuario = "registro.publico",
+            FechaHora = DateTime.Now,
+            CampoModificado = "Estado registral",
+            ValorAnterior = "Sincronización previa",
+            ValorNuevo = Model.EstadoRegistral,
+            Origen = "Registro Público"
+        });
+        await ModelChanged.InvokeAsync(Model);
+        Snackbar.Add("Movimiento registral simulado correctamente.", Severity.Info);
+    }
+
+    private async Task SyncGisAsync()
+    {
+        await BienesInmueblesService.SimularGisAsync(Model);
+        Model.HistorialCambios.Insert(0, new AuditoriaCambioDto
+        {
+            Usuario = "gis.municipal",
+            FechaHora = DateTime.Now,
+            CampoModificado = "Ubicación GIS",
+            ValorAnterior = "Pendiente",
+            ValorNuevo = Model.UbicacionGis,
+            Origen = "GIS"
+        });
+        await ModelChanged.InvokeAsync(Model);
+        Snackbar.Add("Ubicación GIS actualizada.", Severity.Info);
+    }
+
+    private async Task SyncHaciendaAsync()
+    {
+        await BienesInmueblesService.SimularRemisionHaciendaAsync(Model);
+        Model.HistorialCambios.Insert(0, new AuditoriaCambioDto
+        {
+            Usuario = "hacienda.integracion",
+            FechaHora = DateTime.Now,
+            CampoModificado = "Remisión periódica",
+            ValorAnterior = "Pendiente",
+            ValorNuevo = "Transmitida",
+            Origen = "Ministerio de Hacienda"
+        });
+        await ModelChanged.InvokeAsync(Model);
+        Snackbar.Add("Remisión periódica a Hacienda simulada.", Severity.Info);
+    }
+
+    private async Task SyncCobroAsync()
+    {
+        await BienesInmueblesService.SimularCobroAsync(Model);
+        Model.HistorialCambios.Insert(0, new AuditoriaCambioDto
+        {
+            Usuario = "cobro.integracion",
+            FechaHora = DateTime.Now,
+            CampoModificado = "Cuenta tributaria",
+            ValorAnterior = "Sin cuenta",
+            ValorNuevo = Model.CuentaTributaria,
+            Origen = "Cobro"
+        });
+        await ModelChanged.InvokeAsync(Model);
+        Snackbar.Add("Cuenta tributaria enlazada con Cobro.", Severity.Info);
+    }
+
+    private async Task ProgramarFiscalizacionAsync()
+    {
+        var caso = await FiscalizacionService.ProgramarAsync(Model);
+        Model.Fiscalizaciones.Insert(0, caso);
+        Model.PendienteFiscalizacion = true;
+        Model.Estado = "En fiscalizacion";
+        Model.HistorialCambios.Insert(0, new AuditoriaCambioDto
+        {
+            Usuario = "fiscalizacion.bienes",
+            FechaHora = DateTime.Now,
+            CampoModificado = "Programación de fiscalización",
+            ValorAnterior = "Sin caso activo",
+            ValorNuevo = caso.NumeroCaso,
+            Origen = "Fiscalización"
+        });
+        await ModelChanged.InvokeAsync(Model);
+        Snackbar.Add("Fiscalización programada.", Severity.Warning);
+    }
+
+    private void SyncCalculatedFields()
+    {
+        Model.ValorFiscalTotal = Model.ValorTerreno + Model.ValorConstruccion;
+    }
+
+    private void SyncOwnershipRecord()
+    {
+        if (Model.PropietarioPrincipalId <= 0 || string.IsNullOrWhiteSpace(Model.PropietarioPrincipal))
+            return;
+
+        if (!Model.DerechosPropiedad.Any())
+        {
+            Model.DerechosPropiedad.Add(new DerechoPropiedadDto());
+        }
+
+        var right = Model.DerechosPropiedad.First();
+        right.ContribuyenteId = Model.PropietarioPrincipalId;
+        right.Titular = Model.PropietarioPrincipal;
+        right.Identificacion = Model.PropietarioPrincipalIdentificacion;
+        right.TipoDerecho = string.IsNullOrWhiteSpace(right.TipoDerecho) ? "Pleno dominio" : right.TipoDerecho;
+        right.Porcentaje = Model.PorcentajeDerecho;
+        right.Estado = "Activo";
+        if (right.FechaInicio == default)
+        {
+            right.FechaInicio = DateTime.Today;
+        }
+    }
+
+    private List<string> ValidateModel()
+    {
+        var errors = new List<string>();
+        if (string.IsNullOrWhiteSpace(Model.NumeroFinca) && string.IsNullOrWhiteSpace(Model.IdPredial))
+            errors.Add("El número de finca o el ID predial es obligatorio.");
+        if (Model.PropietarioPrincipalId <= 0)
+            errors.Add("El propietario vinculado a RUC es obligatorio.");
+        if (Model.AreaTerreno <= 0)
+            errors.Add("El área de terreno debe ser mayor que cero.");
+        if (Model.PorcentajeDerecho < 0 || Model.PorcentajeDerecho > 100)
+            errors.Add("El porcentaje de derecho debe estar entre 0 y 100.");
+        if (Model.ValorFiscalTotal != Model.ValorTerreno + Model.ValorConstruccion)
+            errors.Add("El valor fiscal total debe ser igual a valor terreno más valor construcción.");
+        if (string.IsNullOrWhiteSpace(Model.Distrito))
+            errors.Add("El distrito es obligatorio.");
+        if (!estadosBien.Contains(Model.Estado))
+            errors.Add("El estado de la finca no es permitido.");
+        if (!string.IsNullOrWhiteSpace(Model.PropietarioPrincipalIdentificacion) && !new RegularExpressionAttribute(@"^[0-9\-]+$").IsValid(Model.PropietarioPrincipalIdentificacion))
+            errors.Add("La identificación vinculada del propietario no es válida.");
+        return errors;
+    }
+}

@@ -1,0 +1,6 @@
+html, body { margin: 0; min-height: 100%; font-family: Inter, Roboto, "Helvetica Neue", Arial, sans-serif; background: #f4f7fb; }
+a { color: inherit; }
+.cm-content-shell { width: 100%; }
+.min-vh-100 { min-height: 100vh; }
+.text-white { color: #fff !important; }
+.gap-1 { gap: .25rem; } .gap-2 { gap: .5rem; } .gap-3 { gap: .75rem; }

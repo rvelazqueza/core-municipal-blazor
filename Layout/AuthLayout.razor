@@ -1,0 +1,15 @@
+@inherits LayoutComponentBase
+@using MudBlazor
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout Class="cm-auth-layout">
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="pa-0">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>

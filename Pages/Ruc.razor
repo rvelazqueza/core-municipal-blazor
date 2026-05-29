@@ -1,0 +1,126 @@
+@page "/ruc"
+@using BlazorApp.Models
+@using BlazorApp.Services
+@using BlazorApp.Shared
+@inject IContribuyentesService ContribuyentesService
+@inject IAuditoriaService AuditoriaService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitleBar Title="Registro Único de Contribuyentes" Subtitle="Núcleo maestro del ecosistema tributario municipal" Breadcrumbs="breadcrumbs">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="CreateNew">Nuevo contribuyente</MudButton>
+    </Actions>
+</PageTitleBar>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+    Gestión centralizada del padrón tributario con seguimiento de calidad, trazabilidad y mantenimiento operativo.
+</MudAlert>
+
+<MudPaper Outlined="true" Class="pa-2 pa-md-3">
+<MudTabs Outlined="true" Rounded="true" Border="true" ApplyEffectsToContainer="true" ActivePanelIndex="activePanelIndex" ActivePanelIndexChanged="OnPanelChanged" PanelClass="pa-4">
+    <MudTabPanel Text="Dashboard RUC" Icon="@Icons.Material.Filled.SpaceDashboard">
+        <RucDashboardPanel Items="contribuyentes" RecentChanges="recentChanges" />
+    </MudTabPanel>
+    <MudTabPanel Text="Consulta de contribuyentes" Icon="@Icons.Material.Filled.ManageSearch">
+        <RucFilterPanel Identificacion="identificacionFilter" IdentificacionChanged="@(value => identificacionFilter = value)" Nombre="nombreFilter" NombreChanged="@(value => nombreFilter = value)" TipoPersona="tipoPersonaFilter" TipoPersonaChanged="@(value => tipoPersonaFilter = value)" Estado="estadoFilter" EstadoChanged="@(value => estadoFilter = value)" Distrito="distritoFilter" DistritoChanged="@(value => distritoFilter = value)" ActividadEconomica="actividadFilter" ActividadEconomicaChanged="@(value => actividadFilter = value)" OnSearch="LoadFilteredAsync" />
+        @if (filteredContribuyentes.Any())
+        {
+            <ContribuyentesTable Items="filteredContribuyentes" ViewRequested="OpenView" EditRequested="OpenEdit" />
+        }
+        else
+        {
+            <EmptyState Title="Sin resultados" Description="No hay contribuyentes que coincidan con los filtros aplicados." Icon="@Icons.Material.Filled.FilterAltOff" />
+        }
+    </MudTabPanel>
+    <MudTabPanel Text="Formulario de contribuyente" Icon="@Icons.Material.Filled.EditNote">
+        <ContribuyenteForm Model="selectedContribuyente" ModelChanged="OnModelChanged" OnSaved="AfterSavedAsync" />
+    </MudTabPanel>
+</MudTabs>
+</MudPaper>
+
+@code {
+    private List<BreadcrumbItem> breadcrumbs = new()
+    {
+        new("Inicio", href: "/"),
+        new("RUC", href: null, disabled: true)
+    };
+
+    private List<ContribuyenteDto> contribuyentes = new();
+    private List<ContribuyenteDto> filteredContribuyentes = new();
+    private List<AuditoriaCambioDto> recentChanges = new();
+    private ContribuyenteDto selectedContribuyente = new();
+    private int activePanelIndex = 0;
+
+    private string identificacionFilter = string.Empty;
+    private string nombreFilter = string.Empty;
+    private string tipoPersonaFilter = string.Empty;
+    private string estadoFilter = string.Empty;
+    private string distritoFilter = string.Empty;
+    private string actividadFilter = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllAsync();
+        selectedContribuyente = contribuyentes.FirstOrDefault() ?? new ContribuyenteDto();
+    }
+
+    private async Task LoadAllAsync()
+    {
+        contribuyentes = await ContribuyentesService.GetAllAsync();
+        filteredContribuyentes = contribuyentes.OrderByDescending(x => x.UltimaActualizacion).ToList();
+        recentChanges = await AuditoriaService.GetRecentAsync();
+    }
+
+    private async Task LoadFilteredAsync()
+    {
+        filteredContribuyentes = await ContribuyentesService.SearchAsync(identificacionFilter, nombreFilter, tipoPersonaFilter, estadoFilter, distritoFilter, actividadFilter);
+        Snackbar.Add("Consulta actualizada.", Severity.Normal);
+    }
+
+    private void CreateNew()
+    {
+        selectedContribuyente = new ContribuyenteDto
+        {
+            TipoPersona = "Fisica",
+            TipoIdentificacion = "Cedula",
+            EstadoContribuyente = "Activo"
+        };
+        activePanelIndex = 2;
+    }
+
+    private async Task OpenView(int id)
+    {
+        selectedContribuyente = await ContribuyentesService.GetByIdAsync(id);
+        activePanelIndex = 2;
+    }
+
+    private async Task OpenEdit(int id)
+    {
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirmar edición", new DialogParameters<ConfirmDialog> { { x => x.Title, "Abrir formulario" }, { x => x.Message, "Se cargará el contribuyente seleccionado en el formulario para edición." } });
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            selectedContribuyente = await ContribuyentesService.GetByIdAsync(id);
+            activePanelIndex = 2;
+        }
+    }
+
+    private Task OnModelChanged(ContribuyenteDto model)
+    {
+        selectedContribuyente = model;
+        return Task.CompletedTask;
+    }
+
+    private async Task AfterSavedAsync()
+    {
+        await LoadAllAsync();
+        activePanelIndex = 1;
+    }
+
+    private Task OnPanelChanged(int index)
+    {
+        activePanelIndex = index;
+        return Task.CompletedTask;
+    }
+}

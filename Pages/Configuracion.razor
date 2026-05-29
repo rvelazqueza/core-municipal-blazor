@@ -1,0 +1,145 @@
+@page "/configuracion"
+@using BlazorApp.Shared
+
+@{
+    var previewImageUrl = string.IsNullOrWhiteSpace(loginSettings.HeroImageUrl) ? loginSettings.ImagenBienvenidaUrl : loginSettings.HeroImageUrl;
+}
+
+<PageTitleBar Title="Configuración" Subtitle="Parámetros institucionales y experiencia visual del acceso seguro." Breadcrumbs="breadcrumbs">
+    <Actions>
+        <MudButton Href="/login" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Preview">Ver login</MudButton>
+    </Actions>
+</PageTitleBar>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+    Esta sección parametriza la experiencia visual del acceso. La autenticación real podrá conectarse después con API REST, JWT/OIDC, Identity o proveedor externo.
+</MudAlert>
+
+@if (isLoading)
+{
+    <MudPaper Outlined="true" Class="pa-6 text-center">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        <MudText Typo="Typo.body2" Class="mt-3">Cargando configuración del login...</MudText>
+    </MudPaper>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" lg="7">
+            <MudCard Outlined="true" Class="mb-4">
+                <MudCardContent>
+                    <div class="d-flex flex-wrap justify-space-between align-center gap-2 mb-4">
+                        <div>
+                            <MudText Typo="Typo.h6">Pantalla de login</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">Contenido institucional, mensajes cortos y una imagen visible sin texto encima.</MudText>
+                        </div>
+                        <MudChip T="string" Text="Parametrizable" Color="Color.Success" Variant="Variant.Filled" />
+                    </div>
+
+                    <MudForm Model="loginSettings">
+                        <MudGrid>
+                            <MudItem xs="12">
+                                <MudTextField T="string" @bind-Value="loginSettings.HeroImageUrl" Label="Imagen de bienvenida" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="string" @bind-Value="loginSettings.Titulo" Label="Título" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="string" @bind-Value="loginSettings.Subtitulo" Label="Subtítulo" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField T="string" @bind-Value="loginSettings.MensajeInformativo" Label="Mensaje corto" Variant="Variant.Outlined" FullWidth="true" Lines="3" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField T="string" @bind-Value="loginSettings.MensajeConfianza" Label="Mensaje de confianza" Variant="Variant.Outlined" FullWidth="true" Lines="3" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField T="string" @bind-Value="beneficiosTexto" Label="Beneficios breves (máximo 3, uno por línea)" Variant="Variant.Outlined" FullWidth="true" Lines="5" />
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudTextField T="string" @bind-Value="maxIntentosTexto" Label="Máximo de intentos fallidos" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudSwitch @bind-Value="loginSettings.HabilitarFirmaDigital" Color="Color.Primary" Label="Habilitar firma digital" />
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudSwitch @bind-Value="loginSettings.HabilitarTwoFactor" Color="Color.Info" Label="Habilitar 2FA" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudForm>
+
+                    <div class="d-flex justify-space-between align-center gap-2 mt-4">
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-0">
+                            Solo parametrización visual mock. No reemplaza un proveedor de identidad real.
+                        </MudAlert>
+                        <MudButton OnClick="SaveAsync" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <MudProgressCircular Class="me-2" Size="Size.Small" Indeterminate="true" />
+                                <MudText Inline="true">Guardando</MudText>
+                            }
+                            else
+                            {
+                                <MudText Inline="true">Guardar cambios</MudText>
+                            }
+                        </MudButton>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" lg="5">
+            <MudCard Outlined="true" Class="mb-4">
+                <MudCardContent>
+                    <div class="d-flex justify-space-between align-center gap-2 mb-3">
+                        <MudText Typo="Typo.h6">Vista previa</MudText>
+                        <MudChip T="string" Text="Login institucional" Color="Color.Primary" Variant="Variant.Outlined" />
+                    </div>
+
+                    <MudPaper Square="true" Class="pa-4" Style="background: linear-gradient(180deg, #07182d 0%, #0b2746 100%); border-radius: 24px;">
+                        <div class="text-center mb-4">
+                            <MudText Typo="Typo.h5" Align="Align.Center" Class="text-white mb-2">@loginSettings.Titulo</MudText>
+                            <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mb-2" style="color:#d7e9fb;">@loginSettings.Subtitulo</MudText>
+                            <MudText Typo="Typo.body2" Align="Align.Center" style="color:#b7d8f7; max-width: 480px; margin-inline: auto;">@loginSettings.MensajeInformativo</MudText>
+                        </div>
+
+                        <div class="d-flex flex-wrap justify-center gap-2 mb-4">
+                            @foreach (var beneficio in loginSettings.Beneficios)
+                            {
+                                <MudChip T="string" Text="@beneficio" Color="Color.Surface" Variant="Variant.Outlined" />
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(previewImageUrl))
+                        {
+                            <div style="border-radius: 22px; overflow: hidden; border: 1px solid rgba(191, 219, 254, 0.22); background-color: #102944; box-shadow: 0 18px 40px rgba(3, 10, 25, 0.28);">
+                                <img src="@previewImageUrl" alt="Vista previa institucional del login" style="display:block; width:100%; height:280px; object-fit:cover;" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-column align-center justify-center text-center" style="height: 280px; border-radius: 22px; border: 1px solid rgba(191, 219, 254, 0.18); background: linear-gradient(135deg, rgba(13, 44, 78, 0.96), rgba(7, 24, 45, 0.98));">
+                                <MudAvatar Color="Color.Info" Variant="Variant.Filled" Size="Size.Large" Class="mb-3">
+                                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Inherit" />
+                                </MudAvatar>
+                                <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="text-white mb-1">Sin imagen configurada</MudText>
+                                <MudText Typo="Typo.body2" Align="Align.Center" style="color:#c8def4; max-width: 320px;">
+                                    Ingrese una URL válida para mostrar aquí la imagen institucional del acceso.
+                                </MudText>
+                            </div>
+                        }
+                    </MudPaper>
+                </MudCardContent>
+            </MudCard>
+
+            <MudPaper Outlined="true" Class="pa-4">
+                <MudText Typo="Typo.subtitle1" GutterBottom="true">Resumen de seguridad visual</MudText>
+                <div class="d-flex flex-column gap-2">
+                    <MudChip T="string" Text="@(loginSettings.HabilitarFirmaDigital ? "Firma digital habilitada" : "Firma digital deshabilitada")" Color="@(loginSettings.HabilitarFirmaDigital ? Color.Success : Color.Default)" Variant="Variant.Outlined" />
+                    <MudChip T="string" Text="@(loginSettings.HabilitarTwoFactor ? "2FA habilitado" : "2FA deshabilitado")" Color="@(loginSettings.HabilitarTwoFactor ? Color.Info : Color.Default)" Variant="Variant.Outlined" />
+                    <MudChip T="string" Text="@($"Máximo de intentos: {loginSettings.MaxIntentosFallidos}")" Color="Color.Warning" Variant="Variant.Outlined" />
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}

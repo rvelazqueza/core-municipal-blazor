@@ -1,0 +1,145 @@
+@using BlazorApp.Models
+
+<MudPaper Class="pa-4">
+    <ValidationSummaryPanel Errors="validationErrors" />
+
+    <MudAlert Severity="Severity.Info" Class="mb-4">
+        Trámite básico preparado para integrarse con RUC, Bienes Inmuebles, Uso de Suelo, Cobro, Notificaciones y GIS.
+    </MudAlert>
+
+    <MudForm @ref="form">
+        <MudTabs Outlined="true">
+            <MudTabPanel Text="Datos del solicitante" Icon="@Icons.Material.Filled.Badge">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="int" Value="@selectedContribuyenteId" ValueChanged="OnContribuyenteChanged" Label="Seleccionar contribuyente RUC" Variant="Variant.Outlined">
+                            @foreach (var item in contribuyentes)
+                            {
+                                <MudSelectItem T="int" Value="@item.Id">@($"{item.NumeroIdentificacion} · {item.NombreCompleto}")</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="3"><MudTextField T="string" Value="@Model.ContribuyenteRuc" Label="Contribuyente RUC" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                    <MudItem xs="12" md="3"><MudTextField T="string" Value="@Model.Identificacion" Label="Identificación" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                    <MudItem xs="12" md="6"><MudTextField T="string" Value="@Model.ContribuyenteNombre" Label="Solicitante" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                    <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.NombreComercial" Label="Nombre comercial" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12">
+                        <MudChip T="string" Color="Color.Secondary">@(string.IsNullOrWhiteSpace(Model.ContribuyenteNombre) ? "Debe vincular un contribuyente desde RUC" : $"RUC vinculado: {Model.ContribuyenteNombre}")</MudChip>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Datos del local" Icon="@Icons.Material.Filled.Storefront">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="string" Value="@selectedFinca" ValueChanged="OnFincaChanged" Label="Finca o ID predial" Variant="Variant.Outlined">
+                            @foreach (var item in bienes)
+                            {
+                                <MudSelectItem T="string" Value="@item.NumeroFinca">@($"{item.NumeroFinca} · {item.IdPredial} · {item.Distrito}")</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.DireccionLocal" Label="Dirección del local" Variant="Variant.Outlined" MaxLines="3" AutoGrow="true" /></MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.Distrito" Label="Distrito" Variant="Variant.Outlined">
+                            @foreach (var item in distritos)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4"><MudChip T="string" Color="Color.Info">@(string.IsNullOrWhiteSpace(Model.FincaOIdPredial) ? "Sin vincular a Bienes Inmuebles" : $"Local vinculado: {Model.FincaOIdPredial}")</MudChip></MudItem>
+                    <MudItem xs="12" md="4"><MudChip T="string" Color="Color.Secondary">GIS @(string.IsNullOrWhiteSpace(Model.FincaOIdPredial) ? "pendiente" : "listo para validación")</MudChip></MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Actividad económica" Icon="@Icons.Material.Filled.AssignmentInd">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="string" Value="@Model.CodigoCaecr" ValueChanged="OnActividadChanged" Label="Actividad económica CAECR" Variant="Variant.Outlined">
+                            @foreach (var item in actividades)
+                            {
+                                <MudSelectItem T="string" Value="@item.CodigoCaecr">@($"{item.CodigoCaecr} · {item.Descripcion}")</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudSelect T="string" @bind-Value="Model.TipoPatente" Label="Tipo de patente" Variant="Variant.Outlined">
+                            @foreach (var item in tiposPatente)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="3"><MudTextField T="string" Value="@Model.ActividadEconomica" Label="Descripción actividad" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Uso de suelo vinculado" Icon="@Icons.Material.Filled.Rule">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.NumeroCertificadoUsoSuelo" Label="Número de certificado de uso de suelo" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" Value="@Model.EstadoUsoSuelo" Label="Estado del uso de suelo" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                    <MudItem xs="12" md="4" Class="d-flex align-center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ValidateUsoSueloAsync">Validar uso de suelo</MudButton>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudAlert Severity="@UsoSueloSeverity">@UsoSueloMessage</MudAlert>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Requisitos" Icon="@Icons.Material.Filled.Checklist">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="7">
+                        <MudSelect T="string" MultiSelection="true" SelectedValues="selectedAdjuntos" SelectedValuesChanged="OnAdjuntosChanged" Label="Adjuntos recibidos" Variant="Variant.Outlined">
+                            @foreach (var item in adjuntosCatalogo)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="5" Class="d-flex align-center">
+                        <MudChip T="string" Color="@(Model.Adjuntos.Count >= 2 ? Color.Success : Color.Warning)">@($"Adjuntos seleccionados: {Model.Adjuntos.Count}")</MudChip>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTable Items="Model.Requisitos" Hover="true" Breakpoint="Breakpoint.None">
+                            <HeaderContent>
+                                <MudTh>Requisito</MudTh>
+                                <MudTh>Obligatorio</MudTh>
+                                <MudTh>Estado</MudTh>
+                                <MudTh>Observación</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Requisito">@context.Nombre</MudTd>
+                                <MudTd DataLabel="Obligatorio">@(context.Obligatorio ? "Sí" : "No")</MudTd>
+                                <MudTd DataLabel="Estado"><StatusBadge Text="@(context.Cumplido ? "Aprobado" : "Pendiente")" /></MudTd>
+                                <MudTd DataLabel="Observación">@context.Observacion</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Resolución" Icon="@Icons.Material.Filled.Gavel">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="4"><MudTextField T="string" Value="@fechaSolicitudInput" ValueChanged="OnFechaSolicitudChanged" Label="Fecha de solicitud (AAAA-MM-DD)" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.Responsable" Label="Responsable" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.Estado" Label="Estado del trámite" Variant="Variant.Outlined">
+                            @foreach (var item in estadosPatente)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12"><MudTextField T="string" @bind-Value="Model.Observaciones" Label="Observaciones" Variant="Variant.Outlined" MaxLines="4" AutoGrow="true" /></MudItem>
+                </MudGrid>
+            </MudTabPanel>
+        </MudTabs>
+    </MudForm>
+
+    <div class="d-flex flex-wrap gap-2 mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">Guardar solicitud</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApproveAsync">Aprobar patente</MudButton>
+    </div>
+</MudPaper>

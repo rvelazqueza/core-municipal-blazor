@@ -1,0 +1,49 @@
+@using BlazorApp.Models
+
+<MudCard Outlined="true">
+    <MudCardContent>
+        <div class="d-flex flex-wrap justify-space-between align-center gap-2 mb-3">
+            <div>
+                <MudText Typo="Typo.h6">Consulta de licencias</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Resultados de licencias comerciales y expedientes de patentes.</MudText>
+            </div>
+            <MudChip T="string" Text="@($"{Items.Count} registros")" Color="Color.Primary" Variant="Variant.Outlined" />
+        </div>
+
+        <MudTable Items="Items" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Número de licencia</MudTh>
+                <MudTh>Contribuyente</MudTh>
+                <MudTh>Nombre comercial</MudTh>
+                <MudTh>Actividad económica CAECR</MudTh>
+                <MudTh>Distrito</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh>Fecha de aprobación</MudTh>
+                <MudTh>Fecha de vencimiento</MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Número de licencia">@context.NumeroLicencia</MudTd>
+                <MudTd DataLabel="Contribuyente">@context.ContribuyenteNombre</MudTd>
+                <MudTd DataLabel="Nombre comercial">@context.NombreComercial</MudTd>
+                <MudTd DataLabel="Actividad económica CAECR">@($"{context.CodigoCaecr} · {context.ActividadEconomica}")</MudTd>
+                <MudTd DataLabel="Distrito">@context.Distrito</MudTd>
+                <MudTd DataLabel="Estado"><StatusBadge Text="@context.Estado" /></MudTd>
+                <MudTd DataLabel="Fecha de aprobación">@(context.FechaAprobacion?.ToString("dd/MM/yyyy") ?? "-")</MudTd>
+                <MudTd DataLabel="Fecha de vencimiento">@(context.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "-")</MudTd>
+                <MudTd DataLabel="Acciones">
+                    <div class="d-flex flex-wrap gap-1">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => SolicitudRequested.InvokeAsync(context.Id))">Solicitud</MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="@(() => MaintenanceRequested.InvokeAsync(context.Id))">Mantenimiento</MudButton>
+                    </div>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public List<LicenciaComercialDto> Items { get; set; } = new();
+    [Parameter] public EventCallback<int> SolicitudRequested { get; set; }
+    [Parameter] public EventCallback<int> MaintenanceRequested { get; set; }
+}

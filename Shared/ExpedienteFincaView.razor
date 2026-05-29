@@ -1,0 +1,207 @@
+@using BlazorApp.Models
+
+@if (Model.Id == 0 && string.IsNullOrWhiteSpace(Model.NumeroFinca) && string.IsNullOrWhiteSpace(Model.IdPredial))
+{
+    <EmptyState Title="Sin expediente seleccionado" Description="Selecciona una finca desde la consulta para ver su ficha integral." Icon="@Icons.Material.Filled.FolderOpen" />
+}
+else
+{
+    <MudCard>
+        <MudCardContent>
+            <div class="d-flex flex-wrap justify-space-between align-center gap-2 mb-3">
+                <div>
+                    <MudText Typo="Typo.h6">Expediente de finca @Model.NumeroFinca</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">ID predial @Model.IdPredial · Última actualización @Model.UltimaActualizacion.ToString("dd/MM/yyyy HH:mm")</MudText>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <StatusBadge Text="@Model.Estado" />
+                    <MudChip T="string" Color="Color.Info">@Model.Distrito</MudChip>
+                    <MudChip T="string" Color="Color.Secondary">@Model.PropietarioPrincipal</MudChip>
+                </div>
+            </div>
+
+            <MudTabs Outlined="true">
+                <MudTabPanel Text="Datos generales" Icon="@Icons.Material.Filled.Info">
+                    <MudGrid Class="mt-2">
+                        <MudItem xs="12" md="6" lg="3"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Tipo de finca</MudText><MudText Typo="Typo.subtitle1">@Model.TipoFinca</MudText></MudPaper></MudItem>
+                        <MudItem xs="12" md="6" lg="3"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Estado registral</MudText><MudText Typo="Typo.subtitle1">@Model.EstadoRegistral</MudText></MudPaper></MudItem>
+                        <MudItem xs="12" md="6" lg="3"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Condición</MudText><MudText Typo="Typo.subtitle1">@Model.Condicion</MudText></MudPaper></MudItem>
+                        <MudItem xs="12" md="6" lg="3"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Cuenta tributaria</MudText><MudText Typo="Typo.subtitle1">@(string.IsNullOrWhiteSpace(Model.CuentaTributaria) ? "Pendiente" : Model.CuentaTributaria)</MudText></MudPaper></MudItem>
+                        <MudItem xs="12"><MudPaper Outlined="true" Class="pa-3"><MudText Typo="Typo.caption">Dirección exacta</MudText><MudText Typo="Typo.body1">@Model.DireccionExacta</MudText></MudPaper></MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Propietarios y derechos" Icon="@Icons.Material.Filled.Gavel">
+                    <MudTable Items="Model.DerechosPropiedad" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-2">
+                        <HeaderContent>
+                            <MudTh>Titular</MudTh>
+                            <MudTh>Identificación</MudTh>
+                            <MudTh>Tipo derecho</MudTh>
+                            <MudTh>Porcentaje</MudTh>
+                            <MudTh>Estado</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Titular">@context.Titular</MudTd>
+                            <MudTd DataLabel="Identificación">@context.Identificacion</MudTd>
+                            <MudTd DataLabel="Tipo derecho">@context.TipoDerecho</MudTd>
+                            <MudTd DataLabel="Porcentaje">@context.Porcentaje.ToString("N2")%</MudTd>
+                            <MudTd DataLabel="Estado"><StatusBadge Text="@context.Estado" /></MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Terreno" Icon="@Icons.Material.Filled.Landscape">
+                    <MudGrid Class="mt-2">
+                        <MudItem xs="12" md="4"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Área terreno</MudText><MudText Typo="Typo.h6">@Model.AreaTerreno.ToString("N2") m²</MudText></MudPaper></MudItem>
+                        <MudItem xs="12" md="4"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Zona homogénea</MudText><MudText Typo="Typo.h6">@Model.ZonaHomogenea</MudText></MudPaper></MudItem>
+                        <MudItem xs="12" md="4"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Ubicación GIS</MudText><MudText Typo="Typo.body1">@Model.UbicacionGis</MudText></MudPaper></MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Construcciones" Icon="@Icons.Material.Filled.Apartment">
+                    <MudGrid Class="mt-2">
+                        <MudItem xs="12" md="6"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Tipología constructiva</MudText><MudText Typo="Typo.h6">@Model.TipologiaConstructiva</MudText></MudPaper></MudItem>
+                        <MudItem xs="12" md="6"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Uso del inmueble</MudText><MudText Typo="Typo.h6">@Model.UsoInmueble</MudText></MudPaper></MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Valoración" Icon="@Icons.Material.Filled.PriceCheck">
+                    <MudGrid Class="mt-2 mb-3">
+                        <MudItem xs="12" md="4"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Valor terreno</MudText><MudText Typo="Typo.h6">@Model.ValorTerreno.ToString("N2")</MudText></MudPaper></MudItem>
+                        <MudItem xs="12" md="4"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Valor construcción</MudText><MudText Typo="Typo.h6">@Model.ValorConstruccion.ToString("N2")</MudText></MudPaper></MudItem>
+                        <MudItem xs="12" md="4"><MudPaper Outlined="true" Class="pa-3 h-100"><MudText Typo="Typo.caption">Valor fiscal total</MudText><MudText Typo="Typo.h6">@Model.ValorFiscalTotal.ToString("N2")</MudText></MudPaper></MudItem>
+                    </MudGrid>
+                    <MudTable Items="Model.Valoraciones" Hover="true" Breakpoint="Breakpoint.Sm">
+                        <HeaderContent>
+                            <MudTh>Periodo</MudTh>
+                            <MudTh>Zona</MudTh>
+                            <MudTh>Tipología</MudTh>
+                            <MudTh>Fecha</MudTh>
+                            <MudTh>Total</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Periodo">@context.Periodo</MudTd>
+                            <MudTd DataLabel="Zona">@context.ZonaHomogenea</MudTd>
+                            <MudTd DataLabel="Tipología">@context.TipologiaConstructiva</MudTd>
+                            <MudTd DataLabel="Fecha">@context.FechaValoracion.ToString("dd/MM/yyyy")</MudTd>
+                            <MudTd DataLabel="Total">@context.ValorFiscalTotal.ToString("N2")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Declaraciones" Icon="@Icons.Material.Filled.Assignment">
+                    <MudTable Items="Model.Declaraciones" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-2">
+                        <HeaderContent>
+                            <MudTh>Periodo</MudTh>
+                            <MudTh>Estado</MudTh>
+                            <MudTh>Fecha presentación</MudTh>
+                            <MudTh>Medio</MudTh>
+                            <MudTh>Observación</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Periodo">@context.Periodo</MudTd>
+                            <MudTd DataLabel="Estado"><StatusBadge Text="@context.Estado" /></MudTd>
+                            <MudTd DataLabel="Fecha presentación">@(context.FechaPresentacion.HasValue ? context.FechaPresentacion.Value.ToString("dd/MM/yyyy") : "Pendiente")</MudTd>
+                            <MudTd DataLabel="Medio">@context.MedioRecepcion</MudTd>
+                            <MudTd DataLabel="Observación">@context.Observacion</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Exoneraciones" Icon="@Icons.Material.Filled.LocalOffer">
+                    @if (Model.Exoneraciones.Any())
+                    {
+                        <MudTable Items="Model.Exoneraciones" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-2">
+                            <HeaderContent>
+                                <MudTh>Tipo</MudTh>
+                                <MudTh>Porcentaje</MudTh>
+                                <MudTh>Vigencia</MudTh>
+                                <MudTh>Estado</MudTh>
+                                <MudTh>Institución</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Tipo">@context.TipoExoneracion</MudTd>
+                                <MudTd DataLabel="Porcentaje">@context.Porcentaje.ToString("N2")%</MudTd>
+                                <MudTd DataLabel="Vigencia">@context.FechaInicio.ToString("dd/MM/yyyy") - @context.FechaFin.ToString("dd/MM/yyyy")</MudTd>
+                                <MudTd DataLabel="Estado"><StatusBadge Text="@context.Estado" /></MudTd>
+                                <MudTd DataLabel="Institución">@context.Institucion</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info" Class="mt-2">La finca no presenta exoneraciones activas.</MudAlert>
+                    }
+                </MudTabPanel>
+
+                <MudTabPanel Text="Fiscalización" Icon="@Icons.Material.Filled.FactCheck">
+                    <MudTable Items="Model.Fiscalizaciones" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-2">
+                        <HeaderContent>
+                            <MudTh>Caso</MudTh>
+                            <MudTh>Inspector</MudTh>
+                            <MudTh>Estado</MudTh>
+                            <MudTh>Programada</MudTh>
+                            <MudTh>Resultado</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Caso">@context.NumeroCaso</MudTd>
+                            <MudTd DataLabel="Inspector">@context.Inspector</MudTd>
+                            <MudTd DataLabel="Estado"><StatusBadge Text="@context.Estado" /></MudTd>
+                            <MudTd DataLabel="Programada">@context.FechaProgramada.ToString("dd/MM/yyyy")</MudTd>
+                            <MudTd DataLabel="Resultado">@(string.IsNullOrWhiteSpace(context.Resultado) ? "Pendiente" : context.Resultado)</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Imágenes / planos" Icon="@Icons.Material.Filled.Image">
+                    <MudGrid Class="mt-2">
+                        @if (Model.Imagenes.Any())
+                        {
+                            @foreach (var imagen in Model.Imagenes)
+                            {
+                                <MudItem xs="12" md="6" lg="4">
+                                    <MudCard>
+                                        <MudCardMedia Image="@imagen.Url" Height="220" />
+                                        <MudCardContent>
+                                            <MudText Typo="Typo.subtitle1">@imagen.Titulo</MudText>
+                                            <MudText Typo="Typo.body2" Class="mud-text-secondary">@imagen.Tipo · @imagen.Fuente</MudText>
+                                        </MudCardContent>
+                                    </MudCard>
+                                </MudItem>
+                            }
+                        }
+                        else
+                        {
+                            <MudItem xs="12">
+                                <MudAlert Severity="Severity.Info">No hay imágenes ni planos asociados al expediente.</MudAlert>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Historial y auditoría" Icon="@Icons.Material.Filled.History">
+                    <MudTable Items="@(Model.HistorialCambios.OrderByDescending(x => x.FechaHora).ToList())" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-2">
+                        <HeaderContent>
+                            <MudTh>Usuario</MudTh>
+                            <MudTh>Fecha y hora</MudTh>
+                            <MudTh>Campo</MudTh>
+                            <MudTh>Anterior</MudTh>
+                            <MudTh>Nuevo</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Usuario">@context.Usuario</MudTd>
+                            <MudTd DataLabel="Fecha y hora">@context.FechaHora.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                            <MudTd DataLabel="Campo">@context.CampoModificado</MudTd>
+                            <MudTd DataLabel="Anterior">@context.ValorAnterior</MudTd>
+                            <MudTd DataLabel="Nuevo">@context.ValorNuevo</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+            </MudTabs>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    [Parameter] public BienInmuebleDto Model { get; set; } = new();
+}

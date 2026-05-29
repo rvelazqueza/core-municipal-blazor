@@ -1,0 +1,16 @@
+@using MudBlazor
+
+@if (Errors.Any())
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="cm-validation-summary mb-3">
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Validaciones pendientes</MudText>
+        @foreach (var error in Errors)
+        {
+            <MudText Typo="Typo.body2" Class="mb-1">• @error</MudText>
+        }
+    </MudAlert>
+}
+
+@code {
+    [Parameter] public List<string> Errors { get; set; } = new();
+}

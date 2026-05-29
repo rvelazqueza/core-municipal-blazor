@@ -1,0 +1,136 @@
+@page "/bienes-inmuebles"
+@using BlazorApp.Models
+@using BlazorApp.Services
+@using BlazorApp.Shared
+@inject IBienesInmueblesService BienesInmueblesService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitleBar Title="Bienes Inmuebles" Subtitle="Gestión integral de fincas, derechos, valoración, fiscalización y emisión del impuesto" Breadcrumbs="breadcrumbs">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddHome" OnClick="CreateNew">Nueva finca</MudButton>
+    </Actions>
+</PageTitleBar>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+    Catastro municipal con control ejecutivo de expedientes, fiscalización y valoraciones tributarias.
+</MudAlert>
+
+<MudPaper Outlined="true" Class="pa-2 pa-md-3">
+<MudTabs Outlined="true" Rounded="true" Border="true" ApplyEffectsToContainer="true" ActivePanelIndex="activePanelIndex" ActivePanelIndexChanged="OnPanelChanged" PanelClass="pa-4">
+    <MudTabPanel Text="Dashboard" Icon="@Icons.Material.Filled.SpaceDashboard">
+        <BienesDashboardPanel Items="bienes" />
+    </MudTabPanel>
+    <MudTabPanel Text="Consulta de fincas" Icon="@Icons.Material.Filled.ManageSearch">
+        <FincasFilterPanel NumeroFinca="numeroFincaFilter" NumeroFincaChanged="@(value => numeroFincaFilter = value)" IdPredial="idPredialFilter" IdPredialChanged="@(value => idPredialFilter = value)" Propietario="propietarioFilter" PropietarioChanged="@(value => propietarioFilter = value)" Distrito="distritoFilter" DistritoChanged="@(value => distritoFilter = value)" Estado="estadoFilter" EstadoChanged="@(value => estadoFilter = value)" ValorFiscalMinimo="valorFiscalMinimoFilter" ValorFiscalMinimoChanged="@(value => valorFiscalMinimoFilter = value)" Condicion="condicionFilter" CondicionChanged="@(value => condicionFilter = value)" OnSearch="LoadFilteredAsync" />
+        @if (filteredBienes.Any())
+        {
+            <FincasTable Items="filteredBienes" ViewRequested="OpenView" EditRequested="OpenEdit" />
+        }
+        else
+        {
+            <EmptyState Title="Sin resultados" Description="No hay fincas que coincidan con los filtros aplicados." Icon="@Icons.Material.Filled.FilterAltOff" />
+        }
+    </MudTabPanel>
+    <MudTabPanel Text="Expediente de finca" Icon="@Icons.Material.Filled.FolderShared">
+        <ExpedienteFincaView Model="selectedBien" />
+    </MudTabPanel>
+    <MudTabPanel Text="Formulario básico" Icon="@Icons.Material.Filled.EditNote">
+        <BienInmuebleForm Model="selectedBien" ModelChanged="OnModelChanged" OnSaved="AfterSavedAsync" />
+    </MudTabPanel>
+</MudTabs>
+</MudPaper>
+
+@code {
+    private List<BreadcrumbItem> breadcrumbs = new()
+    {
+        new("Inicio", href: "/"),
+        new("Bienes Inmuebles", href: null, disabled: true)
+    };
+
+    private List<BienInmuebleDto> bienes = new();
+    private List<BienInmuebleDto> filteredBienes = new();
+    private BienInmuebleDto selectedBien = new();
+    private int activePanelIndex = 0;
+
+    private string numeroFincaFilter = string.Empty;
+    private string idPredialFilter = string.Empty;
+    private string propietarioFilter = string.Empty;
+    private string distritoFilter = string.Empty;
+    private string estadoFilter = string.Empty;
+    private string valorFiscalMinimoFilter = string.Empty;
+    private string condicionFilter = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllAsync();
+        selectedBien = bienes.FirstOrDefault() ?? new BienInmuebleDto();
+    }
+
+    private async Task LoadAllAsync()
+    {
+        bienes = await BienesInmueblesService.GetAllAsync();
+        filteredBienes = bienes.OrderByDescending(x => x.UltimaActualizacion).ToList();
+    }
+
+    private async Task LoadFilteredAsync()
+    {
+        decimal? valorMinimo = null;
+        if (decimal.TryParse(valorFiscalMinimoFilter, out var parsed))
+        {
+            valorMinimo = parsed;
+        }
+
+        filteredBienes = await BienesInmueblesService.SearchAsync(numeroFincaFilter, idPredialFilter, propietarioFilter, distritoFilter, estadoFilter, valorMinimo, condicionFilter);
+        Snackbar.Add("Consulta predial actualizada.", Severity.Normal);
+    }
+
+    private void CreateNew()
+    {
+        selectedBien = new BienInmuebleDto
+        {
+            TipoFinca = "Individual",
+            EstadoRegistral = "Inscrita",
+            Estado = "Activo",
+            PorcentajeDerecho = 100m,
+            Condicion = "Al dia"
+        };
+        activePanelIndex = 3;
+    }
+
+    private async Task OpenView(int id)
+    {
+        selectedBien = await BienesInmueblesService.GetByIdAsync(id);
+        activePanelIndex = 2;
+    }
+
+    private async Task OpenEdit(int id)
+    {
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirmar edición", new DialogParameters<ConfirmDialog> { { x => x.Title, "Abrir ficha editable" }, { x => x.Message, "Se cargará la finca seleccionada en el formulario básico para edición." } });
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            selectedBien = await BienesInmueblesService.GetByIdAsync(id);
+            activePanelIndex = 3;
+        }
+    }
+
+    private Task OnModelChanged(BienInmuebleDto model)
+    {
+        selectedBien = model;
+        return Task.CompletedTask;
+    }
+
+    private async Task AfterSavedAsync()
+    {
+        await LoadAllAsync();
+        selectedBien = bienes.OrderByDescending(x => x.UltimaActualizacion).FirstOrDefault(x => x.NumeroFinca == selectedBien.NumeroFinca && x.IdPredial == selectedBien.IdPredial) ?? selectedBien;
+        activePanelIndex = 1;
+    }
+
+    private Task OnPanelChanged(int index)
+    {
+        activePanelIndex = index;
+        return Task.CompletedTask;
+    }
+}

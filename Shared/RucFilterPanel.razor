@@ -1,0 +1,99 @@
+@using MudBlazor
+@using BlazorApp.Services
+@inject IMaestroDatosService MaestroDatosService
+
+<MudPaper Class="pa-4 mb-4">
+    <MudText Typo="Typo.h6" Class="mb-3">Filtros de consulta</MudText>
+    <MudGrid>
+        <MudItem xs="12" md="6" lg="2">
+            <MudTextField T="string" Value="@Identificacion" ValueChanged="OnIdentificacionChanged" Label="Identificación" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudTextField T="string" Value="@Nombre" ValueChanged="OnNombreChanged" Label="Nombre o razón social" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudSelect T="string" Value="@TipoPersona" ValueChanged="OnTipoPersonaChanged" Label="Tipo persona" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var item in tiposPersona)
+                {
+                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudSelect T="string" Value="@Estado" ValueChanged="OnEstadoChanged" Label="Estado" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var item in estados)
+                {
+                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudSelect T="string" Value="@Distrito" ValueChanged="OnDistritoChanged" Label="Distrito" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var item in distritos)
+                {
+                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudSelect T="string" Value="@ActividadEconomica" ValueChanged="OnActividadChanged" Label="Actividad" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var item in actividades)
+                {
+                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+    <div class="d-flex flex-wrap gap-2 mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchRequested">Buscar</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="ResetFilters">Limpiar</MudButton>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter] public string Identificacion { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> IdentificacionChanged { get; set; }
+    [Parameter] public string Nombre { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> NombreChanged { get; set; }
+    [Parameter] public string TipoPersona { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> TipoPersonaChanged { get; set; }
+    [Parameter] public string Estado { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> EstadoChanged { get; set; }
+    [Parameter] public string Distrito { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> DistritoChanged { get; set; }
+    [Parameter] public string ActividadEconomica { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ActividadEconomicaChanged { get; set; }
+    [Parameter] public EventCallback OnSearch { get; set; }
+
+    private List<string> tiposPersona = new();
+    private List<string> estados = new();
+    private List<string> distritos = new();
+    private List<string> actividades = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        tiposPersona = await MaestroDatosService.GetTiposPersonaAsync();
+        estados = await MaestroDatosService.GetEstadosContribuyenteAsync();
+        distritos = await MaestroDatosService.GetDistritosAsync();
+        actividades = await MaestroDatosService.GetActividadesEconomicasAsync();
+    }
+
+    private Task OnIdentificacionChanged(string value) => IdentificacionChanged.InvokeAsync(value ?? string.Empty);
+    private Task OnNombreChanged(string value) => NombreChanged.InvokeAsync(value ?? string.Empty);
+    private Task OnTipoPersonaChanged(string value) => TipoPersonaChanged.InvokeAsync(value ?? string.Empty);
+    private Task OnEstadoChanged(string value) => EstadoChanged.InvokeAsync(value ?? string.Empty);
+    private Task OnDistritoChanged(string value) => DistritoChanged.InvokeAsync(value ?? string.Empty);
+    private Task OnActividadChanged(string value) => ActividadEconomicaChanged.InvokeAsync(value ?? string.Empty);
+    private Task SearchRequested() => OnSearch.InvokeAsync();
+
+    private async Task ResetFilters()
+    {
+        await IdentificacionChanged.InvokeAsync(string.Empty);
+        await NombreChanged.InvokeAsync(string.Empty);
+        await TipoPersonaChanged.InvokeAsync(string.Empty);
+        await EstadoChanged.InvokeAsync(string.Empty);
+        await DistritoChanged.InvokeAsync(string.Empty);
+        await ActividadEconomicaChanged.InvokeAsync(string.Empty);
+        await OnSearch.InvokeAsync();
+    }
+}

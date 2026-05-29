@@ -1,0 +1,86 @@
+@using BlazorApp.Models
+@using BlazorApp.Services
+@inject IMaestroDatosService MaestroDatosService
+
+<MudPaper Class="pa-4 mb-4">
+    <MudText Typo="Typo.h6" Class="mb-3">Filtros de licencias</MudText>
+    <MudGrid>
+        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="@Model.NumeroLicencia" ValueChanged="OnNumeroChanged" Label="Número de licencia" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="@Model.Contribuyente" ValueChanged="OnContribuyenteChanged" Label="Contribuyente / RUC" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="@Model.ActividadEconomica" ValueChanged="OnActividadChanged" Label="Actividad CAECR" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudSelect T="string" Value="@Model.Distrito" ValueChanged="OnDistritoChanged" Label="Distrito" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var item in distritos)
+                {
+                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudSelect T="string" Value="@Model.Estado" ValueChanged="OnEstadoChanged" Label="Estado" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var item in estados)
+                {
+                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="@Model.FechaVencimientoHasta" ValueChanged="OnFechaChanged" Label="Vence antes de (AAAA-MM-DD)" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12" md="6" lg="3">
+            <MudSelect T="string" Value="@Model.Tipo" ValueChanged="OnTipoChanged" Label="Tipo de patente" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var item in tipos)
+                {
+                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+    <div class="d-flex flex-wrap gap-2 mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchRequested">Buscar licencias</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="ResetFilters">Limpiar</MudButton>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter] public FiltroLicenciasPatenteDto Model { get; set; } = new();
+    [Parameter] public EventCallback<FiltroLicenciasPatenteDto> ModelChanged { get; set; }
+    [Parameter] public EventCallback OnSearch { get; set; }
+
+    private List<string> distritos = new();
+    private List<string> estados = new();
+    private List<string> tipos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        distritos = await MaestroDatosService.GetDistritosAsync();
+        estados = await MaestroDatosService.GetEstadosPatenteAsync();
+        tipos = await MaestroDatosService.GetTiposPatenteAsync();
+    }
+
+    private Task OnNumeroChanged(string value) => UpdateModelAsync(() => Model.NumeroLicencia = value ?? string.Empty);
+    private Task OnContribuyenteChanged(string value) => UpdateModelAsync(() => Model.Contribuyente = value ?? string.Empty);
+    private Task OnActividadChanged(string value) => UpdateModelAsync(() => Model.ActividadEconomica = value ?? string.Empty);
+    private Task OnDistritoChanged(string value) => UpdateModelAsync(() => Model.Distrito = value ?? string.Empty);
+    private Task OnEstadoChanged(string value) => UpdateModelAsync(() => Model.Estado = value ?? string.Empty);
+    private Task OnFechaChanged(string value) => UpdateModelAsync(() => Model.FechaVencimientoHasta = value ?? string.Empty);
+    private Task OnTipoChanged(string value) => UpdateModelAsync(() => Model.Tipo = value ?? string.Empty);
+    private Task SearchRequested() => OnSearch.InvokeAsync();
+
+    private async Task ResetFilters()
+    {
+        Model.NumeroLicencia = string.Empty;
+        Model.Contribuyente = string.Empty;
+        Model.ActividadEconomica = string.Empty;
+        Model.Distrito = string.Empty;
+        Model.Estado = string.Empty;
+        Model.FechaVencimientoHasta = string.Empty;
+        Model.Tipo = string.Empty;
+        await ModelChanged.InvokeAsync(Model);
+        await OnSearch.InvokeAsync();
+    }
+
+    private Task UpdateModelAsync(Action apply)
+    {
+        apply();
+        return ModelChanged.InvokeAsync(Model);
+    }
+}

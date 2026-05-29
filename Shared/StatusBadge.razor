@@ -1,0 +1,44 @@
+@using MudBlazor
+
+<MudChip T="string" Text="@Text" Icon="@ResolvedIcon" Color="@ResolvedColor" Variant="Variant.Outlined" Size="Size.Small" Class="cm-status-badge" />
+
+@code {
+    [Parameter] public string Text { get; set; } = string.Empty;
+
+    private Color ResolvedColor => Text switch
+    {
+        "Activo" => Color.Success,
+        "Activa" => Color.Success,
+        "Aprobado" => Color.Success,
+        "Aprobada" => Color.Success,
+        "Conforme" => Color.Success,
+        "Presentada" => Color.Success,
+        "Finalizada" => Color.Success,
+        "Inactivo" => Color.Dark,
+        "Suspendido" => Color.Dark,
+        "Cancelado" => Color.Error,
+        "Rechazado" => Color.Error,
+        "Difunto" => Color.Error,
+        "No conforme" => Color.Error,
+        "Pendiente revision" => Color.Warning,
+        "Pendiente" => Color.Warning,
+        "Borrador" => Color.Warning,
+        "En revision" => Color.Warning,
+        "Prevenido" => Color.Warning,
+        "Programada" => Color.Warning,
+        "En fiscalizacion" => Color.Info,
+        "Seguimiento" => Color.Info,
+        "Omiso" => Color.Error,
+        _ => Color.Primary
+    };
+
+    private string ResolvedIcon => ResolvedColor switch
+    {
+        Color.Success => Icons.Material.Filled.CheckCircle,
+        Color.Warning => Icons.Material.Filled.Schedule,
+        Color.Error => Icons.Material.Filled.Cancel,
+        Color.Info => Icons.Material.Filled.Info,
+        Color.Dark => Icons.Material.Filled.PauseCircle,
+        _ => Icons.Material.Filled.RadioButtonChecked
+    };
+}

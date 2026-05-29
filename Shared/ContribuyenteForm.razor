@@ -1,0 +1,310 @@
+@using System.ComponentModel.DataAnnotations
+@using BlazorApp.Models
+@using BlazorApp.Services
+@using MudBlazor
+@inject IMaestroDatosService MaestroDatosService
+@inject IContribuyentesService ContribuyentesService
+@inject IAuditoriaService AuditoriaService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <ValidationSummaryPanel Errors="validationErrors" />
+
+    <MudTabs Outlined="true">
+        <MudTabPanel Text="Datos generales" Icon="@Icons.Material.Filled.Badge">
+            <MudGrid Class="mt-2">
+                <MudItem xs="12" md="4">
+                    <MudSelect T="string" @bind-Value="Model.TipoPersona" Label="Tipo de persona" Variant="Variant.Outlined">
+                        @foreach (var item in tiposPersona)
+                        {
+                            <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="string" @bind-Value="Model.TipoIdentificacion" Label="Tipo de identificación" Variant="Variant.Outlined">
+                        @foreach (var item in tiposIdentificacion)
+                        {
+                            <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField T="string" @bind-Value="Model.NumeroIdentificacion" Label="Número de identificación" Variant="Variant.Outlined" Required="true" RequiredError="La identificación es obligatoria" />
+                </MudItem>
+                @if (Model.TipoPersona == "Fisica")
+                {
+                    <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.Nombre" Label="Nombre" Variant="Variant.Outlined" Required="true" RequiredError="El nombre es obligatorio" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.Apellidos" Label="Apellidos" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.EstadoCivil" Label="Estado civil" Variant="Variant.Outlined">
+                            @foreach (var item in estadosCiviles)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                }
+                else
+                {
+                    <MudItem xs="12" md="8"><MudTextField T="string" @bind-Value="Model.RazonSocial" Label="Razón social" Variant="Variant.Outlined" Required="true" RequiredError="La razón social es obligatoria" /></MudItem>
+                }
+                <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.Nacionalidad" Label="Nacionalidad" Variant="Variant.Outlined" /></MudItem>
+                <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.Telefono" Label="Teléfono" Variant="Variant.Outlined" /></MudItem>
+                <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.Correo" Label="Correo" Variant="Variant.Outlined" /></MudItem>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="string" @bind-Value="Model.EstadoContribuyente" Label="Estado del contribuyente" Variant="Variant.Outlined">
+                        @foreach (var item in estadosContribuyente)
+                        {
+                            <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Dirección fiscal" Icon="@Icons.Material.Filled.LocationOn">
+            <MudGrid Class="mt-2">
+                <MudItem xs="12" md="4">
+                    <MudSelect T="string" @bind-Value="Model.DireccionFiscal.Provincia" Label="Provincia" Variant="Variant.Outlined">
+                        @foreach (var item in provincias)
+                        {
+                            <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="string" @bind-Value="Model.DireccionFiscal.Canton" Label="Cantón" Variant="Variant.Outlined">
+                        @foreach (var item in cantones)
+                        {
+                            <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="string" @bind-Value="Model.DireccionFiscal.Distrito" Label="Distrito" Variant="Variant.Outlined">
+                        @foreach (var item in distritos)
+                        {
+                            <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField T="string" @bind-Value="Model.DireccionFiscal.DireccionExacta" Label="Dirección exacta" Variant="Variant.Outlined" Lines="3" />
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Representante y actividad" Icon="@Icons.Material.Filled.BusinessCenter">
+            <MudGrid Class="mt-2">
+                @if (Model.TipoPersona == "Juridica")
+                {
+                    <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.RepresentanteLegal.NombreCompleto" Label="Representante legal" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Identificacion" Label="Identificación representante" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Telefono" Label="Teléfono representante" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Correo" Label="Correo representante" Variant="Variant.Outlined" /></MudItem>
+                }
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" @bind-Value="Model.ActividadEconomica" Label="Actividad económica" Variant="Variant.Outlined">
+                        @foreach (var item in actividades)
+                        {
+                            <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6" Class="d-flex align-center">
+                    <MudBadge Dot="@Model.IndicadorDifunto" Color="Color.Error" Class="me-3">
+                        <MudText Typo="Typo.body1">Indicador TSE / difunto</MudText>
+                    </MudBadge>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Vínculos" Icon="@Icons.Material.Filled.Link">
+            <MudGrid Class="mt-2">
+                <MudItem xs="12" lg="6">
+                    <MudPaper Outlined="true" Class="pa-3 h-100">
+                        <MudText Typo="Typo.subtitle1" GutterBottom="true">Tributos vinculados</MudText>
+                        @if (Model.TributosVinculados.Any())
+                        {
+                            <MudTable Items="Model.TributosVinculados" Hover="true" Breakpoint="Breakpoint.None">
+                                <HeaderContent><MudTh>Código</MudTh><MudTh>Nombre</MudTh><MudTh>Estado</MudTh></HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Código">@context.Codigo</MudTd>
+                                    <MudTd DataLabel="Nombre">@context.Nombre</MudTd>
+                                    <MudTd DataLabel="Estado"><StatusBadge Text="@context.Estado" /></MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">Sin tributos vinculados.</MudText>
+                        }
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" lg="6">
+                    <MudPaper Outlined="true" Class="pa-3 h-100">
+                        <MudText Typo="Typo.subtitle1" GutterBottom="true">Bienes inmuebles vinculados</MudText>
+                        @if (Model.BienesInmueblesVinculados.Any())
+                        {
+                            <MudTable Items="Model.BienesInmueblesVinculados" Hover="true" Breakpoint="Breakpoint.None">
+                                <HeaderContent><MudTh>Finca</MudTh><MudTh>Distrito</MudTh><MudTh>Uso</MudTh><MudTh>Estado</MudTh></HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Finca">@context.FincaNumero</MudTd>
+                                    <MudTd DataLabel="Distrito">@context.Distrito</MudTd>
+                                    <MudTd DataLabel="Uso">@context.Uso</MudTd>
+                                    <MudTd DataLabel="Estado"><StatusBadge Text="@context.Estado" /></MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">Sin bienes inmuebles vinculados.</MudText>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Historial" Icon="@Icons.Material.Filled.History">
+            <MudTable Items="Historial" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-2">
+                <HeaderContent>
+                    <MudTh>Usuario</MudTh>
+                    <MudTh>Fecha y hora</MudTh>
+                    <MudTh>Campo</MudTh>
+                    <MudTh>Anterior</MudTh>
+                    <MudTh>Nuevo</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Usuario">@context.Usuario</MudTd>
+                    <MudTd DataLabel="Fecha y hora">@context.FechaHora.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                    <MudTd DataLabel="Campo">@context.CampoModificado</MudTd>
+                    <MudTd DataLabel="Anterior">@context.ValorAnterior</MudTd>
+                    <MudTd DataLabel="Nuevo">@context.ValorNuevo</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudTabPanel>
+    </MudTabs>
+
+    <div class="d-flex flex-wrap gap-2 mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">Guardar contribuyente</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="SyncTseAsync">Sincronizar TSE</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="SyncRegistroAsync">Sincronizar Registro Nacional</MudButton>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter] public ContribuyenteDto Model { get; set; } = new();
+    [Parameter] public EventCallback<ContribuyenteDto> ModelChanged { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+
+    private List<string> tiposPersona = new();
+    private List<string> tiposIdentificacion = new();
+    private List<string> estadosContribuyente = new();
+    private List<string> distritos = new();
+    private List<string> actividades = new();
+    private List<string> provincias = new();
+    private List<string> cantones = new();
+    private List<string> estadosCiviles = new();
+    private List<string> validationErrors = new();
+    private List<AuditoriaCambioDto> Historial = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        tiposPersona = await MaestroDatosService.GetTiposPersonaAsync();
+        tiposIdentificacion = await MaestroDatosService.GetTiposIdentificacionAsync();
+        estadosContribuyente = await MaestroDatosService.GetEstadosContribuyenteAsync();
+        distritos = await MaestroDatosService.GetDistritosAsync();
+        actividades = await MaestroDatosService.GetActividadesEconomicasAsync();
+        provincias = await MaestroDatosService.GetProvinciasAsync();
+        cantones = await MaestroDatosService.GetCantonesAsync();
+        estadosCiviles = await MaestroDatosService.GetEstadosCivilesAsync();
+        Historial = await AuditoriaService.GetByContribuyenteAsync(Model.Id);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Historial = await AuditoriaService.GetByContribuyenteAsync(Model.Id);
+    }
+
+    private async Task SaveAsync()
+    {
+        validationErrors = ValidateModel();
+        if (validationErrors.Any())
+        {
+            Snackbar.Add("Existen validaciones pendientes en el formulario.", Severity.Warning);
+            return;
+        }
+
+        await ContribuyentesService.SaveAsync(Model);
+        await AuditoriaService.RegistrarCambioAsync(Model.Id == 0 ? 1 : Model.Id, new AuditoriaCambioDto
+        {
+            Usuario = "analista.ruc",
+            FechaHora = DateTime.Now,
+            CampoModificado = "Registro general",
+            ValorAnterior = "N/A",
+            ValorNuevo = Model.NombreCompleto,
+            Origen = "Formulario RUC"
+        });
+        Historial = await AuditoriaService.GetByContribuyenteAsync(Model.Id == 0 ? 1 : Model.Id);
+        await ModelChanged.InvokeAsync(Model);
+        await OnSaved.InvokeAsync();
+        Snackbar.Add("Contribuyente guardado correctamente.", Severity.Success);
+    }
+
+    private async Task SyncTseAsync()
+    {
+        await ContribuyentesService.SimularActualizacionTseAsync(Model);
+        await AuditoriaService.RegistrarCambioAsync(Model.Id == 0 ? 1 : Model.Id, new AuditoriaCambioDto
+        {
+            Usuario = "integracion.tse",
+            FechaHora = DateTime.Now,
+            CampoModificado = "Datos físicos / indicador difunto",
+            ValorAnterior = "Sincronización previa",
+            ValorNuevo = Model.IndicadorDifunto ? "Marcado como difunto" : "Datos actualizados",
+            Origen = "TSE"
+        });
+        Historial = await AuditoriaService.GetByContribuyenteAsync(Model.Id == 0 ? 1 : Model.Id);
+        await ModelChanged.InvokeAsync(Model);
+        Snackbar.Add("Sincronización TSE simulada correctamente.", Severity.Info);
+    }
+
+    private async Task SyncRegistroAsync()
+    {
+        await ContribuyentesService.SimularActualizacionRegistroNacionalAsync(Model);
+        await AuditoriaService.RegistrarCambioAsync(Model.Id == 0 ? 1 : Model.Id, new AuditoriaCambioDto
+        {
+            Usuario = "integracion.registronacional",
+            FechaHora = DateTime.Now,
+            CampoModificado = "Representación legal",
+            ValorAnterior = "Sin representante verificado",
+            ValorNuevo = Model.RepresentanteLegal.NombreCompleto,
+            Origen = "Registro Nacional"
+        });
+        Historial = await AuditoriaService.GetByContribuyenteAsync(Model.Id == 0 ? 1 : Model.Id);
+        await ModelChanged.InvokeAsync(Model);
+        Snackbar.Add("Sincronización con Registro Nacional simulada.", Severity.Info);
+    }
+
+    private List<string> ValidateModel()
+    {
+        var errors = new List<string>();
+        if (string.IsNullOrWhiteSpace(Model.NumeroIdentificacion))
+            errors.Add("La identificación es obligatoria.");
+        if (Model.TipoPersona == "Juridica" && string.IsNullOrWhiteSpace(Model.RazonSocial))
+            errors.Add("La razón social es obligatoria.");
+        if (Model.TipoPersona == "Fisica" && string.IsNullOrWhiteSpace(Model.Nombre))
+            errors.Add("El nombre es obligatorio.");
+        if (!string.IsNullOrWhiteSpace(Model.Correo) && !new EmailAddressAttribute().IsValid(Model.Correo))
+            errors.Add("El correo no tiene un formato válido.");
+        if (!string.IsNullOrWhiteSpace(Model.Telefono) && !System.Text.RegularExpressions.Regex.IsMatch(Model.Telefono, @"^[0-9]{4}-?[0-9]{4}$"))
+            errors.Add("El teléfono debe tener 8 dígitos.");
+        if (string.IsNullOrWhiteSpace(Model.DireccionFiscal.DireccionExacta))
+            errors.Add("La dirección fiscal es obligatoria.");
+        if (Model.TipoPersona == "Juridica" && string.IsNullOrWhiteSpace(Model.RepresentanteLegal.NombreCompleto))
+            errors.Add("El representante legal es obligatorio para persona jurídica.");
+        if (!estadosContribuyente.Contains(Model.EstadoContribuyente))
+            errors.Add("El estado del contribuyente no es permitido.");
+        return errors;
+    }
+}

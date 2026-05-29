@@ -1,0 +1,102 @@
+@using BlazorApp.Models
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-4">
+    Vista ejecutiva del catastro municipal con control de valor fiscal, fiscalización y actividad reciente.
+</MudAlert>
+
+<MudGrid>
+    <MudItem xs="12" md="6" lg="3"><KpiCard Title="Propiedades registradas" Value="@Items.Count.ToString()" Subtitle="Catastro tributario" Icon="@Icons.Material.Filled.Domain" Color="Color.Primary" /></MudItem>
+    <MudItem xs="12" md="6" lg="3"><KpiCard Title="Derechos activos" Value="@Items.SelectMany(x => x.DerechosPropiedad).Count(x => x.Estado == "Activo").ToString()" Subtitle="Vínculos vigentes" Icon="@Icons.Material.Filled.Gavel" Color="Color.Info" /></MudItem>
+    <MudItem xs="12" md="6" lg="3"><KpiCard Title="Valor actualizado" Value="@Items.Count(x => x.FincaValorActualizado).ToString()" Subtitle="Fincas valorizadas" Icon="@Icons.Material.Filled.PriceCheck" Color="Color.Success" /></MudItem>
+    <MudItem xs="12" md="6" lg="3"><KpiCard Title="Pendientes fiscalización" Value="@Items.Count(x => x.PendienteFiscalizacion).ToString()" Subtitle="Casos abiertos" Icon="@Icons.Material.Filled.FactCheck" Color="Color.Warning" /></MudItem>
+    <MudItem xs="12" md="6" lg="4"><KpiCard Title="Declaraciones pendientes" Value="@Items.SelectMany(x => x.Declaraciones).Count(x => x.Estado == "Pendiente").ToString()" Subtitle="Corte tributario" Icon="@Icons.Material.Filled.AssignmentLate" Color="Color.Error" /></MudItem>
+    <MudItem xs="12" md="6" lg="4"><KpiCard Title="Exoneraciones activas" Value="@Items.SelectMany(x => x.Exoneraciones).Count(x => x.Estado == "Activa").ToString()" Subtitle="Beneficios vigentes" Icon="@Icons.Material.Filled.LocalOffer" Color="Color.Secondary" /></MudItem>
+    <MudItem xs="12" md="6" lg="4"><KpiCard Title="Omisos detectados" Value="@Items.Count(x => x.OmisoDetectado).ToString()" Subtitle="Control anual" Icon="@Icons.Material.Filled.WarningAmber" Color="Color.Dark" /></MudItem>
+</MudGrid>
+
+<MudGrid Class="mt-2">
+    <MudItem xs="12" lg="7">
+        <MudCard Class="h-100" Outlined="true">
+            <MudCardContent>
+                <div class="d-flex flex-wrap justify-space-between align-center mb-3 gap-2">
+                    <div>
+                        <MudText Typo="Typo.h6">Actividad reciente</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">Historial consolidado de movimientos sobre expedientes y fincas.</MudText>
+                    </div>
+                    <MudChip T="string" Color="Color.Info" Text="@($"{RecentActivity.Count} eventos")" Variant="Variant.Outlined" />
+                </div>
+                <MudTable Items="RecentActivity" Hover="true" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
+                        <MudTh>Fecha</MudTh>
+                        <MudTh>Usuario</MudTh>
+                        <MudTh>Campo</MudTh>
+                        <MudTh>Origen</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Fecha">@context.FechaHora.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                        <MudTd DataLabel="Usuario">@context.Usuario</MudTd>
+                        <MudTd DataLabel="Campo">@context.CampoModificado</MudTd>
+                        <MudTd DataLabel="Origen">@context.Origen</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" lg="5">
+        <MudCard Class="h-100" Outlined="true">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" GutterBottom="true">Estado de integraciones</MudText>
+                <div class="d-flex flex-column gap-3">
+                    <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">Registro Público operativo para movimientos registrales.</MudAlert>
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Ministerio de Hacienda listo para remisión periódica.</MudAlert>
+                    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">GIS con fincas pendientes de georreferenciación.</MudAlert>
+                    <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">RUC y Cobro disponibles para vinculación tributaria.</MudAlert>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<MudCard Class="mt-4" Outlined="true">
+    <MudCardContent>
+        <div class="d-flex flex-wrap justify-space-between align-center gap-2 mb-3">
+            <div>
+                <MudText Typo="Typo.h6">Resumen por distrito</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Concentración territorial de valor fiscal y pendientes de gestión.</MudText>
+            </div>
+            <MudChip T="string" Text="Catastro analítico" Color="Color.Primary" Variant="Variant.Outlined" />
+        </div>
+        <MudDataGrid T="ResumenDistritoBienViewModel" Items="DistrictSummary" ReadOnly="true" Dense="true" Hover="true" Bordered="true" Striped="true">
+            <Columns>
+                <PropertyColumn T="ResumenDistritoBienViewModel" TProperty="string" Property="x => x.Distrito" Title="Distrito" />
+                <PropertyColumn T="ResumenDistritoBienViewModel" TProperty="int" Property="x => x.Propiedades" Title="Propiedades" />
+                <PropertyColumn T="ResumenDistritoBienViewModel" TProperty="int" Property="x => x.PendientesFiscalizacion" Title="Pend. fiscalización" />
+                <PropertyColumn T="ResumenDistritoBienViewModel" TProperty="int" Property="x => x.DeclaracionesPendientes" Title="Decl. pendientes" />
+                <PropertyColumn T="ResumenDistritoBienViewModel" TProperty="decimal" Property="x => x.ValorFiscalTotal" Title="Valor fiscal total" />
+            </Columns>
+        </MudDataGrid>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public List<BienInmuebleDto> Items { get; set; } = new();
+
+    private List<AuditoriaCambioDto> RecentActivity => Items
+        .SelectMany(x => x.HistorialCambios)
+        .OrderByDescending(x => x.FechaHora)
+        .Take(8)
+        .ToList();
+
+    private List<ResumenDistritoBienViewModel> DistrictSummary => Items
+        .GroupBy(x => x.Distrito)
+        .Select(x => new ResumenDistritoBienViewModel
+        {
+            Distrito = x.Key,
+            Propiedades = x.Count(),
+            PendientesFiscalizacion = x.Count(y => y.PendienteFiscalizacion),
+            DeclaracionesPendientes = x.Sum(y => y.Declaraciones.Count(d => d.Estado == "Pendiente")),
+            ValorFiscalTotal = x.Sum(y => y.ValorFiscalTotal)
+        })
+        .OrderByDescending(x => x.ValorFiscalTotal)
+        .ToList();
+}

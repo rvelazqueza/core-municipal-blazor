@@ -1,0 +1,38 @@
+@using MudBlazor
+
+<MudPaper Outlined="true" Class="cm-page-title pa-3 pa-md-4 mb-3">
+    <div class="d-flex flex-column flex-xl-row justify-space-between gap-3">
+        <div class="flex-grow-1">
+            @if (Breadcrumbs?.Any() == true)
+            {
+                <MudBreadcrumbs Items="Breadcrumbs" Separator=">" Class="cm-page-breadcrumbs mb-2" />
+            }
+
+            <div class="d-flex flex-wrap align-center gap-2 mb-2">
+                <MudChip T="string" Text="Core municipal" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" />
+                <MudChip T="string" Text="Operación institucional" Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small" />
+            </div>
+
+            <MudText Typo="Typo.h5" Class="cm-page-title-text">@Title</MudText>
+
+            @if (!string.IsNullOrWhiteSpace(Subtitle))
+            {
+                <MudText Typo="Typo.body2" Class="cm-page-subtitle mt-1">@Subtitle</MudText>
+            }
+        </div>
+
+        @if (Actions is not null)
+        {
+            <div class="d-flex flex-wrap gap-2 align-center align-self-start align-self-xl-center">
+                @Actions
+            </div>
+        }
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Subtitle { get; set; } = string.Empty;
+    [Parameter] public List<BreadcrumbItem> Breadcrumbs { get; set; } = new();
+    [Parameter] public RenderFragment? Actions { get; set; }
+}

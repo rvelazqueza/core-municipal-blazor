@@ -1,0 +1,5 @@
+::deep .cm-validation-summary {
+    border-radius: 16px;
+    background: #fffaf0;
+    border-color: rgba(245, 158, 11, 0.3);
+}

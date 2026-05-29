@@ -1,0 +1,145 @@
+@inherits LayoutComponentBase
+@using System.Threading.Tasks
+@using MudBlazor
+@using BlazorApp.Models
+@using BlazorApp.Services
+@using BlazorApp.Shared
+@inject IAuthService AuthService
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@if (currentUser?.IsAuthenticated == true)
+{
+    <MudLayout Class="cm-shell">
+        <MudDrawer @bind-Open="drawerOpen" Variant="DrawerVariant.Responsive" Breakpoint="Breakpoint.Md" Elevation="0" Width="286px" Class="cm-sidebar pa-3">
+            <MudDrawerHeader Dense="true">
+                <div class="cm-brand-card mb-2">
+                    <div class="d-flex align-center gap-3 mb-3">
+                        <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Large" Class="cm-brand-avatar">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Inherit" />
+                        </MudAvatar>
+                        <div class="flex-grow-1">
+                            <MudText Typo="Typo.subtitle1" Class="cm-brand-title">Core Municipal Inteligente</MudText>
+                            <MudText Typo="Typo.caption" Class="cm-brand-subtitle">Gobierno digital tributario y trazabilidad institucional</MudText>
+                        </div>
+                    </div>
+                    <div class="d-flex align-center justify-space-between gap-2 flex-wrap">
+                        <MudChip T="string" Text="Municipal" Color="Color.Info" Variant="Variant.Filled" Size="Size.Small" />
+                        <MudChip T="string" Text="Operativo" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Small" />
+                    </div>
+                </div>
+            </MudDrawerHeader>
+
+            <div class="cm-sidebar-section-label">Navegación principal</div>
+            <MudNavMenu Bordered="false" Rounded="true" Dense="true" Color="Color.Primary" Class="cm-nav-menu mb-3">
+                <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+                <MudNavLink Href="/ruc" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Badge">RUC</MudNavLink>
+                <MudNavLink Href="/bienes-inmuebles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.HomeWork">Bienes Inmuebles</MudNavLink>
+                <MudNavLink Href="/patentes" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Store">Patentes</MudNavLink>
+                <MudNavLink Href="/auditoria" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.FactCheck">Auditoría</MudNavLink>
+                <MudNavLink Href="/configuracion" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">Configuración</MudNavLink>
+            </MudNavMenu>
+
+        </MudDrawer>
+
+        <MudAppBar Elevation="0" Color="Color.Surface" Dense="true" Class="cm-topbar">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+
+            <div class="d-flex flex-column">
+                <MudText Typo="Typo.subtitle2" Class="cm-topbar-title">Core Municipal Inteligente</MudText>
+                <MudText Typo="Typo.caption" Class="cm-topbar-subtitle d-none d-md-block">Plataforma institucional de gestión tributaria</MudText>
+            </div>
+
+            <MudSpacer />
+
+            <div class="d-none d-md-flex cm-search-wrapper">
+                <MudTextField T="string" Value="@searchText" ValueChanged="OnSearchChanged" Placeholder="Buscar contribuyentes, fincas, licencias o trámites" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" FullWidth="true" Margin="Margin.Dense" Class="cm-search-field" />
+            </div>
+
+            <MudPaper Outlined="true" Class="cm-topbar-icon me-2">
+                <MudBadge Content="3" Color="Color.Error" Overlap="true">
+                    <MudIconButton Icon="@Icons.Material.Filled.NotificationsNone" Color="Color.Inherit" />
+                </MudBadge>
+            </MudPaper>
+
+            <MudMenu>
+                <ActivatorContent>
+                    <MudPaper Outlined="true" Class="cm-user-menu px-2 py-1 d-flex align-center gap-2">
+                        <MudAvatar Color="Color.Info" Variant="Variant.Filled" Size="Size.Small">@currentUser.Iniciales</MudAvatar>
+                        <div class="d-none d-lg-flex flex-column text-start">
+                            <MudText Typo="Typo.body2" Class="cm-user-menu-name">@currentUser.NombreCompleto</MudText>
+                            <MudText Typo="Typo.caption" Class="cm-user-menu-role">@currentUser.Rol</MudText>
+                        </div>
+                    </MudPaper>
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem Disabled="true">@currentUser.NombreCompleto</MudMenuItem>
+                    <MudMenuItem Disabled="true">@currentUser.Rol</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Filled.LockReset" OnClick="@(_ => OpenChangePasswordAsync())">Cambiar contraseña</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="@(_ => LogoutAsync())">Cerrar sesión</MudMenuItem>
+                </ChildContent>
+            </MudMenu>
+        </MudAppBar>
+
+        <MudMainContent Class="cm-main-content">
+            <MudContainer MaxWidth="MaxWidth.False" Gutters="false" Class="px-3 px-md-4 py-3 py-md-4 mt-8 mt-md-9">
+                <div class="cm-content-shell">
+                    @Body
+                </div>
+            </MudContainer>
+        </MudMainContent>
+    </MudLayout>
+}
+
+@code {
+    private bool drawerOpen = true;
+    private string searchText = string.Empty;
+    private AuthUserDto? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await AuthService.GetCurrentUserAsync();
+
+        if (currentUser?.IsAuthenticated != true)
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+
+    private void ToggleDrawer()
+    {
+        drawerOpen = !drawerOpen;
+    }
+
+    private void OnSearchChanged(string value)
+    {
+        searchText = value;
+    }
+
+    private async Task OpenChangePasswordAsync()
+    {
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            CloseOnEscapeKey = true,
+            FullWidth = true,
+            MaxWidth = MaxWidth.Medium
+        };
+
+        await DialogService.ShowAsync(typeof(ChangePasswordDialog), "Cambiar contraseña", options);
+    }
+
+    private async Task LogoutAsync()
+    {
+        await AuthService.LogoutAsync();
+        currentUser = await AuthService.GetCurrentUserAsync();
+        Snackbar.Add("La sesión visual fue cerrada correctamente.", Severity.Info, _ => { }, "logout-info");
+        Navigation.NavigateTo("/login");
+    }
+}

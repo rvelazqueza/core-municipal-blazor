@@ -1,0 +1,49 @@
+@page "/"
+@using BlazorApp.Shared
+
+<PageTitleBar Title="Panel principal" Subtitle="Centro de control ejecutivo del Core Municipal Inteligente" />
+
+<MudGrid Class="mb-4">
+    <MudItem xs="12" md="6" lg="3"><KpiCard Title="Módulos activos" Value="6" Subtitle="Operación institucional habilitada" Icon="@Icons.Material.Filled.Widgets" Color="Color.Primary" /></MudItem>
+    <MudItem xs="12" md="6" lg="3"><KpiCard Title="Contribuyentes" Value="1,284" Subtitle="Base maestra integrada" Icon="@Icons.Material.Filled.Groups" Color="Color.Success" /></MudItem>
+    <MudItem xs="12" md="6" lg="3"><KpiCard Title="Pendientes" Value="27" Subtitle="Control de calidad y seguimiento" Icon="@Icons.Material.Filled.Rule" Color="Color.Warning" /></MudItem>
+    <MudItem xs="12" md="6" lg="3"><KpiCard Title="Alertas" Value="3" Subtitle="Riesgos que requieren gestión" Icon="@Icons.Material.Filled.NotificationsActive" Color="Color.Error" /></MudItem>
+</MudGrid>
+
+<MudGrid>
+    <MudItem xs="12" lg="8">
+        <MudCard Class="h-100" Outlined="true">
+            <MudCardContent>
+                <div class="d-flex flex-wrap justify-space-between align-center gap-2 mb-4">
+                    <div>
+                        <MudText Typo="Typo.h6">Inicio del ecosistema tributario</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">Acceso rápido a los módulos operativos y a la trazabilidad del entorno.</MudText>
+                    </div>
+                    <MudChip T="string" Text="Operación estable" Color="Color.Success" Variant="Variant.Filled" />
+                </div>
+
+                <MudGrid>
+                    <MudItem xs="12" md="7">
+                        <MudNavMenu Dense="true" Rounded="true" Color="Color.Primary">
+                            <MudNavLink Href="/ruc" Icon="@Icons.Material.Filled.Badge">Abrir Módulo RUC</MudNavLink>
+                            <MudNavLink Href="/bienes-inmuebles" Icon="@Icons.Material.Filled.HomeWork">Bienes Inmuebles</MudNavLink>
+                            <MudNavLink Href="/patentes" Icon="@Icons.Material.Filled.Storefront">Patentes</MudNavLink>
+                            <MudNavLink Href="/auditoria" Icon="@Icons.Material.Filled.FactCheck">Auditoría</MudNavLink>
+                            <MudNavLink Href="/configuracion" Icon="@Icons.Material.Filled.Settings">Configuración</MudNavLink>
+                        </MudNavMenu>
+                    </MudItem>
+                    <MudItem xs="12" md="5">
+                        <div class="d-flex flex-column gap-3">
+                            <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">Integración empresarial preparada para servicios y API REST.</MudAlert>
+                            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Existen expedientes con validaciones pendientes de revisión.</MudAlert>
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">La navegación y los componentes compartidos ya siguen una línea visual institucional.</MudAlert>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" lg="4">
+        <EmptyState Title="Siguiente iteración" Description="La base ya está lista para fortalecer seguridad, trazabilidad, catálogos y automatización operativa." Icon="@Icons.Material.Filled.AccountTree" PrimaryActionText="Ir al RUC" PrimaryActionHref="/ruc" />
+    </MudItem>
+</MudGrid>

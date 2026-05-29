@@ -1,0 +1,37 @@
+@page "/patentes"
+@using BlazorApp.Shared
+
+<PageTitleBar Title="Patentes" Subtitle="Gestión básica de licencias comerciales, solicitudes y mantenimiento simple" Breadcrumbs="breadcrumbs">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.NoteAdd" OnClick="CreateNewAsync">Nueva solicitud</MudButton>
+    </Actions>
+</PageTitleBar>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+    Operación de patentes preparada para integrarse con uso de suelo, cobro, notificaciones y trazabilidad institucional.
+</MudAlert>
+
+<MudPaper Outlined="true" Class="pa-2 pa-md-3">
+<MudTabs Outlined="true" Rounded="true" Border="true" ApplyEffectsToContainer="true" PanelClass="pa-4" @bind-ActivePanelIndex="activePanelIndex">
+    <MudTabPanel Text="Dashboard" Icon="@Icons.Material.Filled.SpaceDashboard">
+        <PatentesDashboardPanel Items="licencias" />
+    </MudTabPanel>
+    <MudTabPanel Text="Consulta de licencias" Icon="@Icons.Material.Filled.ManageSearch">
+        <LicenciasFilterPanel Model="filtro" OnSearch="LoadFilteredAsync" />
+        @if (filteredLicencias.Count > 0)
+        {
+            <LicenciasTable Items="filteredLicencias" SolicitudRequested="OpenSolicitudAsync" MaintenanceRequested="OpenMaintenanceAsync" />
+        }
+        else
+        {
+            <EmptyState Title="Sin resultados" Description="No hay licencias que coincidan con los filtros aplicados." Icon="@Icons.Material.Filled.FilterAltOff" />
+        }
+    </MudTabPanel>
+    <MudTabPanel Text="Solicitud de licencia" Icon="@Icons.Material.Filled.NoteAdd">
+        <SolicitudPatenteForm Model="selectedSolicitud" ModelChanged="OnSolicitudChanged" OnSaved="AfterSolicitudSavedAsync" />
+    </MudTabPanel>
+    <MudTabPanel Text="Mantenimiento" Icon="@Icons.Material.Filled.BuildCircle">
+        <MantenimientoPatentePanel Model="selectedLicencia" ModelChanged="OnLicenciaChanged" OnChanged="AfterMaintenanceChangedAsync" />
+    </MudTabPanel>
+</MudTabs>
+</MudPaper>

@@ -1,0 +1,64 @@
+@using BlazorApp.Models
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-4">
+    Monitoreo ejecutivo del padrón maestro, calidad de datos y últimos movimientos auditables del RUC.
+</MudAlert>
+
+<MudGrid>
+    <MudItem xs="12" md="6" lg="2"><KpiCard Title="Total contribuyentes" Value="@Items.Count.ToString()" Subtitle="Base actual" Icon="@Icons.Material.Filled.Groups" Color="Color.Primary" /></MudItem>
+    <MudItem xs="12" md="6" lg="2"><KpiCard Title="Personas físicas" Value="@Items.Count(x => x.TipoPersona == "Fisica").ToString()" Subtitle="TSE / padrón" Icon="@Icons.Material.Filled.Person" Color="Color.Info" /></MudItem>
+    <MudItem xs="12" md="6" lg="2"><KpiCard Title="Personas jurídicas" Value="@Items.Count(x => x.TipoPersona == "Juridica").ToString()" Subtitle="Registro Nacional" Icon="@Icons.Material.Filled.Business" Color="Color.Secondary" /></MudItem>
+    <MudItem xs="12" md="6" lg="2"><KpiCard Title="Datos incompletos" Value="@Items.Count(x => x.DatosIncompletos).ToString()" Subtitle="Requieren atención" Icon="@Icons.Material.Filled.WarningAmber" Color="Color.Warning" /></MudItem>
+    <MudItem xs="12" md="6" lg="2"><KpiCard Title="Pendientes calidad" Value="@Items.Count(x => x.PendienteCalidad).ToString()" Subtitle="Control interno" Icon="@Icons.Material.Filled.FactCheck" Color="Color.Error" /></MudItem>
+    <MudItem xs="12" md="6" lg="2"><KpiCard Title="Modificaciones" Value="@RecentChanges.Count.ToString()" Subtitle="Últimos eventos" Icon="@Icons.Material.Filled.History" Color="Color.Success" /></MudItem>
+</MudGrid>
+
+<MudGrid Class="mt-2">
+    <MudItem xs="12" lg="8">
+        <MudCard Class="h-100" Outlined="true">
+            <MudCardContent>
+                <div class="d-flex flex-wrap justify-space-between align-center mb-3 gap-2">
+                    <div>
+                        <MudText Typo="Typo.h6">Últimas modificaciones</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">Eventos recientes con trazabilidad de usuario, origen y fecha.</MudText>
+                    </div>
+                    <MudChip T="string" Text="@($"{RecentChanges.Count} eventos")" Color="Color.Primary" Variant="Variant.Outlined" />
+                </div>
+                <MudTable Items="RecentChanges" Hover="true" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
+                        <MudTh>Usuario</MudTh>
+                        <MudTh>Fecha y hora</MudTh>
+                        <MudTh>Campo</MudTh>
+                        <MudTh>Origen</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Usuario">@context.Usuario</MudTd>
+                        <MudTd DataLabel="Fecha y hora">@context.FechaHora.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                        <MudTd DataLabel="Campo">@context.CampoModificado</MudTd>
+                        <MudTd DataLabel="Origen">@context.Origen</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" lg="4">
+        <MudCard Class="h-100" Outlined="true">
+            <MudCardContent>
+                <div class="d-flex justify-space-between align-center gap-2 mb-3">
+                    <MudText Typo="Typo.h6">Estado operativo</MudText>
+                    <MudChip T="string" Text="Supervisión" Color="Color.Info" Variant="Variant.Outlined" />
+                </div>
+                <div class="d-flex flex-column gap-3">
+                    <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">Integración TSE habilitada para validación de personas físicas.</MudAlert>
+                    <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">Registro Nacional listo para validaciones jurídicas.</MudAlert>
+                    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Calidad de datos con expedientes pendientes de normalización.</MudAlert>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public List<ContribuyenteDto> Items { get; set; } = new();
+    [Parameter] public List<BlazorApp.Models.AuditoriaCambioDto> RecentChanges { get; set; } = new();
+}
