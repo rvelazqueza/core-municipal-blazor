@@ -9,6 +9,11 @@
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
 @if (currentUser?.IsAuthenticated == true)
 {
     <MudLayout Class="cm-shell">
