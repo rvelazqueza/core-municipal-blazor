@@ -1,0 +1,171 @@
+@using BlazorApp.Models.Auditoria
+@using MudBlazor
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="2">
+        <div class="d-flex flex-wrap justify-space-between align-center gap-2">
+            <div>
+                <MudText Typo="Typo.h6">Filtros de búsqueda</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Consulta transversal por módulo, usuario, entidad y estado.</MudText>
+            </div>
+            <MudStack Row="true" Spacing="1" Class="flex-wrap">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyAsync">Aplicar filtros</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ResetAsync">Limpiar</MudButton>
+            </MudStack>
+        </div>
+
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudDateRangePicker DateRange="@Filter.DateRange" DateRangeChanged="OnDateRangeChanged" Label="Rango de fechas" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="Filter.UserName" Label="Usuario" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" @bind-Value="Filter.Module" Label="Módulo" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var item in Modules)
+                    {
+                        <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" @bind-Value="Filter.Action" Label="Acción" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todas</MudSelectItem>
+                    @foreach (var item in Actions)
+                    {
+                        <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" @bind-Value="Filter.EventType" Label="Tipo de evento" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var item in EventTypes)
+                    {
+                        <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" @bind-Value="Filter.Severity" Label="Severidad" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todas</MudSelectItem>
+                    @foreach (var item in Severities)
+                    {
+                        <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" @bind-Value="Filter.Status" Label="Estado" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var item in Statuses)
+                    {
+                        <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="Filter.TaxpayerIdentification" Label="Identificación contribuyente" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="Filter.ExpedientNumber" Label="Número de expediente" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="Filter.EntityName" Label="Entidad afectada" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="Filter.EntityId" Label="ID entidad" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="Filter.IpAddress" Label="IP mock" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" @bind-Value="Filter.Channel" Label="Canal" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var item in Channels)
+                    {
+                        <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" @bind-Value="Filter.Source" Label="Origen" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var item in Sources)
+                    {
+                        <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" @bind-Value="Filter.Result" Label="Resultado" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var item in Results)
+                    {
+                        <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="Filter.FreeText" Label="Texto libre" Margin="Margin.Dense" />
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public AuditFilterDto Filter { get; set; } = new();
+    [Parameter] public EventCallback OnApply { get; set; }
+    [Parameter] public EventCallback OnReset { get; set; }
+
+    private static readonly string[] Modules =
+    [
+        "Login", "Dashboard", "RUC", "Bienes Inmuebles", "Patentes", "Plataforma de Servicios",
+        "Permisos de Construcción", "Mercado Municipal", "Configuración", "Seguridad", "Integraciones",
+        "Notificaciones", "Cobro mock", "Cuenta Tributaria mock", "Auditoría"
+    ];
+
+    private static readonly string[] Actions =
+    [
+        "Consulta de expediente", "Creación de registro", "Modificación de registro", "Guardado de borrador",
+        "Cambio de estado", "Validación de datos", "Finalización de trámite", "Simulación de integración",
+        "Generación de notificación mock", "Simulación de pago mock", "Inicio de sesión exitoso",
+        "Inicio de sesión fallido", "Cierre de sesión", "MFA simulado exitoso", "MFA simulado fallido",
+        "Firma digital simulada", "Cambio de contraseña", "Recuperación de contraseña", "Acceso a módulo",
+        "Intento de acceso no autorizado mock", "Exportación mock de auditoría solicitada"
+    ];
+
+    private static readonly string[] EventTypes =
+    [
+        "Consulta", "Creación", "Modificación", "Eliminación lógica", "Cambio de estado", "Validación", "Error",
+        "Seguridad", "Integración simulada", "Notificación simulada", "Exportación mock", "Configuración",
+        "Acceso", "Autenticación", "Borrador", "Finalización de proceso"
+    ];
+
+    private static readonly string[] Severities = ["Información", "Éxito", "Advertencia", "Error", "Crítico"];
+    private static readonly string[] Statuses = ["Exitoso", "Fallido", "Pendiente", "Observado", "Simulado", "Bloqueado"];
+    private static readonly string[] Channels = ["Web", "Backoffice", "API mock", "Móvil", "Plataforma digital"];
+    private static readonly string[] Sources = ["Formulario", "Flujo institucional", "Servicio mock", "Proceso batch", "Revisión manual"];
+    private static readonly string[] Results =
+    [
+        "Acción con validación fallida simulada.",
+        "Evento observado para revisión posterior.",
+        "Proceso pendiente de confirmación.",
+        "Evento bloqueado por validación mock.",
+        "Evento registrado correctamente en bitácora mock.",
+        "Notificación mock registrada.",
+        "Exportación disponible en implementación backend."
+    ];
+
+    private Task OnDateRangeChanged(DateRange value)
+    {
+        Filter.DateRange = value;
+        return Task.CompletedTask;
+    }
+
+    private Task ApplyAsync() => OnApply.InvokeAsync();
+
+    private Task ResetAsync() => OnReset.InvokeAsync();
+}

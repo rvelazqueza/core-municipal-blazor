@@ -1,0 +1,146 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información del local para modificaciones.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterModificationAsync">Registrar modificación mock</MudButton>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+            <MudTable T="MmModificationDto" Items="@Items.OrderByDescending(x => x.Date)" Hover="true">
+                <HeaderContent>
+                    <MudTh>Solicitud</MudTh>
+                    <MudTh>Cuenta</MudTh>
+                    <MudTh>Movimiento</MudTh>
+                    <MudTh>Justificación</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh>Valor anterior</MudTh>
+                    <MudTh>Valor nuevo</MudTh>
+                    <MudTh>Fecha</MudTh>
+                    <MudTh>Usuario</MudTh>
+                    <MudTh>Inspección</MudTh>
+                    <MudTh>Concejo</MudTh>
+                    <MudTh>Resultado</MudTh>
+                    <MudTh>Comercial</MudTh>
+                    <MudTh>GIS</MudTh>
+                    <MudTh>Fiscalización</MudTh>
+                    <MudTh>Cobro</MudTh>
+                    <MudTh>Cuenta tributaria</MudTh>
+                    <MudTh>Notificaciones</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.RequestNumber</MudTd>
+                    <MudTd>@context.AccountNumber</MudTd>
+                    <MudTd>@context.MovementType</MudTd>
+                    <MudTd>@context.Justification</MudTd>
+                    <MudTd>@context.Status</MudTd>
+                    <MudTd>@context.PreviousValue</MudTd>
+                    <MudTd>@context.NewValue</MudTd>
+                    <MudTd>@context.Date.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd>@context.User</MudTd>
+                    <MudTd>@(context.RequiresInspection ? "Sí" : "No")</MudTd>
+                    <MudTd>@(context.RequiresCouncilApproval ? "Sí" : "No")</MudTd>
+                    <MudTd>@context.Result</MudTd>
+                    <MudTd>@context.CommercialImpact</MudTd>
+                    <MudTd>@context.GisImpact</MudTd>
+                    <MudTd>@context.FiscalizationImpact</MudTd>
+                    <MudTd>@context.CollectionImpact</MudTd>
+                    <MudTd>@context.TaxAccountImpact</MudTd>
+                    <MudTd>@context.NotificationImpact</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public List<MmModificationDto> Items { get; set; } = new();
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private Task RegisterModificationAsync()
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        var item = new MmModificationDto
+        {
+            Id = $"MOD-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            RequestNumber = $"MM-MOD-MOCK-{DateTime.Now:HHmmss}",
+            AccountNumber = Local.AccountNumber,
+            MovementType = "Modificación de oficio",
+            Justification = "Ajuste referencial desde expediente existente.",
+            Status = "Registrada",
+            PreviousValue = Local.Status,
+            NewValue = "En revisión administrativa",
+            Date = DateTime.Now,
+            User = "Analista Mercado",
+            RequiresInspection = true,
+            RequiresCouncilApproval = false,
+            Result = "Pendiente",
+            CommercialImpact = "Actualizar actividad",
+            GisImpact = "Sin impacto",
+            FiscalizationImpact = "Programar revisión",
+            CollectionImpact = "Revisar cobro",
+            TaxAccountImpact = "Revisar cuenta",
+            NotificationImpact = "Generar aviso"
+        };
+
+        Items.Insert(0, item);
+        RegisterMockEvent("Registrar modificación", item.PreviousValue, item.NewValue, "Modificaciones", "Media");
+        Snackbar.Add("Modificación mock registrada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Analista Mercado",
+            Action = action,
+            PreviousStatus = "Registrado",
+            NewStatus = "En revisión",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Panel modificaciones",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde modificaciones."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Analista Mercado",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel modificaciones",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Solicitud de modificación mock"
+        });
+    }
+}

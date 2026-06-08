@@ -1,0 +1,57 @@
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" sm="6" md="3"><MudText Typo="Typo.caption">ID Predial</MudText><MudText>@Permit.Property.IdPredial</MudText></MudItem>
+        <MudItem xs="12" sm="6" md="3"><MudText Typo="Typo.caption">Finca</MudText><MudText>@Permit.Property.PropertyNumber</MudText></MudItem>
+        <MudItem xs="12" sm="6" md="3"><MudText Typo="Typo.caption">Plano catastro</MudText><MudText>@Permit.Property.PlanNumber</MudText></MudItem>
+        <MudItem xs="12" sm="6" md="3"><MudText Typo="Typo.caption">Distrito / sector / manzana</MudText><MudText>@($"{Permit.Property.District} · {Permit.Property.Sector} · {Permit.Property.Block}")</MudText></MudItem>
+        <MudItem xs="12"><MudText Typo="Typo.caption">Dirección</MudText><MudText>@Permit.Property.ExactAddress</MudText></MudItem>
+        <MudItem xs="12" sm="6" md="3"><MudText Typo="Typo.caption">Área</MudText><MudText>@($"{Permit.Property.LandArea:N0} m²")</MudText></MudItem>
+        <MudItem xs="12" sm="6" md="3"><MudText Typo="Typo.caption">Uso actual</MudText><MudText>@Permit.Property.CurrentUse</MudText></MudItem>
+        <MudItem xs="12" sm="6" md="3"><MudText Typo="Typo.caption">Valor fiscal mock</MudText><MudText>@Permit.Property.FiscalValue.ToString("C0")</MudText></MudItem>
+        <MudItem xs="12" sm="6" md="3"><MudText Typo="Typo.caption">Cuenta de servicios</MudText><MudText>@Permit.Property.ServicesAccount</MudText></MudItem>
+        <MudItem xs="12" sm="6" md="4"><MudChip T="string" Text="@($"GIS {Permit.Property.GisStatus}")" Color="Color.Info" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12" sm="6" md="4"><MudChip T="string" Text="@($"Tributaria {Permit.Property.TributaryAccountStatus}")" Color="Color.Success" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12" sm="6" md="4"><MudChip T="string" Text="@($"BI {Permit.Property.BiUpdateStatus}")" Color="Color.Warning" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12"><MudText Typo="Typo.caption">Gravámenes</MudText><MudText>@Permit.Property.Gravames</MudText></MudItem>
+    </MudGrid>
+
+    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mt-4">
+        <MudButton Variant="Variant.Outlined" OnClick="ViewPropertyAsync">Ver Bien Inmueble</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ValidatePropertyAsync">Validar finca</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="CreateGisTaskAsync">Crear tarea GIS mock</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="CreateBiTaskAsync">Crear tarea Bienes Inmuebles mock</MudButton>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+
+    private Task ViewPropertyAsync()
+    {
+        Snackbar.Add("Vista de Bienes Inmuebles referencial disponible sin navegación externa.", Severity.Info);
+        return Task.CompletedTask;
+    }
+    private Task ValidatePropertyAsync()
+    {
+        Permit.Property.TributaryAccountStatus = "Al día";
+        Snackbar.Add("Validación mock de finca completada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+    private Task CreateGisTaskAsync()
+    {
+        Permit.Property.GisStatus = "Tarea GIS creada";
+        Snackbar.Add("Tarea GIS mock creada.", Severity.Info);
+        return Task.CompletedTask;
+    }
+    private Task CreateBiTaskAsync()
+    {
+        Permit.Property.BiUpdateStatus = "Pendiente actualización BI";
+        Snackbar.Add("Tarea mock enviada a Bienes Inmuebles.", Severity.Info);
+        return Task.CompletedTask;
+    }
+}

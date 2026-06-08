@@ -1,0 +1,39 @@
+@using System
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+            <MudChip T="string" Text="@($"Eventos {Permit.AuditEvents.Count}")" Color="Color.Info" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Consultas {CountByOrigin("Plataforma de Servicios")}")" Color="Color.Primary" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Sistema {CountByOrigin("Sistema")}")" Color="Color.Success" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Control {CountByOrigin("Control de calidad")}")" Color="Color.Warning" Variant="Variant.Outlined" />
+        </MudStack>
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+            Auditoría básica mock con eventos de creación, estado, inspección, cobro, pago, resolución y consulta.
+        </MudAlert>
+    </MudPaper>
+
+    <MudTable T="PcAuditEventDto" Items="@Permit.AuditEvents.OrderByDescending(x => x.Date)" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Fecha</MudTh><MudTh>Usuario</MudTh><MudTh>Acción</MudTh><MudTh>Entidad</MudTh><MudTh>Detalle</MudTh><MudTh>Origen</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Date.ToString("dd/MM/yyyy HH:mm")</MudTd>
+            <MudTd>@context.User</MudTd>
+            <MudTd>@context.Action</MudTd>
+            <MudTd>@context.Entity</MudTd>
+            <MudTd>@context.Details</MudTd>
+            <MudTd>@context.Origin</MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+
+    private int CountByOrigin(string origin) => Permit.AuditEvents.Count(x => x.Origin.Contains(origin, StringComparison.OrdinalIgnoreCase));
+}

@@ -1,0 +1,383 @@
+@using System.Globalization
+@using System.Linq
+@using BlazorApp.Models
+@using BlazorApp.Services
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+@{
+    var filteredRows = GetFilteredRows();
+}
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="3">
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+            <div>
+                <MudText Typo="Typo.h6">Bandeja / repositorio de locales</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Vista de locales fijos, puestos ocasionales y derechos de piso con información comercial y de cobro mock.
+                </MudText>
+            </div>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddBusiness" OnClick="GoToNewWizardAsync">
+                Nuevo local / contrato
+            </MudButton>
+        </div>
+
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Número de expediente" @bind-Value="expedienteFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Número de documento de identidad" @bind-Value="identificationFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Número de local o puesto" @bind-Value="localNumberFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Número de cuenta" @bind-Value="accountNumberFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Nombre del inquilino" @bind-Value="tenantNameFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Nombre comercial" @bind-Value="businessNameFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Actividad comercial" @bind-Value="activityFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudSelect T="string" Label="Tipo de local" @bind-Value="localTypeFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Fijo")">Fijo</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Ocasional")">Ocasional</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Derecho de piso")">Derecho de piso</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Puesto transitorio")">Puesto transitorio</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Bodega")">Bodega</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Quiosco")">Quiosco</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudSelect T="string" Label="Estado del local" @bind-Value="statusFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Alquilado")">Alquilado</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("No alquilado")">No alquilado</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("En remate")">En remate</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Desocupado")">Desocupado</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Suspendido")">Suspendido</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("En mantenimiento")">En mantenimiento</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Inactivo")">Inactivo</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Piso" @bind-Value="floorFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Zona" @bind-Value="zoneFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Pasillo" @bind-Value="aisleFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudSelect T="string" Label="Estado del contrato" @bind-Value="contractStatusFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Activo")">Activo</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Próximo a vencer")">Próximo a vencer</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Vencido")">Vencido</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudSelect T="string" Label="Estado de cuenta" @bind-Value="accountStatusFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Al día")">Al día</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Pendiente")">Pendiente</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Moroso")">Moroso</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudSelect T="string" Label="Estado de morosidad" @bind-Value="morosityFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Al día")">Al día</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Moroso")">Moroso</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("En cobro administrativo")">En cobro administrativo</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudSelect T="string" Label="Tipo de alquiler" @bind-Value="rentalTypeFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Permanente")">Permanente</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Transitorio")">Transitorio</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Ocasional")">Ocasional</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Fecha inicio contrato" @bind-Value="startDateFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" Placeholder="dd/MM/yyyy" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudTextField T="string" Label="Fecha vencimiento contrato" @bind-Value="endDateFilter" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true" Placeholder="dd/MM/yyyy" />
+            </MudItem>
+        </MudGrid>
+
+        <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Resultados visibles: @filteredRows.Count de @rows.Count
+            </MudText>
+            <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Clear" OnClick="ClearFiltersAsync">
+                Limpiar filtros
+            </MudButton>
+        </div>
+
+        <MudTable Items="@filteredRows" Hover="true" Bordered="true" Striped="true" Breakpoint="Breakpoint.Sm" HorizontalScrollbar="true">
+            <HeaderContent>
+                <MudTh>Número de local</MudTh>
+                <MudTh>Número de cuenta</MudTh>
+                <MudTh>Tipo de local</MudTh>
+                <MudTh>Actividad comercial</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh>Inquilino</MudTh>
+                <MudTh>Identificación</MudTh>
+                <MudTh>Fotografía</MudTh>
+                <MudTh>Número de patente</MudTh>
+                <MudTh>Cuenta de servicios</MudTh>
+                <MudTh>Localización</MudTh>
+                <MudTh>Bien inmueble</MudTh>
+                <MudTh>Área m2</MudTh>
+                <MudTh>Factor ponderación</MudTh>
+                <MudTh>Precio propuesto</MudTh>
+                <MudTh>Monto alquiler</MudTh>
+                <MudTh>Estado de cuenta</MudTh>
+                <MudTh>Morosidad</MudTh>
+                <MudTh>Última actualización</MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Número de local">@context.Local.LocalNumber</MudTd>
+                <MudTd DataLabel="Número de cuenta">@context.Local.AccountNumber</MudTd>
+                <MudTd DataLabel="Tipo de local">@context.Local.LocalType</MudTd>
+                <MudTd DataLabel="Actividad comercial">@context.Local.BusinessActivity</MudTd>
+                <MudTd DataLabel="Estado">
+                    <MudChip T="string" Color="@GetLocalStatusColor(context.Local.Status)" Variant="Variant.Filled">@context.Local.Status</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Inquilino">@context.TenantName</MudTd>
+                <MudTd DataLabel="Identificación">@context.TenantIdentification</MudTd>
+                <MudTd DataLabel="Fotografía">
+                    <MudPaper Outlined="true" Class="d-flex align-center justify-center text-secondary rounded-circle" Style="width:48px;height:48px;">
+                        @context.PhotoLabel
+                    </MudPaper>
+                </MudTd>
+                <MudTd DataLabel="Número de patente">@context.Local.PatentNumber</MudTd>
+                <MudTd DataLabel="Cuenta de servicios">@context.Local.ServiceAccount</MudTd>
+                <MudTd DataLabel="Localización">@context.Local.Location</MudTd>
+                <MudTd DataLabel="Bien inmueble">@context.Local.RelatedProperty</MudTd>
+                <MudTd DataLabel="Área m2">@context.Local.AreaM2.ToString("N2")</MudTd>
+                <MudTd DataLabel="Factor ponderación">@context.Local.WeightingFactor.ToString("N2")</MudTd>
+                <MudTd DataLabel="Precio propuesto">₡@context.Local.ProposedPrice.ToString("N0")</MudTd>
+                <MudTd DataLabel="Monto alquiler">₡@context.Local.RentAmount.ToString("N0")</MudTd>
+                <MudTd DataLabel="Estado de cuenta">
+                    <MudChip T="string" Color="@GetAccountStatusColor(context.AccountStatus)" Variant="Variant.Outlined">@context.AccountStatus</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Morosidad">
+                    <MudChip T="string" Color="@GetMorosityColor(context.MorosityStatus)" Variant="Variant.Outlined">@context.MorosityStatus</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Última actualización">@context.Local.LastUpdated.ToString("dd/MM/yyyy")</MudTd>
+                <MudTd DataLabel="Acciones">
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.OpenInNew" OnClick="@( () => GoToExpedienteAsync(context.Local.Id) )">Ver expediente</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Edit" OnClick="ShowEditarAsync">Editar</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="ShowAsignarInquilinoAsync">Asignar inquilino</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Refresh" OnClick="ShowRenovarContratoAsync">Renovar contrato</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.AttachMoney" OnClick="ShowModificarAlquilerAsync">Modificar alquiler</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.SwapHoriz" OnClick="ShowRegistrarTraspasoAsync">Registrar traspaso</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.CallMerge" OnClick="ShowFusionarLocalesAsync">Fusionar locales</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.ReceiptLong" OnClick="ShowGenerarEmisionAsync">Generar emisión</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Payments" OnClick="ShowEnviarACobroAsync">Enviar a cobro</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.WarningAmber" OnClick="ShowRegistrarAmonestacionAsync">Registrar amonestación</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Search" OnClick="ShowRegistrarInspeccionAsync">Registrar inspección</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Assignment" OnClick="ShowVerAuditoriaAsync">Ver auditoría</MudButton>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Class="pa-4" Align="Align.Center">No hay locales que coincidan con los filtros aplicados.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private readonly MercadoMunicipalMockService marketService = new();
+    private readonly List<LocalRow> rows = new();
+
+    private string expedienteFilter = string.Empty;
+    private string identificationFilter = string.Empty;
+    private string localNumberFilter = string.Empty;
+    private string accountNumberFilter = string.Empty;
+    private string tenantNameFilter = string.Empty;
+    private string businessNameFilter = string.Empty;
+    private string activityFilter = string.Empty;
+    private string localTypeFilter = string.Empty;
+    private string statusFilter = string.Empty;
+    private string floorFilter = string.Empty;
+    private string zoneFilter = string.Empty;
+    private string aisleFilter = string.Empty;
+    private string contractStatusFilter = string.Empty;
+    private string accountStatusFilter = string.Empty;
+    private string morosityFilter = string.Empty;
+    private string rentalTypeFilter = string.Empty;
+    private string startDateFilter = string.Empty;
+    private string endDateFilter = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        var locals = marketService.GetLocals();
+        var tenants = marketService.GetTenants().ToDictionary(x => x.Id, x => x);
+        var contracts = marketService.GetContracts();
+        var taxAccounts = marketService.GetTaxAccounts().ToDictionary(x => x.LocalId, x => x);
+        var collections = marketService.GetCollections().ToDictionary(x => x.LocalId, x => x);
+
+        foreach (var local in locals)
+        {
+            tenants.TryGetValue(local.TenantId, out var tenant);
+            var contract = contracts.FirstOrDefault(x => x.LocalId.Equals(local.Id, StringComparison.OrdinalIgnoreCase));
+            taxAccounts.TryGetValue(local.Id, out var taxAccount);
+            collections.TryGetValue(local.Id, out var collection);
+
+            rows.Add(new LocalRow(
+                local,
+                tenant,
+                contract,
+                taxAccount,
+                collection));
+        }
+    }
+
+    private List<LocalRow> GetFilteredRows()
+    {
+        return rows
+            .Where(row => Matches(row.Local.Id, expedienteFilter))
+            .Where(row => Matches(row.TenantIdentification, identificationFilter))
+            .Where(row => Matches(row.Local.LocalNumber, localNumberFilter))
+            .Where(row => Matches(row.Local.AccountNumber, accountNumberFilter))
+            .Where(row => Matches(row.TenantName, tenantNameFilter))
+            .Where(row => Matches(row.BusinessName, businessNameFilter))
+            .Where(row => Matches(row.Local.BusinessActivity, activityFilter))
+            .Where(row => Matches(row.Local.LocalType, localTypeFilter))
+            .Where(row => Matches(row.Local.Status, statusFilter))
+            .Where(row => Matches(row.Local.Floor, floorFilter))
+            .Where(row => Matches(row.Local.Zone, zoneFilter))
+            .Where(row => Matches(row.Local.Aisle, aisleFilter))
+            .Where(row => Matches(row.ContractStatus, contractStatusFilter))
+            .Where(row => Matches(row.AccountStatus, accountStatusFilter))
+            .Where(row => Matches(row.MorosityStatus, morosityFilter))
+            .Where(row => Matches(row.Local.RentalType, rentalTypeFilter))
+            .Where(row => MatchesDate(row.ContractStartDate, startDateFilter))
+            .Where(row => MatchesDate(row.ContractEndDate, endDateFilter))
+            .ToList();
+    }
+
+    private static bool Matches(string value, string filter)
+        => string.IsNullOrWhiteSpace(filter) || value.Contains(filter, StringComparison.OrdinalIgnoreCase);
+
+    private static bool MatchesDate(DateTime? value, string filter)
+        => string.IsNullOrWhiteSpace(filter)
+           || (value.HasValue && value.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture).Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+    private Task GoToNewWizardAsync()
+    {
+        Navigation.NavigateTo("/mercado-municipal/nuevo");
+        return Task.CompletedTask;
+    }
+
+    private Task GoToExpedienteAsync(string id)
+    {
+        Navigation.NavigateTo($"/mercado-municipal/expediente/{id}");
+        return Task.CompletedTask;
+    }
+
+    private Task ShowPendingActionAsync(string actionName)
+    {
+        Snackbar.Add($"{actionName} estará disponible en la siguiente fase.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task ShowEditarAsync() => ShowPendingActionAsync("Editar");
+    private Task ShowAsignarInquilinoAsync() => ShowPendingActionAsync("Asignar inquilino");
+    private Task ShowRenovarContratoAsync() => ShowPendingActionAsync("Renovar contrato");
+    private Task ShowModificarAlquilerAsync() => ShowPendingActionAsync("Modificar alquiler");
+    private Task ShowRegistrarTraspasoAsync() => ShowPendingActionAsync("Registrar traspaso");
+    private Task ShowFusionarLocalesAsync() => ShowPendingActionAsync("Fusionar locales");
+    private Task ShowGenerarEmisionAsync() => ShowPendingActionAsync("Generar emisión");
+    private Task ShowEnviarACobroAsync() => ShowPendingActionAsync("Enviar a cobro");
+    private Task ShowRegistrarAmonestacionAsync() => ShowPendingActionAsync("Registrar amonestación");
+    private Task ShowRegistrarInspeccionAsync() => ShowPendingActionAsync("Registrar inspección");
+    private Task ShowVerAuditoriaAsync() => ShowPendingActionAsync("Ver auditoría");
+
+    private Task ClearFiltersAsync()
+    {
+        expedienteFilter = string.Empty;
+        identificationFilter = string.Empty;
+        localNumberFilter = string.Empty;
+        accountNumberFilter = string.Empty;
+        tenantNameFilter = string.Empty;
+        businessNameFilter = string.Empty;
+        activityFilter = string.Empty;
+        localTypeFilter = string.Empty;
+        statusFilter = string.Empty;
+        floorFilter = string.Empty;
+        zoneFilter = string.Empty;
+        aisleFilter = string.Empty;
+        contractStatusFilter = string.Empty;
+        accountStatusFilter = string.Empty;
+        morosityFilter = string.Empty;
+        rentalTypeFilter = string.Empty;
+        startDateFilter = string.Empty;
+        endDateFilter = string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private static Color GetLocalStatusColor(string status) => status switch
+    {
+        "Alquilado" => Color.Success,
+        "No alquilado" => Color.Info,
+        "En remate" => Color.Error,
+        "Desocupado" => Color.Warning,
+        "Suspendido" => Color.Dark,
+        "En mantenimiento" => Color.Secondary,
+        "Inactivo" => Color.Default,
+        _ => Color.Primary
+    };
+
+    private static Color GetAccountStatusColor(string status) => status switch
+    {
+        "Al día" => Color.Success,
+        "Pendiente" => Color.Warning,
+        "Moroso" => Color.Error,
+        _ => Color.Default
+    };
+
+    private static Color GetMorosityColor(string status) => status switch
+    {
+        "Al día" => Color.Success,
+        "Moroso" => Color.Error,
+        "En cobro administrativo" => Color.Warning,
+        _ => Color.Default
+    };
+
+    private sealed record LocalRow(
+        MmLocalDto Local,
+        MmTenantDto? Tenant,
+        MmContractDto? Contract,
+        MmTaxAccountMockDto? TaxAccount,
+        MmCollectionDto? Collection)
+    {
+        public string TenantName => Tenant?.Name ?? "Sin inquilino";
+        public string TenantIdentification => Tenant?.Identification ?? "N/D";
+        public string BusinessName => Tenant?.BusinessName ?? Local.BusinessName;
+        public string ContractStatus => Contract?.Status ?? "Sin contrato";
+        public string AccountStatus => TaxAccount?.Status ?? "Sin estado";
+        public string MorosityStatus => Collection?.Status ?? (Local.HasMorosity ? "Moroso" : "Al día");
+        public DateTime? ContractStartDate => Contract?.StartDate;
+        public DateTime? ContractEndDate => Contract?.EndDate;
+        public string PhotoLabel => Tenant?.PhotoPlaceholder is { Length: > 0 } placeholder ? placeholder[..Math.Min(2, placeholder.Length)] : "FM";
+    }
+}

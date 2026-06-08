@@ -1,0 +1,352 @@
+@page "/mercado-municipal/expediente/{Id}"
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components.Web
+@using BlazorApp.Models
+@using BlazorApp.Services
+@using BlazorApp.Components.MercadoMunicipal
+@inject NavigationManager Navigation
+
+<PageTitle>Mercado Municipal - Expediente</PageTitle>
+
+<div class="d-flex flex-column gap-4">
+    <MudPaper Outlined="true" Class="pa-4 pa-md-5">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="8">
+                <MudText Typo="Typo.h4">Expediente Mercado Municipal</MudText>
+                <MudText Typo="Typo.body1" Color="Color.Secondary">
+                    Consulta y edición controlada del expediente completo mediante tabs para la Parte 8.2C.
+                </MudText>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                @if (selectedLocal is not null)
+                {
+                    <div class="d-flex flex-wrap gap-2 justify-end">
+                        <MudChip T="string" Text="@selectedLocal.Status" Color="@ResolveStatusColor(selectedLocal.Status)" Variant="Variant.Outlined" Size="Size.Small" />
+                        <MudChip T="string" Text="@(selectedContract?.Status ?? "Sin contrato")" Color="@ResolveStatusColor(selectedContract?.Status ?? "Pendiente")" Variant="Variant.Outlined" Size="Size.Small" />
+                        <MudChip T="string" Text="@accountStatus" Color="@ResolveStatusColor(accountStatus)" Variant="Variant.Outlined" Size="Size.Small" />
+                    </div>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @if (selectedLocal is null)
+    {
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+            No se encontró un local con identificador @Id.
+        </MudAlert>
+    }
+    else
+    {
+        <MudPaper Outlined="true" Class="pa-4">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6" md="3"><MudText><strong>Local:</strong> @selectedLocal.LocalNumber</MudText></MudItem>
+                <MudItem xs="12" sm="6" md="3"><MudText><strong>Inquilino:</strong> @(selectedTenant?.Name ?? "Sin asignar")</MudText></MudItem>
+                <MudItem xs="12" sm="6" md="3"><MudText><strong>Contrato:</strong> @(selectedContract?.ContractNumber ?? "Sin contrato")</MudText></MudItem>
+                <MudItem xs="12" sm="6" md="3"><MudText><strong>Cuenta:</strong> @selectedLocal.AccountNumber</MudText></MudItem>
+            </MudGrid>
+        </MudPaper>
+
+        <MudTabs @bind-ActivePanelIndex="activeTabIndex" Border="true" Outlined="true" PanelClass="pa-4">
+            <MudTabPanel Text="Resumen 360°">
+                <MmSummary360Panel Local="selectedLocal"
+                                   Tenant="selectedTenant"
+                                   Contract="selectedContract"
+                                   Rent="selectedRent"
+                                   TaxAccount="selectedTaxAccount"
+                                   Collection="selectedCollection"
+                                   Requirements="requirements" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Datos del local">
+                <MmLocalDataForm Local="selectedLocal" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Inquilino / padrón fotográfico">
+                <MmTenantPanel Tenant="selectedTenant" Local="selectedLocal" TenantHistory="tenantHistory" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Contrato">
+                <MmContractPanel Contract="selectedContract" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Canon / alquiler">
+                <MmRentPanel Local="selectedLocal" Rent="selectedRent" HistoryEvents="historyItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Requisitos y documentos" BadgeData="@requirements.Count">
+                <MmRequirementsPanel Requirements="requirements" Documents="documents" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Cuenta tributaria mock">
+                <MmTaxAccountMockPanel Local="selectedLocal" TaxAccount="selectedTaxAccount" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Historial" BadgeData="@historyItems.Count">
+                <MmHistoryPanel Items="historyItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Auditoría" BadgeData="@auditItems.Count">
+                <MmAuditPanel Items="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Integraciones completas" BadgeData="@integrations.Count">
+                <MmIntegrationStatusPanel Items="integrations" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Cuentas por cobrar" BadgeData="@receivableItems.Count">
+                <MmReceivablesPanel Local="selectedLocal"
+                                    Tenant="selectedTenant"
+                                    Items="receivableItems"
+                                    HistoryItems="historyItems"
+                                    AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Emisiones" BadgeData="@emissionItems.Count">
+                <MmEmissionPanel Local="selectedLocal"
+                                 Rent="selectedRent"
+                                 Items="emissionItems"
+                                 HistoryItems="historyItems"
+                                 AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Pagos históricos" BadgeData="@paymentItems.Count">
+                <MmPaymentsMockPanel Local="selectedLocal"
+                                     Items="paymentItems"
+                                     HistoryItems="historyItems"
+                                     AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Morosidad / cobro administrativo">
+                <MmCollectionsPanel Local="selectedLocal"
+                                    Collection="selectedCollection"
+                                    HistoryItems="historyItems"
+                                    AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Modificaciones" BadgeData="@modificationItems.Count">
+                <MmModificationsPanel Local="selectedLocal"
+                                      Items="modificationItems"
+                                      HistoryItems="historyItems"
+                                      AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Traspasos" BadgeData="@transferItems.Count">
+                <MmTransfersPanel Local="selectedLocal"
+                                  Tenant="selectedTenant"
+                                  Items="transferItems"
+                                  HistoryItems="historyItems"
+                                  AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Fusiones / segregaciones" BadgeData="@mergerSegregationItems.Count">
+                <MmMergersSegregationsPanel Local="selectedLocal"
+                                            Items="mergerSegregationItems"
+                                            HistoryItems="historyItems"
+                                            AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Amonestaciones" BadgeData="@warningItems.Count">
+                <MmWarningsPanel Local="selectedLocal"
+                                 Tenant="selectedTenant"
+                                 Items="warningItems"
+                                 HistoryItems="historyItems"
+                                 AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Sanciones" BadgeData="@sanctionItems.Count">
+                <MmSanctionsPanel Local="selectedLocal"
+                                  Tenant="selectedTenant"
+                                  Items="sanctionItems"
+                                  HistoryItems="historyItems"
+                                  AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Remodelaciones" BadgeData="@remodelingItems.Count">
+                <MmRemodelingPanel Local="selectedLocal"
+                                   Items="remodelingItems"
+                                   HistoryItems="historyItems"
+                                   AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Horarios especiales" BadgeData="@specialScheduleItems.Count">
+                <MmSpecialSchedulesPanel Local="selectedLocal"
+                                         Tenant="selectedTenant"
+                                         Items="specialScheduleItems"
+                                         HistoryItems="historyItems"
+                                         AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Carnés" BadgeData="@cardItems.Count">
+                <MmCardsPanel Local="selectedLocal"
+                              Tenant="selectedTenant"
+                              Items="cardItems"
+                              HistoryItems="historyItems"
+                              AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Inspecciones" BadgeData="@inspectionItems.Count">
+                <MmInspectionsPanel Local="selectedLocal"
+                                    Tenant="selectedTenant"
+                                    Items="inspectionItems"
+                                    HistoryItems="historyItems"
+                                    AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Correspondencia" BadgeData="@correspondenceItems.Count">
+                <MmCorrespondencePanel Local="selectedLocal"
+                                       Items="correspondenceItems"
+                                       HistoryItems="historyItems"
+                                       AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Notificaciones" BadgeData="@notificationItems.Count">
+                <MmNotificationsPanel Local="selectedLocal"
+                                      Tenant="selectedTenant"
+                                      Items="notificationItems"
+                                      HistoryItems="historyItems"
+                                      AuditItems="auditItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Reportería" BadgeData="@reportItems.Count">
+                <MmReportsPanel Items="reportItems" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Configuración" BadgeData="@catalogItems.Count">
+                <MmConfigurationPanel Items="catalogItems" />
+            </MudTabPanel>
+        </MudTabs>
+    }
+
+    <div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="BackAsync">
+            Volver a /mercado-municipal
+        </MudButton>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Id { get; set; } = string.Empty;
+
+    private readonly MercadoMunicipalMockService marketService = new();
+    private MmLocalDto? selectedLocal;
+    private MmTenantDto? selectedTenant;
+    private MmContractDto? selectedContract;
+    private MmRentDto? selectedRent;
+    private MmTaxAccountMockDto? selectedTaxAccount;
+    private MmCollectionDto? selectedCollection;
+    private List<MmRequirementDto> requirements = new();
+    private List<MmDocumentDto> documents = new();
+    private List<MmHistoryEventDto> historyItems = new();
+    private List<MmAuditEventDto> auditItems = new();
+    private List<MmIntegrationStatusDto> integrations = new();
+    private List<MmReceivableDto> receivableItems = new();
+    private List<MmEmissionDto> emissionItems = new();
+    private List<MmPaymentMockDto> paymentItems = new();
+    private List<MmModificationDto> modificationItems = new();
+    private List<MmTransferDto> transferItems = new();
+    private List<MmMergerSegregationDto> mergerSegregationItems = new();
+    private List<MmWarningDto> warningItems = new();
+    private List<MmSanctionDto> sanctionItems = new();
+    private List<MmRemodelingPermitDto> remodelingItems = new();
+    private List<MmSpecialScheduleDto> specialScheduleItems = new();
+    private List<MmCardDto> cardItems = new();
+    private List<MmInspectionDto> inspectionItems = new();
+    private List<MmCorrespondenceDto> correspondenceItems = new();
+    private List<MmNotificationDto> notificationItems = new();
+    private List<MmReportDto> reportItems = new();
+    private List<MmCatalogItemDto> catalogItems = new();
+    private List<MmTenantDto> tenantHistory = new();
+    private string accountStatus = "Pendiente";
+    private int activeTabIndex;
+
+    protected override void OnParametersSet()
+    {
+        selectedLocal = marketService.GetLocalById(Id);
+        selectedTenant = null;
+        selectedContract = null;
+        selectedRent = null;
+        selectedTaxAccount = null;
+        selectedCollection = null;
+        requirements = new List<MmRequirementDto>();
+        documents = new List<MmDocumentDto>();
+        historyItems = new List<MmHistoryEventDto>();
+        auditItems = new List<MmAuditEventDto>();
+        integrations = marketService.GetIntegrations();
+        receivableItems = new List<MmReceivableDto>();
+        emissionItems = new List<MmEmissionDto>();
+        paymentItems = new List<MmPaymentMockDto>();
+        modificationItems = new List<MmModificationDto>();
+        transferItems = new List<MmTransferDto>();
+        mergerSegregationItems = new List<MmMergerSegregationDto>();
+        warningItems = new List<MmWarningDto>();
+        sanctionItems = new List<MmSanctionDto>();
+        remodelingItems = new List<MmRemodelingPermitDto>();
+        specialScheduleItems = new List<MmSpecialScheduleDto>();
+        cardItems = new List<MmCardDto>();
+        inspectionItems = new List<MmInspectionDto>();
+        correspondenceItems = new List<MmCorrespondenceDto>();
+        notificationItems = new List<MmNotificationDto>();
+        reportItems = new List<MmReportDto>();
+        catalogItems = new List<MmCatalogItemDto>();
+        tenantHistory = new List<MmTenantDto>();
+        accountStatus = "Pendiente";
+
+        if (selectedLocal is null)
+            return;
+
+        selectedTenant = marketService.GetTenants().FirstOrDefault(item => item.Id == selectedLocal.TenantId);
+        selectedContract = marketService.GetContracts().FirstOrDefault(item => item.LocalId == selectedLocal.Id);
+        selectedRent = marketService.GetRents().FirstOrDefault(item => item.LocalId == selectedLocal.Id);
+        selectedTaxAccount = marketService.GetTaxAccounts().FirstOrDefault(item => item.LocalId == selectedLocal.Id);
+        selectedCollection = marketService.GetCollections().FirstOrDefault(item => item.LocalId == selectedLocal.Id);
+        requirements = marketService.GetRequirements().Where(item => item.LocalId == selectedLocal.Id).ToList();
+        documents = marketService.GetDocuments().Where(item => item.LocalId == selectedLocal.Id).ToList();
+        receivableItems = marketService.GetReceivables().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.CreatedAt).ToList();
+        emissionItems = marketService.GetEmissions().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.CreatedAt).ToList();
+        paymentItems = marketService.GetPayments().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.PaymentDate).ToList();
+        modificationItems = marketService.GetModifications().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.Date).ToList();
+        transferItems = marketService.GetTransfers().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.RequestDate).ToList();
+        mergerSegregationItems = marketService.GetMergersSegregations().Where(item => item.LocalId == selectedLocal.Id).ToList();
+        warningItems = marketService.GetWarnings().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.AppliedDate).ToList();
+        sanctionItems = marketService.GetSanctions().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.AppliedDate).ToList();
+        remodelingItems = marketService.GetRemodelingPermits().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.RequestDate).ToList();
+        specialScheduleItems = marketService.GetSpecialSchedules().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.StartDate).ToList();
+        cardItems = marketService.GetCards().Where(item => item.LocalId == selectedLocal.Id || item.TenantId == (selectedTenant?.Id ?? string.Empty)).OrderByDescending(item => item.ExpirationDate).ToList();
+        inspectionItems = marketService.GetInspections().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.Date).ToList();
+        correspondenceItems = marketService.GetCorrespondences().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.EntryDate).ToList();
+        notificationItems = marketService.GetNotifications().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.CreatedAt).ToList();
+        reportItems = marketService.GetReports();
+        catalogItems = marketService.GetCatalogs();
+        historyItems = marketService.GetHistory().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.Date).ToList();
+        auditItems = marketService.GetAuditEvents().Where(item => item.LocalId == selectedLocal.Id).OrderByDescending(item => item.Date).ToList();
+        tenantHistory = marketService.GetTenants()
+            .Where(item => item.Id != selectedTenant?.Id && item.Condition.Equals(selectedTenant?.Condition ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+            .Take(5)
+            .ToList();
+
+        if (selectedTenant is not null)
+            tenantHistory.Insert(0, selectedTenant);
+
+        accountStatus = selectedTaxAccount?.Status ?? (selectedLocal.HasMorosity ? "Moroso" : "Al día");
+    }
+
+    private Task BackAsync()
+    {
+        Navigation.NavigateTo("/mercado-municipal");
+        return Task.CompletedTask;
+    }
+
+    private static Color ResolveStatusColor(string status)
+    {
+        if (status.Equals("Alquilado", StringComparison.OrdinalIgnoreCase) || status.Equals("Activo", StringComparison.OrdinalIgnoreCase) || status.Equals("Al día", StringComparison.OrdinalIgnoreCase))
+            return Color.Success;
+        if (status.Equals("Desocupado", StringComparison.OrdinalIgnoreCase) || status.Equals("En remate", StringComparison.OrdinalIgnoreCase) || status.Equals("Pendiente", StringComparison.OrdinalIgnoreCase) || status.Equals("Próximo a vencer", StringComparison.OrdinalIgnoreCase))
+            return Color.Warning;
+        if (status.Equals("Moroso", StringComparison.OrdinalIgnoreCase) || status.Equals("Vencido", StringComparison.OrdinalIgnoreCase) || status.Equals("Cancelado", StringComparison.OrdinalIgnoreCase))
+            return Color.Error;
+        return Color.Info;
+    }
+}

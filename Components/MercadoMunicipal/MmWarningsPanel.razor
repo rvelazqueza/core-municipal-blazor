@@ -1,0 +1,172 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información del local para amonestaciones.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Total @Items.Count</MudChip>
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Notificadas @Items.Count(x => x.NotificationMock.Contains("enviada", StringComparison.OrdinalIgnoreCase) || x.NotificationMock.Contains("Notificada", StringComparison.OrdinalIgnoreCase))</MudChip>
+                <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined">Local @Local.LocalNumber</MudChip>
+            </div>
+            @if (Items.Count >= 3)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+                    El local acumula @Items.Count amonestaciones mock y requiere seguimiento administrativo referencial.
+                </MudAlert>
+            }
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="RegisterWarningAsync">Registrar amonestación mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="GenerateDocumentAsync">Generar documento mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="NotifyAsync">Notificar mock</MudButton>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+            <MudTable T="MmWarningDto" Items="@Items.OrderByDescending(x => x.AppliedDate)" Hover="true" Bordered="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Número</MudTh>
+                    <MudTh>Local</MudTh>
+                    <MudTh>Inquilino</MudTh>
+                    <MudTh>Tipo</MudTh>
+                    <MudTh>Fecha aplicación</MudTh>
+                    <MudTh>Plazo cumplimiento</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh>Documento mock</MudTh>
+                    <MudTh>Notificación mock</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Número">@context.WarningNumber</MudTd>
+                    <MudTd DataLabel="Local">@context.LocalNumber</MudTd>
+                    <MudTd DataLabel="Inquilino">@context.TenantName</MudTd>
+                    <MudTd DataLabel="Tipo">@context.WarningType</MudTd>
+                    <MudTd DataLabel="Fecha aplicación">@context.AppliedDate.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Plazo cumplimiento">@context.ComplianceDeadline.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Estado">@context.Status</MudTd>
+                    <MudTd DataLabel="Documento mock">@context.DocumentMock</MudTd>
+                    <MudTd DataLabel="Notificación mock">@context.NotificationMock</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudText Typo="Typo.h6">Histórico de amonestaciones</MudText>
+                @foreach (var item in Items.OrderByDescending(x => x.AppliedDate).Take(5))
+                {
+                    <MudText Typo="Typo.body2">@item.AppliedDate.ToString("dd/MM/yyyy") - @item.WarningNumber - @item.WarningType - @item.Status</MudText>
+                }
+            </MudCardContent>
+        </MudCard>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public MmTenantDto? Tenant { get; set; }
+    [Parameter] public List<MmWarningDto> Items { get; set; } = new();
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private Task RegisterWarningAsync()
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        var item = new MmWarningDto
+        {
+            Id = $"WAR-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            TenantId = Tenant?.Id ?? string.Empty,
+            WarningNumber = $"AMO-MOCK-{DateTime.Now:HHmmss}",
+            LocalNumber = Local.LocalNumber,
+            TenantName = Tenant?.Name ?? "Sin asignar",
+            WarningType = "Incumplimiento administrativo mock",
+            AppliedDate = DateTime.Today,
+            ComplianceDeadline = DateTime.Today.AddDays(8),
+            Status = "Registrada",
+            DocumentMock = "Pendiente de documento",
+            NotificationMock = "Pendiente de notificación"
+        };
+
+        Items.Insert(0, item);
+        RegisterMockEvent("Registrar amonestación", string.Empty, item.WarningNumber, "Amonestaciones", "Media");
+        Snackbar.Add("Amonestación mock registrada.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private Task GenerateDocumentAsync()
+    {
+        var item = Items.OrderByDescending(x => x.AppliedDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.DocumentMock = $"Documento_{item.WarningNumber}.pdf";
+        RegisterMockEvent("Generar documento de amonestación", "Pendiente", item.DocumentMock, "Amonestaciones", "Baja");
+        Snackbar.Add("Documento mock de amonestación generado.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task NotifyAsync()
+    {
+        var item = Items.OrderByDescending(x => x.AppliedDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.NotificationMock = "Notificada mock";
+        item.Status = "Notificada";
+        RegisterMockEvent("Notificar amonestación", "Pendiente", item.NotificationMock, "Amonestaciones", "Alta");
+        Snackbar.Add("Notificación mock de amonestación generada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousStatus = "Registrado",
+            NewStatus = "Actualizado",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Panel de amonestaciones",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde amonestaciones."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel de amonestaciones",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Bitácora visual mock"
+        });
+    }
+}

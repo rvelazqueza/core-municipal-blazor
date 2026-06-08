@@ -1,0 +1,78 @@
+@using System
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null || TaxAccount is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe cuenta tributaria mock asociada al expediente.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Cuenta tributaria mock</MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6"><MudText>Cuenta mercado: @Local.AccountNumber</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Cuenta tributaria mock: @TaxAccount.AccountNumber</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Período: @TaxAccount.Period</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Mes: @TaxAccount.Month</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Débito: @FormatCurrency(TaxAccount.Debit)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Crédito: @FormatCurrency(TaxAccount.Credit)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Saldo: @FormatCurrency(TaxAccount.Balance)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Estado: @TaxAccount.Status</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Último pago: @(TaxAccount.LastPaymentDate?.ToString("dd/MM/yyyy") ?? "N/D")</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Morosidad: @TaxAccount.MorosityStatus</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Compensación referencial: @(TaxAccount.Credit > 0 ? "Con crédito aplicable" : "Sin compensación")</MudText></MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ViewDetailAsync">Ver detalle</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SimulateMovementAsync">Simular movimiento</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SendToCollectionAsync">Enviar a cobro mock</MudButton>
+            </div>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public MmTaxAccountMockDto? TaxAccount { get; set; }
+
+    private Task ViewDetailAsync()
+    {
+        Snackbar.Add("Detalle mock de cuenta tributaria visualizado.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task SimulateMovementAsync()
+    {
+        if (TaxAccount is null)
+            return Task.CompletedTask;
+
+        TaxAccount.Debit += 100m;
+        TaxAccount.Balance += 100m;
+        TaxAccount.Status = TaxAccount.Balance > 0 ? "Pendiente" : "Al día";
+        TaxAccount.MorosityStatus = TaxAccount.Balance > 0 ? "Movimiento mock pendiente de aplicación" : "Sin morosidad";
+        Snackbar.Add("Movimiento mock aplicado a la cuenta tributaria.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task SendToCollectionAsync()
+    {
+        if (TaxAccount is null)
+            return Task.CompletedTask;
+
+        TaxAccount.Status = "Moroso";
+        TaxAccount.MorosityStatus = "Enviado a cobro administrativo mock";
+        Snackbar.Add("Cuenta enviada a cobro mock.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private static string FormatCurrency(decimal value) => $"CRC {value:N2}";
+}

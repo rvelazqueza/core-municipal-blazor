@@ -1,0 +1,72 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+
+<div class="d-flex flex-column gap-3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <div class="d-flex flex-wrap gap-2">
+            <MudChip T="string" Text="@($"Presentados {CountByStatus("Presentado")}")" Color="Color.Success" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Pendientes {CountByStatus("Pendiente")}")" Color="Color.Warning" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Observados {CountByStatus("Observado")}")" Color="Color.Error" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"No aplica {CountByStatus("No aplica")}")" Color="Color.Info" Variant="Variant.Outlined" />
+        </div>
+    </MudPaper>
+
+    <MudTable T="MmRequirementDto" Items="@Requirements" Hover="true">
+        <HeaderContent>
+            <MudTh>Requisito</MudTh>
+            <MudTh>Estado</MudTh>
+            <MudTh>Documento placeholder</MudTh>
+            <MudTh>Observación</MudTh>
+            <MudTh>Usuario receptor</MudTh>
+            <MudTh>Fecha recepción</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>
+                <MudChip T="string" Text="@context.Status" Color="@ResolveStatusColor(context.Status)" Variant="Variant.Outlined" Size="Size.Small" />
+            </MudTd>
+            <MudTd>@context.DocumentPlaceholder</MudTd>
+            <MudTd>@context.Observation</MudTd>
+            <MudTd>@context.ReceivedBy</MudTd>
+            <MudTd>@(context.ReceivedAt?.ToString("dd/MM/yyyy") ?? "N/D")</MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudText Typo="Typo.subtitle1" Class="mb-3">Documentos placeholder</MudText>
+        <MudTable T="MmDocumentDto" Items="@Documents" Hover="true">
+            <HeaderContent>
+                <MudTh>Nombre</MudTh>
+                <MudTh>Tipo</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh>Referencia</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Name</MudTd>
+                <MudTd>@context.DocumentType</MudTd>
+                <MudTd>@context.Status</MudTd>
+                <MudTd>@context.Placeholder</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter] public IEnumerable<MmRequirementDto> Requirements { get; set; } = Enumerable.Empty<MmRequirementDto>();
+    [Parameter] public IEnumerable<MmDocumentDto> Documents { get; set; } = Enumerable.Empty<MmDocumentDto>();
+
+    private int CountByStatus(string status) => Requirements.Count(item => item.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+
+    private static Color ResolveStatusColor(string status) => status switch
+    {
+        "Presentado" => Color.Success,
+        "Pendiente" => Color.Warning,
+        "Observado" => Color.Error,
+        "No aplica" => Color.Info,
+        _ => Color.Default
+    };
+}

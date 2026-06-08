@@ -1,0 +1,189 @@
+@using System
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null || Collection is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información de morosidad o cobro administrativo para este expediente.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Morosidad / cobro administrativo</MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6"><MudText>Meses pendientes: @Collection.PendingMonths</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Saldo vencido: @FormatCurrency(Collection.OverdueBalance)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Estado: @Collection.Status</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Última gestión: @Collection.LastAction</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Responsable: @Collection.ResponsibleUser</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Fecha gestión: @Collection.LastManagementDate.ToString("dd/MM/yyyy")</MudText></MudItem>
+                    <MudItem xs="12"><MudText>Etapa administrativa: @Collection.AdministrativeStage</MudText></MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <MudText Typo="Typo.subtitle1" Class="mb-3">Gestiones mock</MudText>
+            <MudTable T="CollectionManagementItem" Items="managementItems" Hover="true">
+                <HeaderContent>
+                    <MudTh>Fecha</MudTh>
+                    <MudTh>Gestión</MudTh>
+                    <MudTh>Responsable</MudTh>
+                    <MudTh>Estado</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Date.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                    <MudTd>@context.Action</MudTd>
+                    <MudTd>@context.User</MudTd>
+                    <MudTd>@context.Status</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SendToAdministrativeCollectionAsync">Enviar a cobro administrativo mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="RegisterCollectionManagementAsync">Registrar gestión de cobro mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="MarkPaymentArrangementAsync">Marcar arreglo de pago mock</MudButton>
+            </div>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public MmCollectionDto? Collection { get; set; }
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private readonly List<CollectionManagementItem> managementItems = new();
+    private string currentLocalId = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if (Local is null || Collection is null)
+            return;
+
+        if (!string.Equals(currentLocalId, Local.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            currentLocalId = Local.Id;
+            managementItems.Clear();
+            managementItems.Add(new CollectionManagementItem
+            {
+                Date = Collection.LastManagementDate,
+                Action = Collection.LastAction,
+                User = Collection.ResponsibleUser,
+                Status = Collection.Status
+            });
+        }
+    }
+
+    private Task SendToAdministrativeCollectionAsync()
+    {
+        if (Collection is null)
+            return Task.CompletedTask;
+
+        Collection.Status = "En cobro administrativo";
+        Collection.LastAction = "Envío a cobro administrativo mock";
+        Collection.ResponsibleUser = "Analista Cobro";
+        Collection.LastManagementDate = DateTime.Now;
+        Collection.AdministrativeStage = "Cobro administrativo";
+        AddManagement("Envío a cobro administrativo mock", Collection.ResponsibleUser, Collection.Status);
+        RegisterMockEvent("Enviar a cobro administrativo", "Moroso", Collection.Status, "Cobro", "Alta");
+        Snackbar.Add("Caso enviado a cobro administrativo mock.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private Task RegisterCollectionManagementAsync()
+    {
+        if (Collection is null)
+            return Task.CompletedTask;
+
+        Collection.LastAction = "Gestión telefónica y recordatorio de pago mock";
+        Collection.ResponsibleUser = "Coordinación Mercado";
+        Collection.LastManagementDate = DateTime.Now;
+        AddManagement(Collection.LastAction, Collection.ResponsibleUser, Collection.Status);
+        RegisterMockEvent("Registrar gestión de cobro", string.Empty, Collection.LastAction, "Cobro", "Media");
+        Snackbar.Add("Gestión de cobro mock registrada.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task MarkPaymentArrangementAsync()
+    {
+        if (Collection is null)
+            return Task.CompletedTask;
+
+        Collection.Status = "Arreglo de pago";
+        Collection.LastAction = "Arreglo de pago referencial registrado";
+        Collection.ResponsibleUser = "Tesorería Mock";
+        Collection.LastManagementDate = DateTime.Now;
+        Collection.AdministrativeStage = "Convenio de pago";
+        AddManagement(Collection.LastAction, Collection.ResponsibleUser, Collection.Status);
+        RegisterMockEvent("Marcar arreglo de pago", "En cobro administrativo", Collection.Status, "Cobro", "Media");
+        Snackbar.Add("Arreglo de pago mock marcado.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private void AddManagement(string action, string user, string status)
+    {
+        managementItems.Insert(0, new CollectionManagementItem
+        {
+            Date = DateTime.Now,
+            Action = action,
+            User = user,
+            Status = status
+        });
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Analista Cobro",
+            Action = action,
+            PreviousStatus = "Seguimiento",
+            NewStatus = "Actualizado",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Panel cobro administrativo",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde morosidad / cobro administrativo."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Analista Cobro",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel cobro administrativo",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Gestión mock"
+        });
+    }
+
+    private static string FormatCurrency(decimal value) => $"CRC {value:N2}";
+
+    private sealed class CollectionManagementItem
+    {
+        public DateTime Date { get; set; }
+        public string Action { get; set; } = string.Empty;
+        public string User { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
+}

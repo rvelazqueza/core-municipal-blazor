@@ -1,0 +1,50 @@
+@using BlazorApp.Models.Auditoria
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="2">
+        <div class="d-flex flex-wrap justify-space-between align-center gap-2">
+            <div>
+                <MudText Typo="Typo.h6">Auditoría de configuración</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Registro mock de catálogos, parámetros, permisos y reglas.</MudText>
+            </div>
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{Events.Count()} eventos")</MudChip>
+        </div>
+
+        <MudTable T="AuditConfigurationEventDto" Items="@Events" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Parámetro</MudTh>
+                <MudTh>Valor anterior</MudTh>
+                <MudTh>Valor nuevo</MudTh>
+                <MudTh>Usuario</MudTh>
+                <MudTh>Fecha</MudTh>
+                <MudTh>Justificación</MudTh>
+                <MudTh>Módulo afectado</MudTh>
+                <MudTh>Estado</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Parámetro">@context.Parameter</MudTd>
+                <MudTd DataLabel="Valor anterior">@context.PreviousValue</MudTd>
+                <MudTd DataLabel="Valor nuevo">@context.NewValue</MudTd>
+                <MudTd DataLabel="Usuario">@context.UserName</MudTd>
+                <MudTd DataLabel="Fecha">@context.EventDate.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                <MudTd DataLabel="Justificación">@context.Justification</MudTd>
+                <MudTd DataLabel="Módulo afectado">@context.AffectedModule</MudTd>
+                <MudTd DataLabel="Estado">
+                    <MudChip T="string" Color="@GetStateColor(context.ConfigurationState)" Variant="Variant.Outlined" Size="Size.Small">@context.ConfigurationState</MudChip>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<AuditConfigurationEventDto> Events { get; set; } = Array.Empty<AuditConfigurationEventDto>();
+
+    private static Color GetStateColor(string state) => state switch
+    {
+        "Exitoso" => Color.Success,
+        "Simulado" => Color.Info,
+        "Advertencia" => Color.Warning,
+        _ => Color.Primary
+    };
+}

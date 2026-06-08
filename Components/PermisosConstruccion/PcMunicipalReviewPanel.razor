@@ -1,0 +1,31 @@
+@using System
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Técnico municipal</MudText><MudText>@Permit.MunicipalReview.Technician</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Analista Urbanismo</MudText><MudText>@Permit.MunicipalReview.UrbanismAnalyst</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Estado</MudText><MudText>@Permit.MunicipalReview.Status</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Fecha</MudText><MudText>@FormatDate(Permit.MunicipalReview.ReviewedAt)</MudText></MudItem>
+        <MudItem xs="12"><MudTextField T="string" @bind-Value="Permit.MunicipalReview.TechnicalCriterion" Label="Criterio técnico" Variant="Variant.Outlined" Margin="Margin.Dense" AutoGrow="true" /></MudItem>
+        <MudItem xs="12"><MudTextField T="string" @bind-Value="Permit.MunicipalReview.Observations" Label="Observaciones" Variant="Variant.Outlined" Margin="Margin.Dense" AutoGrow="true" /></MudItem>
+    </MudGrid>
+    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mt-4">
+        <MudButton Variant="Variant.Outlined" OnClick="ApproveAsync">Aprobar revisión</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="PreventAsync">Prevenir</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="RejectAsync">Rechazar</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="CorrectionAsync">Solicitar subsanación</MudButton>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private Task ApproveAsync() { Permit.MunicipalReview.Status = "Aprobada"; Permit.MunicipalReview.ReviewedAt = DateTime.Today; Snackbar.Add("Revisión técnica aprobada en modo demo.", Severity.Success); return Task.CompletedTask; }
+    private Task PreventAsync() { Permit.MunicipalReview.Status = "Prevenida"; Snackbar.Add("Prevención técnica registrada.", Severity.Warning); return Task.CompletedTask; }
+    private Task RejectAsync() { Permit.MunicipalReview.Status = "Rechazada"; Permit.PermitStatus = "Rechazado"; Snackbar.Add("Revisión técnica rechazada en modo demo.", Severity.Error); return Task.CompletedTask; }
+    private Task CorrectionAsync() { Permit.MunicipalReview.Status = "Subsanación requerida"; Snackbar.Add("Subsanación solicitada en modo demo.", Severity.Info); return Task.CompletedTask; }
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
+}

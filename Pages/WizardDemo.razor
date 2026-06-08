@@ -1,0 +1,322 @@
+@page "/demo/wizard"
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using BlazorApp.Models
+@using BlazorApp.Services
+@using BlazorApp.Shared
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<PageTitle>Wizard Demo</PageTitle>
+
+<WizardShell Title="Demo técnico reusable"
+             Subtitle="Base transversal para futuros trámites y registros municipales"
+             ModuleName="Core Municipal"
+             ProcessCode="WZ-DEMO-001"
+             State="wizardState"
+             ProcessSummaryItems="processSummaryItems"
+             CurrentStepTitle="@currentStepTitle"
+             CurrentStepSubtitle="@currentStepSubtitle"
+             LastAuditEvent="@lastAuditEvent"
+             NextSuggestedStep="@nextSuggestedStep"
+             DraftSavedBy="@wizardState.DraftState.SavedBy"
+             DraftMessage="@wizardState.DraftState.Message"
+             CanGoBack="@(wizardState.CurrentStepIndex > 0)"
+             CanGoNext="@canGoNext"
+             CanFinish="@canFinish"
+             ShowValidationSummary="true"
+             OnBack="GoBackAsync"
+             OnNext="GoNextAsync"
+             OnSaveDraft="SaveDraftAsync"
+             OnCancel="CancelAsync"
+             OnFinish="FinishAsync">
+    <ChildContent>
+        @switch (wizardState.CurrentStepIndex)
+        {
+            case 0:
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" sm="6">
+                        <MudTextField T="string" Label="Nombre del proceso" Variant="Variant.Outlined" @bind-Value="processName" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudSelect T="string" Label="Tipo de gestión" Variant="Variant.Outlined" @bind-Value="processType">
+                            <MudSelectItem T="string" Value="@(string.Empty)">Seleccione</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("Registro")">Registro</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("Solicitud")">Solicitud</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("Declaración")">Declaración</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("Inspección")">Inspección</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+                break;
+            case 1:
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" sm="6">
+                        <MudTextField T="string" Label="Identificación" Variant="Variant.Outlined" @bind-Value="applicantId" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField T="string" Label="Correo" Variant="Variant.Outlined" @bind-Value="email" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField T="string" Label="Teléfono" Variant="Variant.Outlined" @bind-Value="phone" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField T="string" Label="Dirección" Variant="Variant.Outlined" @bind-Value="address" />
+                    </MudItem>
+                </MudGrid>
+                break;
+            case 2:
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" sm="6">
+                        <MudTextField T="string" Label="Actividad principal" Variant="Variant.Outlined" @bind-Value="mainActivity" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudSelect T="string" Label="Distrito" Variant="Variant.Outlined" @bind-Value="district">
+                            <MudSelectItem T="string" Value="@(string.Empty)">Seleccione</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("Central")">Central</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("San José")">San José</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("Mercedes")">Mercedes</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField T="string" Label="Observaciones mock" Variant="Variant.Outlined" @bind-Value="notes" />
+                    </MudItem>
+                </MudGrid>
+                break;
+            default:
+                <MudStack Spacing="2">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Este paso demuestra el cierre demo del estándar reusable.</MudAlert>
+                    <MudText Typo="Typo.body2">Use Finalizar para simular el cierre, registrar auditoría mock visual y cambiar el estado a completado.</MudText>
+                </MudStack>
+                break;
+        }
+    </ChildContent>
+</WizardShell>
+
+@code {
+    private readonly IWizardStateService wizardStateService = new WizardStateMockService();
+    private readonly IDraftService draftService = new DraftMockService();
+
+    private WizardStateDto wizardState = new();
+    private List<ProcessSummaryItemDto> processSummaryItems = new();
+    private string lastAuditEvent = "Sin eventos registrados aún.";
+    private string processName = "Nuevo trámite demo";
+    private string processType = "Solicitud";
+    private string applicantId = string.Empty;
+    private string email = string.Empty;
+    private string phone = string.Empty;
+    private string address = string.Empty;
+    private string mainActivity = string.Empty;
+    private string district = string.Empty;
+    private string notes = string.Empty;
+
+    private bool canGoNext => wizardState.Status != "Cancelado" && wizardState.CurrentStepIndex < wizardState.TotalSteps - 1;
+    private bool canFinish => wizardState.Status != "Cancelado" && wizardState.CurrentStepIndex == wizardState.TotalSteps - 1;
+    private string currentStepTitle => wizardState.Steps.ElementAtOrDefault(wizardState.CurrentStepIndex)?.Title ?? string.Empty;
+    private string currentStepSubtitle => wizardState.Steps.ElementAtOrDefault(wizardState.CurrentStepIndex)?.Description ?? string.Empty;
+    private string nextSuggestedStep => wizardState.CurrentStepIndex < wizardState.TotalSteps - 1
+        ? wizardState.Steps.ElementAtOrDefault(wizardState.CurrentStepIndex + 1)?.Title ?? "Resumen"
+        : "Finalizar proceso";
+
+    protected override void OnInitialized()
+    {
+        wizardState = wizardStateService.GetInitialState("Core Municipal", "Wizard Demo", new List<WizardStepDto>
+        {
+            new() { Id = "general", Title = "Datos generales", Description = "Identifique el tipo de gestión y nombre del proceso.", Icon = Icons.Material.Filled.Description },
+            new() { Id = "solicitante", Title = "Solicitante", Description = "Valide identificación, correo, teléfono y dirección.", Icon = Icons.Material.Filled.Person },
+            new() { Id = "detalle", Title = "Detalle", Description = "Capture actividad, distrito y observaciones mock.", Icon = Icons.Material.Filled.Business },
+            new() { Id = "cierre", Title = "Resumen y finalización", Description = "Revise el resumen y complete el proceso demo.", Icon = Icons.Material.Filled.TaskAlt }
+        }, "wizard-demo");
+        wizardState.ProcessCode = "WZ-DEMO-001";
+        wizardState.CreatedBy = "demo.user";
+        SyncSummary();
+    }
+
+    private async Task GoNextAsync()
+    {
+        var validations = BuildValidationsForCurrentStep();
+        wizardState = await wizardStateService.UpdateStepValidationAsync(wizardState, wizardState.CurrentStepId, validations);
+        if (wizardState.ValidationResults.Any(item => item.StepId == wizardState.CurrentStepId && !item.IsValid))
+        {
+            SyncSummary();
+            return;
+        }
+
+        wizardState = await wizardStateService.GoNextAsync(wizardState);
+        await draftService.MarkDirtyAsync(wizardState);
+        wizardState.DraftState = await draftService.MarkDirtyAsync(wizardState);
+        SyncSummary();
+    }
+
+    private async Task GoBackAsync()
+    {
+        wizardState = await wizardStateService.GoPreviousAsync(wizardState);
+        SyncSummary();
+    }
+
+    private async Task SaveDraftAsync()
+    {
+        wizardState = await wizardStateService.SaveDraftAsync(wizardState);
+        wizardState.DraftState = await draftService.SaveDraftAsync(wizardState, new { processName, processType, applicantId, email, phone, address, mainActivity, district, notes });
+        SyncSummary();
+    }
+
+    private async Task CancelAsync()
+    {
+        wizardState = await wizardStateService.SetStatusAsync(wizardState, "Cancelado");
+        wizardState.DraftState.Status = "Sin guardar";
+        wizardState.DraftState.Message = "Proceso cancelado en modo demo.";
+        lastAuditEvent = $"{DateTime.Now:dd/MM/yyyy HH:mm} · Cancelación mock registrada por demo.user.";
+        SyncSummary();
+    }
+
+    private async Task FinishAsync()
+    {
+        var validations = BuildValidationsForCurrentStep();
+        wizardState = await wizardStateService.UpdateStepValidationAsync(wizardState, wizardState.CurrentStepId, validations);
+        if (wizardState.ValidationResults.Any(item => item.StepId == wizardState.CurrentStepId && !item.IsValid))
+        {
+            SyncSummary();
+            return;
+        }
+
+        wizardState = await wizardStateService.SetStatusAsync(wizardState, "Completado");
+        wizardState.DraftState.Status = "Guardado";
+        wizardState.DraftState.Message = "Proceso finalizado correctamente en modo demo.";
+        lastAuditEvent = $"{DateTime.Now:dd/MM/yyyy HH:mm} · Evento mock de auditoría registrado para {processName}.";
+        Snackbar.Add("Proceso finalizado correctamente en modo demo.", Severity.Success);
+        SyncSummary();
+    }
+
+    private List<StepValidationResultDto> BuildValidationsForCurrentStep()
+    {
+        var currentStepId = wizardState.CurrentStepId;
+        var currentIndex = wizardState.CurrentStepIndex;
+        var currentTitle = currentStepTitle;
+        var results = new List<StepValidationResultDto>();
+
+        if (currentStepId == "general")
+        {
+            RegisterRequired(results, currentStepId, currentIndex, currentTitle, processName, "ProcessName", "El nombre del proceso es obligatorio.");
+            RegisterRequired(results, currentStepId, currentIndex, currentTitle, processType, "ProcessType", "Debe seleccionar el tipo de gestión.");
+        }
+        else if (currentStepId == "solicitante")
+        {
+            RegisterRequired(results, currentStepId, currentIndex, currentTitle, applicantId, "ApplicantId", "La identificación es obligatoria.");
+            RegisterRequired(results, currentStepId, currentIndex, currentTitle, address, "Address", "La dirección es obligatoria.");
+            if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+            {
+                results.Add(new StepValidationResultDto
+                {
+                    StepId = currentStepId,
+                    StepIndex = currentIndex,
+                    StepTitle = currentTitle,
+                    Field = "Email",
+                    Message = "El correo debe tener un formato válido.",
+                    Severity = "Error",
+                    IsValid = false,
+                    Messages = new List<string> { "El correo debe tener un formato válido." }
+                });
+            }
+            if (string.IsNullOrWhiteSpace(phone))
+            {
+                results.Add(new StepValidationResultDto
+                {
+                    StepId = currentStepId,
+                    StepIndex = currentIndex,
+                    StepTitle = currentTitle,
+                    Field = "Phone",
+                    Message = "El teléfono es recomendable para el contacto mock.",
+                    Severity = "Warning",
+                    IsValid = true,
+                    HasWarnings = true,
+                    Messages = new List<string> { "El teléfono es recomendable para el contacto mock." }
+                });
+            }
+        }
+        else if (currentStepId == "detalle")
+        {
+            RegisterRequired(results, currentStepId, currentIndex, currentTitle, mainActivity, "MainActivity", "La actividad principal es obligatoria.");
+            RegisterRequired(results, currentStepId, currentIndex, currentTitle, district, "District", "Debe seleccionar el distrito.");
+            if (string.IsNullOrWhiteSpace(notes))
+            {
+                results.Add(new StepValidationResultDto
+                {
+                    StepId = currentStepId,
+                    StepIndex = currentIndex,
+                    StepTitle = currentTitle,
+                    Field = "Notes",
+                    Message = "Puede agregar observaciones mock para enriquecer el demo.",
+                    Severity = "Info",
+                    IsValid = true,
+                    Messages = new List<string> { "Puede agregar observaciones mock para enriquecer el demo." }
+                });
+            }
+        }
+        else
+        {
+            results.Add(new StepValidationResultDto
+            {
+                StepId = currentStepId,
+                StepIndex = currentIndex,
+                StepTitle = currentTitle,
+                Field = "Summary",
+                Message = "Resumen final listo para cierre demo.",
+                Severity = "Success",
+                IsValid = true,
+                Messages = new List<string> { "Resumen final listo para cierre demo." }
+            });
+        }
+
+        if (!results.Any())
+        {
+            results.Add(new StepValidationResultDto
+            {
+                StepId = currentStepId,
+                StepIndex = currentIndex,
+                StepTitle = currentTitle,
+                Message = "Paso validado correctamente.",
+                Severity = "Success",
+                IsValid = true,
+                Messages = new List<string> { "Paso validado correctamente." }
+            });
+        }
+
+        return results;
+    }
+
+    private void RegisterRequired(List<StepValidationResultDto> results, string stepId, int stepIndex, string stepTitle, string? value, string field, string message)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+            return;
+
+        results.Add(new StepValidationResultDto
+        {
+            StepId = stepId,
+            StepIndex = stepIndex,
+            StepTitle = stepTitle,
+            Field = field,
+            Message = message,
+            Severity = "Error",
+            IsValid = false,
+            Messages = new List<string> { message }
+        });
+    }
+
+    private void SyncSummary()
+    {
+        processSummaryItems = new List<ProcessSummaryItemDto>
+        {
+            new() { Group = "Proceso", Label = "Proceso", Value = processName, Severity = "Info", Icon = Icons.Material.Filled.Assignment },
+            new() { Group = "Proceso", Label = "Tipo", Value = processType, Severity = "Info", Icon = Icons.Material.Filled.Category },
+            new() { Group = "Solicitante", Label = "Identificación", Value = string.IsNullOrWhiteSpace(applicantId) ? "Pendiente" : applicantId, Severity = string.IsNullOrWhiteSpace(applicantId) ? "Warning" : "Success", Icon = Icons.Material.Filled.Badge },
+            new() { Group = "Solicitante", Label = "Correo", Value = string.IsNullOrWhiteSpace(email) ? "Pendiente" : email, Severity = string.IsNullOrWhiteSpace(email) ? "Warning" : "Success", Icon = Icons.Material.Filled.Email },
+            new() { Group = "Detalle", Label = "Actividad", Value = string.IsNullOrWhiteSpace(mainActivity) ? "Pendiente" : mainActivity, Severity = string.IsNullOrWhiteSpace(mainActivity) ? "Warning" : "Success", Icon = Icons.Material.Filled.Storefront },
+            new() { Group = "Detalle", Label = "Distrito", Value = string.IsNullOrWhiteSpace(district) ? "Pendiente" : district, Severity = string.IsNullOrWhiteSpace(district) ? "Warning" : "Success", Icon = Icons.Material.Filled.LocationOn }
+        };
+
+        wizardState.ProcessSummaryItems = processSummaryItems;
+        wizardState.SummaryItems = processSummaryItems.Select(item => $"{item.Label}: {item.Value}").ToList();
+    }
+}

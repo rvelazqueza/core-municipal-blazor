@@ -1,0 +1,158 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información del local para sanciones.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined">Total @Items.Count</MudChip>
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Relacionadas @Items.Count(x => !string.IsNullOrWhiteSpace(x.RelatedWarningNumber))</MudChip>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="RegisterSanctionAsync">Registrar sanción mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="GenerateResolutionAsync">Generar resolución mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="NotifyAsync">Notificar mock</MudButton>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+            <MudTable T="MmSanctionDto" Items="@Items.OrderByDescending(x => x.AppliedDate)" Hover="true" Bordered="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Número</MudTh>
+                    <MudTh>Local</MudTh>
+                    <MudTh>Inquilino</MudTh>
+                    <MudTh>Tipo</MudTh>
+                    <MudTh>Fecha aplicación</MudTh>
+                    <MudTh>Plazo</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh>Amonestación</MudTh>
+                    <MudTh>Documento mock</MudTh>
+                    <MudTh>Notificación mock</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Número">@context.SanctionNumber</MudTd>
+                    <MudTd DataLabel="Local">@context.LocalNumber</MudTd>
+                    <MudTd DataLabel="Inquilino">@context.TenantName</MudTd>
+                    <MudTd DataLabel="Tipo">@context.SanctionType</MudTd>
+                    <MudTd DataLabel="Fecha aplicación">@context.AppliedDate.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Plazo">@context.Deadline.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Estado">@context.Status</MudTd>
+                    <MudTd DataLabel="Amonestación">@context.RelatedWarningNumber</MudTd>
+                    <MudTd DataLabel="Documento mock">@context.DocumentMock</MudTd>
+                    <MudTd DataLabel="Notificación mock">@context.NotificationMock</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public MmTenantDto? Tenant { get; set; }
+    [Parameter] public List<MmSanctionDto> Items { get; set; } = new();
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private Task RegisterSanctionAsync()
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        var item = new MmSanctionDto
+        {
+            Id = $"SAN-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            TenantId = Tenant?.Id ?? string.Empty,
+            SanctionNumber = $"SNC-MOCK-{DateTime.Now:HHmmss}",
+            LocalNumber = Local.LocalNumber,
+            TenantName = Tenant?.Name ?? "Sin asignar",
+            SanctionType = "Sanción administrativa mock",
+            AppliedDate = DateTime.Today,
+            Deadline = DateTime.Today.AddDays(10),
+            Status = "Registrada",
+            RelatedWarningNumber = "AMO-MOCK-REL",
+            DocumentMock = "Pendiente de resolución",
+            NotificationMock = "Pendiente de notificación"
+        };
+
+        Items.Insert(0, item);
+        RegisterMockEvent("Registrar sanción", string.Empty, item.SanctionNumber, "Sanciones", "Alta");
+        Snackbar.Add("Sanción mock registrada.", Severity.Error);
+        return Task.CompletedTask;
+    }
+
+    private Task GenerateResolutionAsync()
+    {
+        var item = Items.OrderByDescending(x => x.AppliedDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.DocumentMock = $"Resolucion_{item.SanctionNumber}.pdf";
+        item.Status = "Resuelta mock";
+        RegisterMockEvent("Generar resolución de sanción", "Pendiente", item.DocumentMock, "Sanciones", "Media");
+        Snackbar.Add("Resolución mock generada.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task NotifyAsync()
+    {
+        var item = Items.OrderByDescending(x => x.AppliedDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.NotificationMock = "Notificada mock";
+        RegisterMockEvent("Notificar sanción", "Pendiente", item.NotificationMock, "Sanciones", "Alta");
+        Snackbar.Add("Sanción mock notificada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousStatus = "Registrado",
+            NewStatus = "Actualizado",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Panel de sanciones",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde sanciones."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel de sanciones",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Bitácora visual mock"
+        });
+    }
+}

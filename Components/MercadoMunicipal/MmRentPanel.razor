@@ -1,0 +1,209 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null || Rent is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información de canon o alquiler para este expediente.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Canon / alquiler</MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6"><MudText>Monto mensual: @FormatCurrency(Rent.MonthlyAmount)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Área m²: @Rent.AreaM2</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Factor ponderación: @Rent.WeightingFactor</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Valor m²: @FormatCurrency(Rent.PricePerM2)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Precio propuesto: @FormatCurrency(Local.ProposedPrice)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Fecha cobro: Día @Rent.DueDay de cada período</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Fecha vencimiento: @($"{Rent.EndMonth:00}/{Rent.EndYear}")</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Depósito de garantía mock: @FormatCurrency(GuaranteeDeposit)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Ajuste anual: @AnnualAdjustment%</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Reajuste individual: @IndividualAdjustment%</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Reajuste colectivo: @CollectiveAdjustment%</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Descuento: @(Rent.HasDiscount ? "Aplicado" : "No aplicado")</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Suspensión del cobro: @(Rent.IsSuspended ? "Activa" : "No")</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Motivo de ajuste: @lastReason</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Usuario que modifica: @lastUser</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Fecha modificación: @lastDate</MudText></MudItem>
+                    <MudItem xs="12"><MudText>Observación: @Rent.Notes</MudText></MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <MudText Typo="Typo.subtitle1" Class="mb-3">Historial de cambios de monto</MudText>
+            <MudTable T="RentChangeItem" Items="@changeHistory.OrderByDescending(x => x.Date)" Hover="true">
+                <HeaderContent>
+                    <MudTh>Fecha</MudTh>
+                    <MudTh>Acción</MudTh>
+                    <MudTh>Detalle</MudTh>
+                    <MudTh>Usuario</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Date.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                    <MudTd>@context.Action</MudTd>
+                    <MudTd>@context.Detail</MudTd>
+                    <MudTd>@context.User</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ModifyRentAsync">Modificar alquiler mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ApplyAnnualAdjustmentAsync">Aplicar ajuste anual mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApplyDiscountAsync">Aplicar descuento mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SuspendChargeAsync">Suspender cobro mock</MudButton>
+            </div>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public MmRentDto? Rent { get; set; }
+    [Parameter] public IEnumerable<MmHistoryEventDto> HistoryEvents { get; set; } = Enumerable.Empty<MmHistoryEventDto>();
+
+    private readonly List<RentChangeItem> changeHistory = new();
+    private string lastReason = "Sin ajustes recientes";
+    private string lastUser = "Sistema";
+    private string lastDate = "N/D";
+    private string currentLocalId = string.Empty;
+
+    private decimal GuaranteeDeposit => Math.Round((Rent?.MonthlyAmount ?? 0m) * 2, 2);
+    private int AnnualAdjustment => 7;
+    private int IndividualAdjustment => 3;
+    private int CollectiveAdjustment => 5;
+
+    protected override void OnParametersSet()
+    {
+        if (Local is null || Rent is null)
+            return;
+
+        if (!string.Equals(currentLocalId, Local.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            currentLocalId = Local.Id;
+            changeHistory.Clear();
+            lastReason = "Sin ajustes recientes";
+            lastUser = "Sistema";
+            lastDate = "N/D";
+
+            var relevantEvents = HistoryEvents
+                .Where(item => item.Action.Contains("alquiler", StringComparison.OrdinalIgnoreCase) || item.Action.Contains("canon", StringComparison.OrdinalIgnoreCase) || item.Action.Contains("contrato", StringComparison.OrdinalIgnoreCase))
+                .Take(5)
+                .ToList();
+
+            if (relevantEvents.Count == 0)
+            {
+                relevantEvents.Add(new MmHistoryEventDto
+                {
+                    Date = DateTime.Today.AddDays(-15),
+                    Action = "Registro inicial de alquiler",
+                    NewValue = FormatCurrency(Rent.MonthlyAmount),
+                    User = "Sistema"
+                });
+            }
+
+            foreach (var item in relevantEvents)
+            {
+                changeHistory.Add(new RentChangeItem
+                {
+                    Date = item.Date,
+                    Action = item.Action,
+                    Detail = string.IsNullOrWhiteSpace(item.NewValue) ? "Actualización visual" : item.NewValue,
+                    User = string.IsNullOrWhiteSpace(item.User) ? "Sistema" : item.User
+                });
+            }
+
+            var latest = changeHistory.OrderByDescending(x => x.Date).FirstOrDefault();
+            if (latest is not null)
+            {
+                lastReason = latest.Action;
+                lastUser = latest.User;
+                lastDate = latest.Date.ToString("dd/MM/yyyy HH:mm");
+            }
+        }
+    }
+
+    private Task ModifyRentAsync()
+    {
+        if (Rent is null || Local is null)
+            return Task.CompletedTask;
+
+        Rent.MonthlyAmount += 10m;
+        Local.RentAmount = Rent.MonthlyAmount;
+        RegisterChange("Modificación de alquiler", $"Nuevo monto {FormatCurrency(Rent.MonthlyAmount)}", "Analista Mercado");
+        Snackbar.Add("Alquiler modificado en modo mock.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task ApplyAnnualAdjustmentAsync()
+    {
+        if (Rent is null || Local is null)
+            return Task.CompletedTask;
+
+        Rent.MonthlyAmount = Math.Round(Rent.MonthlyAmount * 1.07m, 2);
+        Local.RentAmount = Rent.MonthlyAmount;
+        RegisterChange("Ajuste anual", $"Monto reajustado a {FormatCurrency(Rent.MonthlyAmount)}", "Coordinación Mercado");
+        Snackbar.Add("Ajuste anual mock aplicado.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task ApplyDiscountAsync()
+    {
+        if (Rent is null || Local is null)
+            return Task.CompletedTask;
+
+        Rent.HasDiscount = true;
+        Rent.MonthlyAmount = Math.Max(0m, Rent.MonthlyAmount - 12m);
+        Local.RentAmount = Rent.MonthlyAmount;
+        RegisterChange("Aplicación de descuento", $"Monto con descuento {FormatCurrency(Rent.MonthlyAmount)}", "Tesorería Mock");
+        Snackbar.Add("Descuento mock aplicado.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task SuspendChargeAsync()
+    {
+        if (Rent is null)
+            return Task.CompletedTask;
+
+        Rent.IsSuspended = !Rent.IsSuspended;
+        RegisterChange("Suspensión de cobro", Rent.IsSuspended ? "Cobro suspendido" : "Cobro reactivado", "Analista Cobro");
+        Snackbar.Add(Rent.IsSuspended ? "Cobro suspendido en modo mock." : "Cobro reactivado en modo mock.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterChange(string action, string detail, string user)
+    {
+        var item = new RentChangeItem
+        {
+            Date = DateTime.Now,
+            Action = action,
+            Detail = detail,
+            User = user
+        };
+
+        changeHistory.Add(item);
+        lastReason = action;
+        lastUser = user;
+        lastDate = item.Date.ToString("dd/MM/yyyy HH:mm");
+    }
+
+    private static string FormatCurrency(decimal value) => $"CRC {value:N2}";
+
+    private sealed class RentChangeItem
+    {
+        public DateTime Date { get; set; }
+        public string Action { get; set; } = string.Empty;
+        public string Detail { get; set; } = string.Empty;
+        public string User { get; set; } = string.Empty;
+    }
+}

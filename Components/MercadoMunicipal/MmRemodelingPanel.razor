@@ -1,0 +1,172 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información del local para remodelaciones.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Gestiones @Items.Count</MudChip>
+                <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Aprobadas @Items.Count(x => x.Status.Contains("Aprobada", StringComparison.OrdinalIgnoreCase))</MudChip>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterPermitAsync">Registrar permiso de remodelación mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApproveAsync">Aprobar mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="RejectAsync">Rechazar mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="GenerateUrbanismTaskAsync">Generar tarea Urbanismo mock</MudButton>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+            <MudTable T="MmRemodelingPermitDto" Items="@Items.OrderByDescending(x => x.RequestDate)" Hover="true" Bordered="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Número gestión</MudTh>
+                    <MudTh>Local</MudTh>
+                    <MudTh>Tipo</MudTh>
+                    <MudTh>Fecha solicitud</MudTh>
+                    <MudTh>Fecha ejecución</MudTh>
+                    <MudTh>Horario autorizado</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh>Urbanismo</MudTh>
+                    <MudTh>Alcaldía</MudTh>
+                    <MudTh>Documento mock</MudTh>
+                    <MudTh>Notificación mock</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Número gestión">@context.ManagementNumber</MudTd>
+                    <MudTd DataLabel="Local">@context.LocalNumber</MudTd>
+                    <MudTd DataLabel="Tipo">@context.RemodelingType</MudTd>
+                    <MudTd DataLabel="Fecha solicitud">@context.RequestDate.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Fecha ejecución">@context.ExecutionDate.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Horario autorizado">@context.AuthorizedSchedule</MudTd>
+                    <MudTd DataLabel="Estado">@context.Status</MudTd>
+                    <MudTd DataLabel="Urbanismo">@context.UrbanismTask</MudTd>
+                    <MudTd DataLabel="Alcaldía">@context.MayorOfficeTask</MudTd>
+                    <MudTd DataLabel="Documento mock">@context.DocumentMock</MudTd>
+                    <MudTd DataLabel="Notificación mock">@context.NotificationMock</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public List<MmRemodelingPermitDto> Items { get; set; } = new();
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private Task RegisterPermitAsync()
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        var item = new MmRemodelingPermitDto
+        {
+            Id = $"RMD-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            ManagementNumber = $"RMD-MOCK-{DateTime.Now:HHmmss}",
+            LocalNumber = Local.LocalNumber,
+            RemodelingType = "Remodelación interna mock",
+            RequestDate = DateTime.Today,
+            ExecutionDate = DateTime.Today.AddDays(12),
+            AuthorizedSchedule = "06:00 a 10:00",
+            Status = "En revisión",
+            UrbanismTask = "Pendiente Urbanismo",
+            MayorOfficeTask = "Pendiente Alcaldía",
+            DocumentMock = "Permiso pendiente",
+            NotificationMock = "Notificación pendiente"
+        };
+
+        Items.Insert(0, item);
+        RegisterMockEvent("Registrar remodelación", string.Empty, item.ManagementNumber, "Remodelaciones", "Media");
+        Snackbar.Add("Permiso de remodelación mock registrado.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task ApproveAsync()
+    {
+        var item = Items.OrderByDescending(x => x.RequestDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.Status = "Aprobada";
+        item.MayorOfficeTask = "Aprobación mock emitida";
+        RegisterMockEvent("Aprobar remodelación", "En revisión", item.Status, "Remodelaciones", "Baja");
+        Snackbar.Add("Remodelación mock aprobada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task RejectAsync()
+    {
+        var item = Items.OrderByDescending(x => x.RequestDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.Status = "Rechazada";
+        RegisterMockEvent("Rechazar remodelación", "En revisión", item.Status, "Remodelaciones", "Alta");
+        Snackbar.Add("Remodelación mock rechazada.", Severity.Error);
+        return Task.CompletedTask;
+    }
+
+    private Task GenerateUrbanismTaskAsync()
+    {
+        var item = Items.OrderByDescending(x => x.RequestDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.UrbanismTask = "Tarea Urbanismo generada mock";
+        RegisterMockEvent("Generar tarea Urbanismo", "Pendiente", item.UrbanismTask, "Remodelaciones", "Media");
+        Snackbar.Add("Tarea Urbanismo mock generada.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousStatus = "Registrado",
+            NewStatus = "Actualizado",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Panel de remodelaciones",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde remodelaciones."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel de remodelaciones",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Bitácora visual mock"
+        });
+    }
+}

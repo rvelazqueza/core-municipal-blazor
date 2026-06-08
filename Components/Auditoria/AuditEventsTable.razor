@@ -1,0 +1,96 @@
+@using BlazorApp.Models.Auditoria
+@using MudBlazor
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="2">
+        <div class="d-flex flex-wrap justify-space-between align-center gap-2">
+            <div>
+                <MudText Typo="Typo.h6">Bitácora general</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Eventos ordenados y filtrables por trazabilidad transversal.</MudText>
+            </div>
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{Events.Count()} eventos")</MudChip>
+        </div>
+
+        <MudTable T="AuditEventDto" Items="@Events" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="AuditEventDto" SortBy="new Func<AuditEventDto, object>(x => x.EventDate)">Fecha/hora</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="AuditEventDto" SortBy="new Func<AuditEventDto, object>(x => x.UserName)">Usuario</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="AuditEventDto" SortBy="new Func<AuditEventDto, object>(x => x.Module)">Módulo</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="AuditEventDto" SortBy="new Func<AuditEventDto, object>(x => x.Action)">Acción</MudTableSortLabel></MudTh>
+                <MudTh>Tipo de evento</MudTh>
+                <MudTh>Entidad</MudTh>
+                <MudTh>ID entidad</MudTh>
+                <MudTh>Expediente</MudTh>
+                <MudTh>Contribuyente</MudTh>
+                <MudTh>Severidad</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh>Origen</MudTh>
+                <MudTh>IP mock</MudTh>
+                <MudTh>Resultado</MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Fecha/hora">@context.EventDate.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                <MudTd DataLabel="Usuario">@context.UserName</MudTd>
+                <MudTd DataLabel="Módulo">@context.Module</MudTd>
+                <MudTd DataLabel="Acción">@context.Action</MudTd>
+                <MudTd DataLabel="Tipo de evento">@context.EventType</MudTd>
+                <MudTd DataLabel="Entidad">@context.EntityName</MudTd>
+                <MudTd DataLabel="ID entidad">@context.EntityId</MudTd>
+                <MudTd DataLabel="Expediente">@context.ExpedientNumber</MudTd>
+                <MudTd DataLabel="Contribuyente">@context.TaxpayerIdentification</MudTd>
+                <MudTd DataLabel="Severidad">
+                    <MudChip T="string" Color="@GetSeverityColor(context.Severity)" Variant="Variant.Outlined" Size="Size.Small">@context.Severity</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Estado">
+                    <MudChip T="string" Color="@GetStatusColor(context.Status)" Variant="Variant.Outlined" Size="Size.Small">@context.Status</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Origen">@context.Source</MudTd>
+                <MudTd DataLabel="IP mock">@context.IpAddress</MudTd>
+                <MudTd DataLabel="Resultado">@context.ResultMessage</MudTd>
+                <MudTd DataLabel="Acciones">
+                    <MudStack Row="true" Spacing="0" Class="flex-wrap">
+                        <MudTooltip Text="Ver detalle">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" OnClick="@(() => OnDetailRequested.InvokeAsync(context))" />
+                        </MudTooltip>
+                        <MudTooltip Text="Ver trazabilidad">
+                            <MudIconButton Icon="@Icons.Material.Filled.Timeline" Size="Size.Small" OnClick="@(() => OnTraceRequested.InvokeAsync(context))" />
+                        </MudTooltip>
+                        <MudTooltip Text="Ver expediente relacionado">
+                            <MudIconButton Icon="@Icons.Material.Filled.Dashboard" Size="Size.Small" OnClick="@(() => OnExpedientRequested.InvokeAsync(context))" />
+                        </MudTooltip>
+                        <MudTooltip Text="Copiar referencia mock">
+                            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="@(() => OnCopyRequested.InvokeAsync(context))" />
+                        </MudTooltip>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<AuditEventDto> Events { get; set; } = Array.Empty<AuditEventDto>();
+    [Parameter] public EventCallback<AuditEventDto> OnDetailRequested { get; set; }
+    [Parameter] public EventCallback<AuditEventDto> OnTraceRequested { get; set; }
+    [Parameter] public EventCallback<AuditEventDto> OnExpedientRequested { get; set; }
+    [Parameter] public EventCallback<AuditEventDto> OnCopyRequested { get; set; }
+
+    private static Color GetSeverityColor(string severity) => severity switch
+    {
+        "Crítico" => Color.Error,
+        "Error" => Color.Error,
+        "Advertencia" => Color.Warning,
+        "Éxito" => Color.Success,
+        _ => Color.Info
+    };
+
+    private static Color GetStatusColor(string status) => status switch
+    {
+        "Fallido" or "Bloqueado" => Color.Error,
+        "Pendiente" => Color.Warning,
+        "Observado" => Color.Info,
+        "Exitoso" => Color.Success,
+        _ => Color.Primary
+    };
+}

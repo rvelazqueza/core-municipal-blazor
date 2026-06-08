@@ -1,0 +1,59 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+            <MudChip T="string" Text="Impuesto de construcción 1.5%" Color="Color.Success" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="Plazo ordinario 10 días" Color="Color.Info" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="Plazo excepcional 30 días" Color="Color.Warning" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="Estados APC/APC-R simulados" Color="Color.Primary" Variant="Variant.Outlined" />
+        </MudStack>
+        <MudText Typo="Typo.body2" Class="mt-3">Catálogos y parámetros mock para referencia operativa; no existe persistencia real.</MudText>
+    </MudPaper>
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Outlined="true">
+                <MudCardContent><MudText Typo="Typo.caption">Licencias / permisos</MudText><MudText Typo="Typo.h6">Mock</MudText></MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Outlined="true">
+                <MudCardContent><MudText Typo="Typo.caption">Inspecciones</MudText><MudText Typo="Typo.h6">Referencial</MudText></MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Outlined="true">
+                <MudCardContent><MudText Typo="Typo.caption">Cobro / pago</MudText><MudText Typo="Typo.h6">Simulado</MudText></MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Outlined="true">
+                <MudCardContent><MudText Typo="Typo.caption">Control de calidad</MudText><MudText Typo="Typo.h6">Preparado</MudText></MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <MudTable T="PcCatalogItemDto" Items="@Catalogs.OrderBy(x => x.Category).ThenBy(x => x.Name)" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Código</MudTh><MudTh>Catálogo</MudTh><MudTh>Descripción</MudTh><MudTh>Categoría</MudTh><MudTh>Estado</MudTh><MudTh>Módulo</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Code</MudTd>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.Description</MudTd>
+            <MudTd>@context.Category</MudTd>
+            <MudTd><MudChip T="string" Text="@context.Status" Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small" /></MudTd>
+            <MudTd>@context.Module</MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    [Parameter] public IEnumerable<PcCatalogItemDto> Catalogs { get; set; } = [];
+}

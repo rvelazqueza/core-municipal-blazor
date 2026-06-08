@@ -6,6 +6,8 @@ namespace BlazorApp.Services;
 public interface IPatentesService
 {
     Task<List<LicenciaComercialDto>> GetAllAsync();
+    Task<List<SolicitudPatenteDto>> GetSolicitudesAsync();
+    Task<PatentesModuleSnapshotDto> GetModuleSnapshotAsync();
     Task<LicenciaComercialDto> GetByIdAsync(int id);
     Task<List<LicenciaComercialDto>> SearchAsync(string? numeroLicencia, string? contribuyente, string? actividadEconomica, string? distrito, string? estado, DateTime? fechaVencimientoHasta, string? tipo);
     Task<LicenciaComercialDto> SaveSolicitudAsync(SolicitudPatenteDto solicitud);

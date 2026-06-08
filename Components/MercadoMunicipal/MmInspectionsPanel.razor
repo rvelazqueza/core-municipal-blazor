@@ -1,0 +1,157 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información del local para inspecciones.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Inspecciones @Items.Count</MudChip>
+                <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Observadas @Items.Count(x => x.Status.Equals("Observada", StringComparison.OrdinalIgnoreCase))</MudChip>
+                <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Finalizadas @Items.Count(x => x.Status.Equals("Finalizada", StringComparison.OrdinalIgnoreCase))</MudChip>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CreateInspectionAsync">Crear inspección mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="AssignInspectorAsync">Asignar inspector</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="RegisterResultAsync">Registrar resultado</MudButton>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+            <MudTable T="MmInspectionDto" Items="@Items.OrderByDescending(x => x.Date)" Hover="true" Bordered="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Número</MudTh>
+                    <MudTh>Local</MudTh>
+                    <MudTh>Inquilino</MudTh>
+                    <MudTh>Inspector</MudTh>
+                    <MudTh>Fecha</MudTh>
+                    <MudTh>Motivo</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh>Resultado</MudTh>
+                    <MudTh>Evidencias</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Número">@context.InspectionNumber</MudTd>
+                    <MudTd DataLabel="Local">@context.LocalNumber</MudTd>
+                    <MudTd DataLabel="Inquilino">@context.TenantName</MudTd>
+                    <MudTd DataLabel="Inspector">@context.Inspector</MudTd>
+                    <MudTd DataLabel="Fecha">@context.Date.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Motivo">@context.Reason</MudTd>
+                    <MudTd DataLabel="Estado">@context.Status</MudTd>
+                    <MudTd DataLabel="Resultado">@context.Result</MudTd>
+                    <MudTd DataLabel="Evidencias">@context.EvidencePlaceholder</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public MmTenantDto? Tenant { get; set; }
+    [Parameter] public List<MmInspectionDto> Items { get; set; } = new();
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private Task CreateInspectionAsync()
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        var item = new MmInspectionDto
+        {
+            Id = $"INSP-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            TenantId = Tenant?.Id ?? string.Empty,
+            InspectionNumber = $"INSP-MOCK-{DateTime.Now:HHmmss}",
+            LocalNumber = Local.LocalNumber,
+            TenantName = Tenant?.Name ?? "Sin asignar",
+            Inspector = "Pendiente asignación",
+            Date = DateTime.Today,
+            Reason = "Amonestación",
+            Status = "Solicitada",
+            Result = "Pendiente",
+            EvidencePlaceholder = "https://placehold.co/320x180?text=Inspecci%C3%B3n+Mock"
+        };
+
+        Items.Insert(0, item);
+        RegisterMockEvent("Crear inspección", string.Empty, item.InspectionNumber, "Inspecciones", "Media");
+        Snackbar.Add("Inspección mock creada.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task AssignInspectorAsync()
+    {
+        var item = Items.OrderByDescending(x => x.Date).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.Inspector = "Inspector Mercado QA";
+        item.Status = "Asignada";
+        RegisterMockEvent("Asignar inspector", "Pendiente asignación", item.Inspector, "Inspecciones", "Baja");
+        Snackbar.Add("Inspector asignado de forma mock.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task RegisterResultAsync()
+    {
+        var item = Items.OrderByDescending(x => x.Date).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.Status = "Finalizada";
+        item.Result = "Requiere corrección";
+        RegisterMockEvent("Registrar resultado de inspección", "Pendiente", item.Result, "Inspecciones", "Alta");
+        Snackbar.Add("Resultado de inspección mock registrado.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousStatus = "Registrado",
+            NewStatus = "Actualizado",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Panel de inspecciones",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde inspecciones."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel de inspecciones",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Bitácora visual mock"
+        });
+    }
+}

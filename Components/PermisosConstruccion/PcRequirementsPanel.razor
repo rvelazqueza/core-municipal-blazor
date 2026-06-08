@@ -1,0 +1,66 @@
+@using System
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+            <MudChip T="string" Text="@($"Presentados {PresentedCount}")" Color="Color.Success" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Pendientes {PendingCount}")" Color="Color.Warning" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Observados {ObservedCount}")" Color="Color.Error" Variant="Variant.Outlined" />
+        </MudStack>
+    </MudPaper>
+
+    <MudTable T="PcRequirementDto" Items="@Permit.Requirements" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Requisito</MudTh><MudTh>Estado</MudTh><MudTh>Documento</MudTh><MudTh>Observación</MudTh><MudTh>Origen</MudTh><MudTh>Recepción</MudTh><MudTh>Acción</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd><MudChip T="string" Text="@context.State" Color="@ResolveColor(context.State)" Variant="Variant.Outlined" Size="Size.Small" /></MudTd>
+            <MudTd>@context.DocumentPlaceholder</MudTd>
+            <MudTd>@context.Observation</MudTd>
+            <MudTd>@context.Origin</MudTd>
+            <MudTd>@(context.ReceivedAt?.ToString("dd/MM/yyyy") ?? "Pendiente")</MudTd>
+            <MudTd>
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => MarkPresented(context))">Marcar presentado</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => Observe(context))">Observar</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => RegisterCorrection(context))">Registrar subsanación</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => ViewDocument(context.DocumentPlaceholder))">Ver documento mock</MudButton>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudText Typo="Typo.h6">Documentos placeholder</MudText>
+        <MudTable T="PcDocumentDto" Items="@Permit.Documents" Dense="true" Hover="true">
+            <HeaderContent>
+                <MudTh>Documento</MudTh><MudTh>Placeholder</MudTh><MudTh>Estado</MudTh><MudTh>Origen</MudTh><MudTh>Fecha</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Name</MudTd>
+                <MudTd>@context.Placeholder</MudTd>
+                <MudTd>@context.State</MudTd>
+                <MudTd>@context.Origin</MudTd>
+                <MudTd>@(context.UploadedAt?.ToString("dd/MM/yyyy") ?? "Pendiente")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+</MudStack>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private int PresentedCount => Permit.Requirements.Count(x => x.State == "Presentado");
+    private int PendingCount => Permit.Requirements.Count(x => x.State == "Pendiente");
+    private int ObservedCount => Permit.Requirements.Count(x => x.State == "Observado");
+    private void MarkPresented(PcRequirementDto item) { item.State = "Presentado"; item.ReceivedAt = DateTime.Today; item.Observation = "Recibido en expediente mock"; Snackbar.Add($"{item.Name} marcado como presentado.", Severity.Success); }
+    private void Observe(PcRequirementDto item) { item.State = "Observado"; item.Observation = "Observación mock registrada"; Snackbar.Add($"{item.Name} quedó observado.", Severity.Warning); }
+    private void RegisterCorrection(PcRequirementDto item) { item.State = "Presentado"; item.Observation = "Subsanación mock registrada"; item.ReceivedAt = DateTime.Today; Snackbar.Add($"Subsanación registrada para {item.Name}.", Severity.Success); }
+    private void ViewDocument(string placeholder) => Snackbar.Add($"Documento mock {placeholder} visible solo de forma referencial.", Severity.Info);
+    private static Color ResolveColor(string status) => status switch { "Presentado" => Color.Success, "Observado" => Color.Error, "No aplica" => Color.Dark, _ => Color.Warning };
+}

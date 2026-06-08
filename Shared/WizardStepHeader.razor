@@ -1,0 +1,52 @@
+@using MudBlazor
+
+<MudStack Spacing="2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+        <MudChip T="string" Text="@($"Paso {StepNumber} de {TotalSteps}")" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" />
+        <MudChip T="string" Text="@Status" Color="@resolvedColor" Variant="Variant.Outlined" Size="Size.Small" Icon="@resolvedIcon" />
+    </MudStack>
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        @if (!string.IsNullOrWhiteSpace(Icon))
+        {
+            <MudIcon Icon="@Icon" Color="Color.Primary" Size="Size.Medium" />
+        }
+        <MudText Typo="Typo.subtitle1">@Title</MudText>
+    </MudStack>
+
+    @if (!string.IsNullOrWhiteSpace(Description))
+    {
+        <MudText Typo="Typo.body2">@Description</MudText>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public int StepNumber { get; set; }
+    [Parameter] public int TotalSteps { get; set; }
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Description { get; set; } = string.Empty;
+    [Parameter] public string Status { get; set; } = "Pendiente";
+    [Parameter] public string Icon { get; set; } = string.Empty;
+
+    private Color resolvedColor => normalizedStatus switch
+    {
+        "completado" => Color.Success,
+        "con alertas" => Color.Warning,
+        "con errores" => Color.Error,
+        "omitido" => Color.Default,
+        "en progreso" => Color.Info,
+        _ => Color.Default
+    };
+
+    private string resolvedIcon => normalizedStatus switch
+    {
+        "completado" => Icons.Material.Filled.TaskAlt,
+        "con alertas" => Icons.Material.Filled.WarningAmber,
+        "con errores" => Icons.Material.Filled.ErrorOutline,
+        "omitido" => Icons.Material.Filled.SkipNext,
+        "en progreso" => Icons.Material.Filled.Autorenew,
+        _ => Icons.Material.Filled.RadioButtonUnchecked
+    };
+
+    private string normalizedStatus => (Status ?? string.Empty).Trim().ToLowerInvariant();
+}

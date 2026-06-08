@@ -1,0 +1,378 @@
+@page "/plataforma-servicios"
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using BlazorApp.Models.PlataformaServicios
+@using BlazorApp.Services.PlataformaServicios
+@using BlazorApp.Shared
+@using MudBlazor
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitleBar Title="Plataforma de Servicios"
+              Subtitle="Ventanilla única para recepción, clasificación, seguimiento y resolución de trámites municipales.">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.NoteAdd" OnClick="CreateNewAsync">Nuevo trámite</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.AssignmentTurnedIn" OnClick="ShowControlQualityAsync">Control de calidad</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.PhoneAndroid" OnClick="ShowDigitalAsync">Trámites digitales</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Schedule" OnClick="ShowExpiredAsync">Trámites vencidos</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Assessment" OnClick="ShowReportsAsync">Reportes</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Hub" OnClick="ShowIntegrationsAsync">Integraciones</MudButton>
+    </Actions>
+</PageTitleBar>
+
+<MudStack Spacing="4">
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        Demo MVP de ventanilla única municipal con bandeja operativa, clasificación mock, control de calidad y vínculos visuales con módulos resolutores.
+    </MudAlert>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Recibidos" Value="@procedures.Count.ToString()" Subtitle="Trámites activos en la bandeja" Icon="@Icons.Material.Filled.Inbox" Color="Color.Primary" /></MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Pendientes" Value="@GetPendingCount().ToString()" Subtitle="Expedientes en atención" Icon="@Icons.Material.Filled.PendingActions" Color="Color.Info" /></MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Prevenidos" Value="@GetPreventedCount().ToString()" Subtitle="Pendientes de subsanación" Icon="@Icons.Material.Filled.ReportProblem" Color="Color.Warning" /></MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Resueltos" Value="@GetResolvedCount().ToString()" Subtitle="Casos cerrados o archivados" Icon="@Icons.Material.Filled.DoneAll" Color="Color.Success" /></MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Próximos a vencer" Value="@GetAlmostDueCount().ToString()" Subtitle="Seguimiento prioritario" Icon="@Icons.Material.Filled.Timer" Color="Color.Warning" /></MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Vencidos" Value="@GetExpiredCount().ToString()" Subtitle="Expedientes en alerta" Icon="@Icons.Material.Filled.Error" Color="Color.Error" /></MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Canal digital" Value="@CountByDigitalChannel().ToString()" Subtitle="MIMUNIENCASA, portal o VUI" Icon="@Icons.Material.Filled.Public" Color="Color.Secondary" /></MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Derivados" Value="@procedures.Count.ToString()" Subtitle="Derivación mock a módulos" Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Info" /></MudItem>
+    </MudGrid>
+
+    <MudPaper Outlined="true" Class="pa-3 pa-md-4">
+        <MudStack Spacing="2">
+            <div class="d-flex justify-space-between flex-wrap gap-2 align-center">
+                <div>
+                    <MudText Typo="Typo.h6">Filtros de bandeja</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Búsqueda mock sin backend, útil para validar la experiencia de clasificación y consulta.</MudText>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="ApplyFiltersAsync">Aplicar</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ClearAll" OnClick="ClearFiltersAsync">Limpiar</MudButton>
+                </div>
+            </div>
+
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6" md="4" lg="3"><MudTextField T="string" @bind-Value="filterCaseNumber" Label="Número de expediente" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3"><MudTextField T="string" @bind-Value="filterIdentification" Label="Identificación" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3"><MudTextField T="string" @bind-Value="filterApplicant" Label="Nombre del solicitante" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSelect T="string" @bind-Value="filterType" Label="Tipo de trámite" Variant="Variant.Outlined" Dense="true">
+                        <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+                        @foreach (var item in procedureTypes)
+                        {
+                            <MudSelectItem Value="@item.Name">@item.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSelect T="string" @bind-Value="filterModule" Label="Módulo resolutor" Variant="Variant.Outlined" Dense="true">
+                        <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+                        @foreach (var item in moduleOptions)
+                        {
+                            <MudSelectItem Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSelect T="string" @bind-Value="filterStatus" Label="Estado" Variant="Variant.Outlined" Dense="true">
+                        <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+                        @foreach (var item in statusOptions)
+                        {
+                            <MudSelectItem Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSelect T="string" @bind-Value="filterChannel" Label="Canal" Variant="Variant.Outlined" Dense="true">
+                        <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+                        @foreach (var item in channelOptions)
+                        {
+                            <MudSelectItem Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSelect T="string" @bind-Value="filterDepartment" Label="Departamento" Variant="Variant.Outlined" Dense="true">
+                        <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+                        @foreach (var item in departmentOptions)
+                        {
+                            <MudSelectItem Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSelect T="string" @bind-Value="filterPriority" Label="Prioridad" Variant="Variant.Outlined" Dense="true">
+                        <MudSelectItem Value="@string.Empty">Todas</MudSelectItem>
+                        @foreach (var item in priorityOptions)
+                        {
+                            <MudSelectItem Value="@item">@item</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3"><MudTextField T="string" @bind-Value="filterResponsible" Label="Responsable" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3"><MudDatePicker @bind-Date="filterStartDate" Label="Fecha inicio" Variant="Variant.Outlined" Editable="true" /></MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3"><MudDatePicker @bind-Date="filterEndDate" Label="Fecha fin" Variant="Variant.Outlined" Editable="true" /></MudItem>
+            </MudGrid>
+        </MudStack>
+    </MudPaper>
+
+    <MudPaper Outlined="true" Class="pa-3 pa-md-4">
+        <MudStack Spacing="2">
+            <div class="d-flex justify-space-between flex-wrap gap-2 align-center">
+                <div>
+                    <MudText Typo="Typo.h6">Bandeja de trámites</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">@filteredProcedures.Count expedientes coinciden con los filtros aplicados.</MudText>
+                </div>
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Datos mock en memoria</MudChip>
+            </div>
+
+            @if (filteredProcedures.Any())
+            {
+                <MudTable T="PsProcedureDto" Items="@filteredProcedures" Hover="true" Dense="true" Striped="true" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
+                        <MudTh>Expediente</MudTh>
+                        <MudTh>Tipo</MudTh>
+                        <MudTh>Solicitante</MudTh>
+                        <MudTh>Identificación</MudTh>
+                        <MudTh>Canal</MudTh>
+                        <MudTh>Módulo resolutor</MudTh>
+                        <MudTh>Departamento</MudTh>
+                        <MudTh>Estado</MudTh>
+                        <MudTh>Ingreso</MudTh>
+                        <MudTh>Plazo</MudTh>
+                        <MudTh>Prioridad</MudTh>
+                        <MudTh>Acciones</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Expediente">@context.CaseNumber</MudTd>
+                        <MudTd DataLabel="Tipo">@context.TypeName</MudTd>
+                        <MudTd DataLabel="Solicitante">@context.Applicant.Name</MudTd>
+                        <MudTd DataLabel="Identificación">@context.Applicant.Identification</MudTd>
+                        <MudTd DataLabel="Canal"><MudChip T="string" Size="Size.Small" Color="@GetChannelColor(context.Channel)" Variant="Variant.Outlined">@context.Channel</MudChip></MudTd>
+                        <MudTd DataLabel="Módulo resolutor">@context.ResolverModule</MudTd>
+                        <MudTd DataLabel="Departamento">@context.Department</MudTd>
+                        <MudTd DataLabel="Estado"><MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
+                        <MudTd DataLabel="Ingreso">@context.EntryDate.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd DataLabel="Plazo"><MudChip T="string" Size="Size.Small" Color="@GetDeadlineColor(context.Deadline.Status)" Variant="Variant.Outlined">@context.Deadline.Status</MudChip></MudTd>
+                        <MudTd DataLabel="Prioridad"><MudChip T="string" Size="Size.Small" Color="@GetPriorityColor(context.Priority)" Variant="Variant.Filled">@context.Priority</MudChip></MudTd>
+                        <MudTd DataLabel="Acciones">
+                            <div class="d-flex flex-wrap gap-1">
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewExpedienteAsync(context))">Ver expediente</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Edit" OnClick="@(() => EditAsync(context))">Editar</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.SwapHoriz" OnClick="ShowTransferAsync">Trasladar</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="ShowPreventionAsync">Prevenir</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.TaskAlt" OnClick="ShowResolutionAsync">Resolver</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Notifications" OnClick="ShowNotificationAsync">Notificar</MudButton>
+                            </div>
+                        </MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 20, 50 }" />
+                    </PagerContent>
+                </MudTable>
+            }
+            else
+            {
+                <EmptyState Title="Sin resultados" Description="No hay trámites que coincidan con los filtros aplicados." Icon="@Icons.Material.Filled.FilterAltOff" />
+            }
+        </MudStack>
+    </MudPaper>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" lg="7">
+            <MudPaper Outlined="true" Class="pa-3 pa-md-4 h-100">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Reportería mock</MudText>
+                    <MudGrid Spacing="2">
+                        @foreach (var report in reports)
+                        {
+                            <MudItem xs="12" sm="6">
+                                <MudCard Outlined="true" Class="h-100">
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.subtitle1">@report.Name</MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">@report.Description</MudText>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" Class="mt-2">@report.Filters</MudChip>
+                                        <div class="d-flex flex-wrap gap-1 mt-3">
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowInfoAsync(report.Name))">Ver mock</MudButton>
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowExportAsync(report.Name))">Exportar Excel mock</MudButton>
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowExportAsync(report.Name))">Exportar PDF mock</MudButton>
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowExportAsync(report.Name))">Exportar Word mock</MudButton>
+                                        </div>
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="5">
+            <MudPaper Outlined="true" Class="pa-3 pa-md-4 h-100">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Integraciones simuladas</MudText>
+                    @foreach (var integration in integrations)
+                    {
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <div class="d-flex justify-space-between gap-2 align-start">
+                                    <div>
+                                        <MudText Typo="Typo.subtitle2">@integration.Name</MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">@integration.Description</MudText>
+                                    </div>
+                                    <MudChip T="string" Size="Size.Small" Color="@GetIntegrationColor(integration.Status)" Variant="Variant.Outlined">@integration.Status</MudChip>
+                                </div>
+                                <MudText Typo="Typo.caption" Class="mt-2">@($"Código de integración: {integration.Code}")</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudStack>
+
+@code {
+    private readonly PlataformaServiciosMockService mockService = new();
+    private List<PsProcedureDto> procedures = new();
+    private List<PsProcedureDto> filteredProcedures = new();
+    private List<PsProcedureTypeDto> procedureTypes = new();
+    private List<PsReportDto> reports = new();
+    private List<PsCatalogItemDto> integrations = new();
+
+    private readonly string[] statusOptions = [ "Recibido", "En clasificación", "En revisión", "Trasladado", "En análisis", "Prevenido", "Resuelto", "Archivado" ];
+    private readonly string[] channelOptions = [ "Presencial", "MIMUNIENCASA", "Portal municipal", "VUI", "Correo", "Teléfono", "Gestión interna" ];
+    private readonly string[] departmentOptions = [ "Atención inicial", "Catastro", "Patentes", "Ingeniería", "Mercado", "Secretaría", "Tesorería", "Correspondencia" ];
+    private readonly string[] priorityOptions = [ "Normal", "Alta", "Urgente" ];
+    private readonly string[] moduleOptions = [ "RUC", "Bienes Inmuebles", "Patentes", "Permisos de Construcción", "Mercado Municipal", "Plataforma de Servicios" ];
+
+    private string filterCaseNumber = string.Empty;
+    private string filterIdentification = string.Empty;
+    private string filterApplicant = string.Empty;
+    private string filterType = string.Empty;
+    private string filterModule = string.Empty;
+    private string filterStatus = string.Empty;
+    private string filterChannel = string.Empty;
+    private string filterDepartment = string.Empty;
+    private string filterPriority = string.Empty;
+    private string filterResponsible = string.Empty;
+    private DateTime? filterStartDate;
+    private DateTime? filterEndDate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        procedureTypes = await mockService.GetProcedureTypesAsync();
+        procedures = await mockService.GetProceduresAsync();
+        reports = await mockService.GetReportsAsync();
+        integrations = await mockService.GetIntegrationsAsync();
+        filteredProcedures = procedures.ToList();
+    }
+
+    private async Task CreateNewAsync()
+    {
+        NavigationManager.NavigateTo("/plataforma-servicios/nuevo");
+        await Task.CompletedTask;
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        filteredProcedures = procedures.Where(item =>
+            (string.IsNullOrWhiteSpace(filterCaseNumber) || item.CaseNumber.Contains(filterCaseNumber, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filterIdentification) || item.Applicant.Identification.Contains(filterIdentification, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filterApplicant) || item.Applicant.Name.Contains(filterApplicant, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filterType) || item.TypeName.Equals(filterType, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filterModule) || item.ResolverModule.Equals(filterModule, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filterStatus) || item.Status.Equals(filterStatus, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filterChannel) || item.Channel.Equals(filterChannel, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filterDepartment) || item.Department.Equals(filterDepartment, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filterPriority) || item.Priority.Equals(filterPriority, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(filterResponsible) || item.Responsible.Contains(filterResponsible, StringComparison.OrdinalIgnoreCase)) &&
+            (!filterStartDate.HasValue || item.EntryDate.Date >= filterStartDate.Value.Date) &&
+            (!filterEndDate.HasValue || item.EntryDate.Date <= filterEndDate.Value.Date)
+        ).ToList();
+
+        Snackbar.Add("Bandeja filtrada en modo demo.", Severity.Info);
+        await Task.CompletedTask;
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        filterCaseNumber = string.Empty;
+        filterIdentification = string.Empty;
+        filterApplicant = string.Empty;
+        filterType = string.Empty;
+        filterModule = string.Empty;
+        filterStatus = string.Empty;
+        filterChannel = string.Empty;
+        filterDepartment = string.Empty;
+        filterPriority = string.Empty;
+        filterResponsible = string.Empty;
+        filterStartDate = null;
+        filterEndDate = null;
+        filteredProcedures = procedures.ToList();
+        Snackbar.Add("Filtros restablecidos.", Severity.Normal);
+        await Task.CompletedTask;
+    }
+
+    private async Task ViewExpedienteAsync(PsProcedureDto procedure)
+    {
+        NavigationManager.NavigateTo($"/plataforma-servicios/expediente/{procedure.Id}");
+        await Task.CompletedTask;
+    }
+
+    private async Task EditAsync(PsProcedureDto procedure)
+    {
+        NavigationManager.NavigateTo($"/plataforma-servicios/expediente/{procedure.Id}");
+        await Task.CompletedTask;
+    }
+
+    private async Task ShowActionAsync(string message)
+    {
+        Snackbar.Add($"{message} disponible solo como simulación en la demo.", Severity.Info);
+        await Task.CompletedTask;
+    }
+
+    private async Task ShowInfoAsync(string section)
+    {
+        Snackbar.Add($"{section} se presenta como panel mock en este entorno.", Severity.Info);
+        await Task.CompletedTask;
+    }
+
+    private Task ShowControlQualityAsync() => ShowInfoAsync("Control de calidad");
+    private Task ShowDigitalAsync() => ShowInfoAsync("Trámites digitales");
+    private Task ShowExpiredAsync() => ShowInfoAsync("Trámites vencidos");
+    private Task ShowReportsAsync() => ShowInfoAsync("Reportes");
+    private Task ShowIntegrationsAsync() => ShowInfoAsync("Integraciones");
+    private Task ShowTransferAsync() => ShowActionAsync("Traslado simulado");
+    private Task ShowPreventionAsync() => ShowActionAsync("Prevención simulada");
+    private Task ShowResolutionAsync() => ShowActionAsync("Resolución simulada");
+    private Task ShowNotificationAsync() => ShowActionAsync("Notificación simulada");
+
+    private async Task ShowExportAsync(string reportName)
+    {
+        Snackbar.Add($"Exportación de '{reportName}' disponible en implementación backend.", Severity.Warning);
+        await Task.CompletedTask;
+    }
+
+    private int CountByStatus(params string[] statuses) => procedures.Count(item => statuses.Contains(item.Status, StringComparer.OrdinalIgnoreCase));
+    private int CountByDeadline(string status) => procedures.Count(item => item.Deadline.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+    private int CountByDigitalChannel() => procedures.Count(item => channelOptions.Contains(item.Channel) && !item.Channel.Equals("Presencial", StringComparison.OrdinalIgnoreCase) && !item.Channel.Equals("Teléfono", StringComparison.OrdinalIgnoreCase));
+    private int GetPendingCount() => CountByStatus("Recibido", "En clasificación", "En revisión");
+    private int GetPreventedCount() => CountByStatus("Prevenido");
+    private int GetResolvedCount() => CountByStatus("Resuelto", "Archivado");
+    private int GetAlmostDueCount() => CountByDeadline("Próximo a vencer");
+    private int GetExpiredCount() => CountByDeadline("Vencido");
+
+    private Color GetChannelColor(string channel)
+        => channel is "Presencial" ? Color.Primary : channel is "MIMUNIENCASA" or "Portal municipal" or "VUI" ? Color.Info : Color.Secondary;
+
+    private Color GetStatusColor(string status)
+        => status is "Resuelto" or "Archivado" ? Color.Success : status is "Prevenido" ? Color.Warning : status is "Vencido" ? Color.Error : Color.Info;
+
+    private Color GetDeadlineColor(string status)
+        => status is "Vencido" ? Color.Error : status is "Próximo a vencer" ? Color.Warning : Color.Success;
+
+    private Color GetPriorityColor(string priority)
+        => priority is "Urgente" ? Color.Error : priority is "Alta" ? Color.Warning : Color.Info;
+
+    private Color GetIntegrationColor(string status)
+        => status is "Preparado" ? Color.Success : status is "Simulado" ? Color.Info : Color.Warning;
+}

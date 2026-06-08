@@ -217,6 +217,7 @@ public class ContribuyentesMockService : IContribuyentesService
             UltimaActualizacion = source.UltimaActualizacion,
             TributosVinculados = source.TributosVinculados.Select(x => new TributoVinculadoDto { Codigo = x.Codigo, Nombre = x.Nombre, Estado = x.Estado }).ToList(),
             BienesInmueblesVinculados = source.BienesInmueblesVinculados.Select(x => new BienInmuebleVinculadoDto { FincaNumero = x.FincaNumero, Distrito = x.Distrito, Uso = x.Uso, Estado = x.Estado }).ToList(),
+            Observaciones = source.Observaciones,
             HistorialCambios = source.HistorialCambios.Select(x => new AuditoriaCambioDto { Usuario = x.Usuario, FechaHora = x.FechaHora, CampoModificado = x.CampoModificado, ValorAnterior = x.ValorAnterior, ValorNuevo = x.ValorNuevo, Origen = x.Origen }).ToList()
         };
     }

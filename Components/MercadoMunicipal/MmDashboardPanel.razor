@@ -1,0 +1,320 @@
+@using System.Linq
+@using BlazorApp.Models
+@using BlazorApp.Services
+
+@{
+    var locals = marketService.GetLocals();
+    var tenants = marketService.GetTenants();
+    var contracts = marketService.GetContracts();
+    var rents = marketService.GetRents();
+    var receivables = marketService.GetReceivables();
+    var emissions = marketService.GetEmissions();
+    var collections = marketService.GetCollections();
+    var integrations = marketService.GetIntegrations();
+
+    var totalLocals = locals.Count;
+    var fixedLocals = locals.Count(x => string.Equals(x.LocalType, "Fijo", StringComparison.OrdinalIgnoreCase));
+    var occasionalLocals = locals.Count(x => x.LocalType.Contains("Ocasional", StringComparison.OrdinalIgnoreCase) || x.LocalType.Contains("Derecho de piso", StringComparison.OrdinalIgnoreCase));
+    var rentedLocals = locals.Count(x => string.Equals(x.Status, "Alquilado", StringComparison.OrdinalIgnoreCase));
+    var vacantLocals = locals.Count(x => string.Equals(x.Status, "Desocupado", StringComparison.OrdinalIgnoreCase));
+    var remateLocals = locals.Count(x => string.Equals(x.Status, "En remate", StringComparison.OrdinalIgnoreCase));
+
+    var activeContracts = contracts.Count(x => string.Equals(x.Status, "Activo", StringComparison.OrdinalIgnoreCase));
+    var expiringContracts = contracts.Count(x => string.Equals(x.Status, "Próximo a vencer", StringComparison.OrdinalIgnoreCase));
+    var expiredContracts = contracts.Count(x => string.Equals(x.Status, "Vencido", StringComparison.OrdinalIgnoreCase));
+
+    var moroseTenants = locals.Count(x => x.HasMorosity);
+    var monthlyEmissions = emissions.Count(x => string.Equals(x.EmissionType, "Mensual", StringComparison.OrdinalIgnoreCase));
+    var annualEmissions = emissions.Count(x => string.Equals(x.EmissionType, "Anual", StringComparison.OrdinalIgnoreCase));
+    var pendingReceivables = receivables.Count(x => string.Equals(x.Status, "Pendiente", StringComparison.OrdinalIgnoreCase) || string.Equals(x.Status, "Moroso", StringComparison.OrdinalIgnoreCase));
+
+    var monthlyAmount = rents.Sum(x => x.MonthlyAmount);
+    var morosityAmount = collections.Sum(x => x.OverdueBalance);
+
+    var transfersInProcess = Math.Max(1, tenants.Count / 4);
+    var warningsActive = Math.Max(2, locals.Count / 5);
+    var sanctionsActive = Math.Max(1, collections.Count / 2);
+    var cardsNearExpiry = Math.Max(2, tenants.Count / 3);
+    var inspectionsPending = Math.Max(2, contracts.Count / 3);
+    var occupancyPercent = totalLocals == 0 ? 0 : Math.Round((decimal)rentedLocals / totalLocals * 100m, 0);
+    var collectionTasks = collections.Take(4).ToList();
+    var availabilityRows = locals
+        .GroupBy(x => new { x.Zone, x.Floor, x.Aisle })
+        .Select(group => new AvailabilityRow(group.Key.Zone, group.Key.Floor, group.Key.Aisle, group.Count()))
+        .Take(6)
+        .ToList();
+    var integrationRows = integrations.Take(6).ToList();
+}
+
+<MudStack Spacing="3">
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="8">
+            <MudPaper Outlined="true" Class="pa-4 h-100">
+                <MudStack Spacing="2">
+                    <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+                        <div>
+                            <MudText Typo="Typo.h6">Ocupación del mercado</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Vista general del padrón operativo en modo demo.
+                            </MudText>
+                        </div>
+
+                        <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">
+                            @occupancyPercent% ocupado
+                        </MudChip>
+                    </div>
+
+                    <MudProgressLinear Color="Color.Success" Size="Size.Large" Value="@((double)occupancyPercent)" Class="my-1" />
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">Locales: @totalLocals</MudChip>
+                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Alquilados: @rentedLocals</MudChip>
+                        <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Vacantes: @vacantLocals</MudChip>
+                        <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined">Remate: @remateLocals</MudChip>
+                    </div>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudPaper Outlined="true" Class="pa-4 h-100">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Morosidad simulada</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Cuenta de cobro y presión referencial.
+                    </MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Error">₡@morosityAmount.ToString("N0")</MudText>
+                    <MudStack Spacing="1">
+                        <MudChip T="string" Color="Color.Error" Variant="Variant.Filled">Morosos: @moroseTenants</MudChip>
+                        <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Cobro administrativo: @collectionTasks.Count</MudChip>
+                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Pendientes: @pendingReceivables</MudChip>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Total de locales</MudText>
+                <MudText Typo="Typo.h5">@totalLocals</MudText>
+                <MudText Typo="Typo.body2">Padrón general demo.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Locales fijos</MudText>
+                <MudText Typo="Typo.h5">@fixedLocals</MudText>
+                <MudText Typo="Typo.body2">Concesiones permanentes.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Locales ocasionales / derechos de piso</MudText>
+                <MudText Typo="Typo.h5">@occasionalLocals</MudText>
+                <MudText Typo="Typo.body2">Uso transitorio o temporal.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Locales alquilados</MudText>
+                <MudText Typo="Typo.h5">@rentedLocals</MudText>
+                <MudText Typo="Typo.body2">Estados activos en padrón.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Locales desocupados</MudText>
+                <MudText Typo="Typo.h5">@vacantLocals</MudText>
+                <MudText Typo="Typo.body2">Disponibilidad visible.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Locales en remate</MudText>
+                <MudText Typo="Typo.h5">@remateLocals</MudText>
+                <MudText Typo="Typo.body2">Control referencial de remate.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Contratos activos</MudText>
+                <MudText Typo="Typo.h5">@activeContracts</MudText>
+                <MudText Typo="Typo.body2">Vigencias en curso.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Contratos próximos a vencer</MudText>
+                <MudText Typo="Typo.h5">@expiringContracts</MudText>
+                <MudText Typo="Typo.body2">Alertas de renovación.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Contratos vencidos</MudText>
+                <MudText Typo="Typo.h5">@expiredContracts</MudText>
+                <MudText Typo="Typo.body2">Seguimiento vencido.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Inquilinos morosos</MudText>
+                <MudText Typo="Typo.h5">@moroseTenants</MudText>
+                <MudText Typo="Typo.body2">Estado referencial de mora.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Emisiones mensuales</MudText>
+                <MudText Typo="Typo.h5">@monthlyEmissions</MudText>
+                <MudText Typo="Typo.body2">Generadas en modo demo.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Emisiones anuales</MudText>
+                <MudText Typo="Typo.h5">@annualEmissions</MudText>
+                <MudText Typo="Typo.body2">Proceso anual simulado.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Cuentas por cobrar pendientes</MudText>
+                <MudText Typo="Typo.h5">@pendingReceivables</MudText>
+                <MudText Typo="Typo.body2">Cartera visible para control.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Monto mensual emitido</MudText>
+                <MudText Typo="Typo.h5">₡@monthlyAmount.ToString("N0")</MudText>
+                <MudText Typo="Typo.body2">Suma mock del canon.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Monto en mora</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Error">₡@morosityAmount.ToString("N0")</MudText>
+                <MudText Typo="Typo.body2">Saldo vencido simulado.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Traspasos en trámite</MudText>
+                <MudText Typo="Typo.h5">@transfersInProcess</MudText>
+                <MudText Typo="Typo.body2">Gestiones referenciales.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Amonestaciones activas</MudText>
+                <MudText Typo="Typo.h5">@warningsActive</MudText>
+                <MudText Typo="Typo.body2">Control disciplinario mock.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Sanciones activas</MudText>
+                <MudText Typo="Typo.h5">@sanctionsActive</MudText>
+                <MudText Typo="Typo.body2">Estado sancionatorio demo.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Carnés próximos a vencer</MudText>
+                <MudText Typo="Typo.h5">@cardsNearExpiry</MudText>
+                <MudText Typo="Typo.body2">Seguimiento referencial.</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-3 h-100">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Inspecciones pendientes</MudText>
+                <MudText Typo="Typo.h5">@inspectionsPending</MudText>
+                <MudText Typo="Typo.body2">Agenda de revisión mock.</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="6">
+            <MudPaper Outlined="true" Class="pa-4 h-100">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Disponibilidad por zona / piso / pasillo</MudText>
+                    @foreach (var row in availabilityRows)
+                    {
+                        <div class="d-flex justify-content-between align-items-center gap-2 border-bottom pb-2">
+                            <div>
+                                <MudText Typo="Typo.body1">@row.Zone / @row.Floor / @row.Aisle</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Localidades referenciales</MudText>
+                            </div>
+                            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@row.Count</MudChip>
+                        </div>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudPaper Outlined="true" Class="pa-4 h-100">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Tareas de cobro administrativo referencial</MudText>
+                    @foreach (var collection in collectionTasks)
+                    {
+                        <MudPaper Outlined="true" Class="pa-3">
+                            <MudStack Spacing="1">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <MudText Typo="Typo.body1">@collection.LocalId</MudText>
+                                    <MudChip T="string" Color="@GetCollectionColor(collection.Status)" Variant="Variant.Filled">@collection.Status</MudChip>
+                                </div>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@collection.LastAction</MudText>
+                                <MudText Typo="Typo.caption">Responsable: @collection.ResponsibleUser</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Integraciones principales</MudText>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var integration in integrationRows)
+                {
+                    <MudChip T="string" Color="@GetIntegrationColor(integration.Status)" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Link">
+                        @integration.Name
+                    </MudChip>
+                }
+            </div>
+        </MudStack>
+    </MudPaper>
+</MudStack>
+
+@code {
+    private readonly MercadoMunicipalMockService marketService = new();
+
+    private sealed record AvailabilityRow(string Zone, string Floor, string Aisle, int Count);
+
+    private static Color GetCollectionColor(string status) => status switch
+    {
+        "Al día" => Color.Success,
+        "Moroso" => Color.Error,
+        "En cobro administrativo" => Color.Warning,
+        "Arreglo de pago" => Color.Info,
+        "Aplazamiento" => Color.Secondary,
+        "Cobro judicial" => Color.Dark,
+        _ => Color.Default
+    };
+
+    private static Color GetIntegrationColor(string status) => status switch
+    {
+        "Simulado" => Color.Success,
+        "Referencial" => Color.Info,
+        "Preparado" => Color.Warning,
+        "No incluido en MVP" => Color.Dark,
+        _ => Color.Default
+    };
+}

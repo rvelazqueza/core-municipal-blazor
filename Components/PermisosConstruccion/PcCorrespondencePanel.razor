@@ -1,0 +1,102 @@
+@using System
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+            <MudChip T="string" Text="@($"Registradas {CountBy("Registrada")}")" Color="Color.Info" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"En análisis {CountBy("En análisis")}")" Color="Color.Warning" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Resueltas {CountBy("Resuelta")}")" Color="Color.Success" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Notificadas {CountBy("Notificada")}")" Color="Color.Dark" Variant="Variant.Outlined" />
+        </MudStack>
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+            La correspondencia es mock; no se generan documentos reales ni notificaciones reales.
+        </MudAlert>
+    </MudPaper>
+
+    <MudTable T="PcCorrespondenceDto" Items="@Permit.Correspondences.OrderBy(x => x.ManagementNumber)" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Gestión</MudTh><MudTh>Tipo</MudTh><MudTh>Canal</MudTh><MudTh>Solicitante</MudTh><MudTh>Destino</MudTh><MudTh>Estado</MudTh><MudTh>Resolución</MudTh><MudTh>Plazo</MudTh><MudTh>Acciones</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.ManagementNumber</MudTd>
+            <MudTd>@context.Type</MudTd>
+            <MudTd>@context.Channel</MudTd>
+            <MudTd>@context.Applicant</MudTd>
+            <MudTd>@context.DestinationDepartment</MudTd>
+            <MudTd><MudChip T="string" Text="@context.Status" Color="@ResolveColor(context.Status)" Variant="Variant.Outlined" Size="Size.Small" /></MudTd>
+            <MudTd>@context.ResolutionMock</MudTd>
+            <MudTd>@FormatDate(context.DeadlineMock)</MudTd>
+            <MudTd>
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => RegisterCorrespondence(context))">Registrar correspondencia</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => Reassign(context))">Reasignar</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => Resolve(context))">Resolver</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => Notify(context))">Notificar mock</MudButton>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+
+    private int CountBy(string status) => Permit.Correspondences.Count(x => string.Equals(x.Status, status, StringComparison.OrdinalIgnoreCase));
+
+    private void RegisterCorrespondence(PcCorrespondenceDto item)
+    {
+        item.Status = "Registrada";
+        item.ResolutionMock = "Pendiente revisión";
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "correspondencia.demo",
+            Action = "Registrar correspondencia",
+            PreviousStatus = "No registrada",
+            NewStatus = item.Status,
+            Department = item.DestinationDepartment,
+            Comment = item.Notes,
+            Origin = "Correspondencia"
+        });
+        Snackbar.Add($"Correspondencia {item.ManagementNumber} registrada.", Severity.Info);
+    }
+
+    private void Reassign(PcCorrespondenceDto item)
+    {
+        item.Status = "Reasignada";
+        item.DestinationDepartment = "Urbanismo";
+        item.ResolutionMock = "Reasignada mock";
+        Snackbar.Add($"Correspondencia {item.ManagementNumber} reasignada.", Severity.Warning);
+    }
+
+    private void Resolve(PcCorrespondenceDto item)
+    {
+        item.Status = "Resuelta";
+        item.ResolutionMock = "Resuelta mock";
+        Snackbar.Add($"Correspondencia {item.ManagementNumber} resuelta en modo demo.", Severity.Success);
+    }
+
+    private void Notify(PcCorrespondenceDto item)
+    {
+        item.Status = "Notificada";
+        item.NotificationMock = "Enviada mock";
+        Snackbar.Add($"Notificación mock emitida para {item.ManagementNumber}.", Severity.Info);
+    }
+
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
+    private static Color ResolveColor(string status) => status switch
+    {
+        "Registrada" => Color.Info,
+        "En análisis" => Color.Warning,
+        "Reasignada" => Color.Secondary,
+        "Atendida" => Color.Success,
+        "Resuelta" => Color.Success,
+        "Notificada" => Color.Dark,
+        _ => Color.Default
+    };
+}

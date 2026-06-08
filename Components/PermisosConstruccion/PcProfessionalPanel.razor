@@ -1,0 +1,34 @@
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudCard Outlined="true">
+    <MudCardContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Nombre</MudText><MudText>@Permit.Professional.Name</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Identificación</MudText><MudText>@Permit.Professional.Identification</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Carné</MudText><MudText>@Permit.Professional.LicenseNumber</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Colegio</MudText><MudText>@Permit.Professional.College</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Especialidad</MudText><MudText>@Permit.Professional.Specialty</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Estado CFIA</MudText><MudText>@Permit.Professional.CfiaStatus</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText Typo="Typo.caption">Correo</MudText><MudText>@Permit.Professional.Email</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText Typo="Typo.caption">Teléfono</MudText><MudText>@Permit.Professional.Phone</MudText></MudItem>
+        </MudGrid>
+        <MudChip T="string" Text="@Permit.Professional.MockValidation" Color="Color.Info" Variant="Variant.Outlined" Class="mt-3" />
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton Variant="Variant.Outlined" OnClick="ValidateCfiaAsync">Simular validación CFIA</MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private Task ValidateCfiaAsync()
+    {
+        Permit.Professional.CfiaStatus = "Activo";
+        Permit.Professional.MockValidation = "Validado mock";
+        Snackbar.Add("Validación CFIA simulada correctamente.", Severity.Success);
+        return Task.CompletedTask;
+    }
+}

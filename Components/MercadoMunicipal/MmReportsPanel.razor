@@ -1,0 +1,81 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<div class="d-flex flex-column gap-3">
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        La reportería es mock; las exportaciones e impresiones no generan documentos reales.
+    </MudAlert>
+
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="3"><MudText>Total reportes: @Items.Count</MudText></MudItem>
+            <MudItem xs="12" sm="6" md="3"><MudText>Operación: @Items.Count(x => x.Category.Equals("Operación", StringComparison.OrdinalIgnoreCase))</MudText></MudItem>
+            <MudItem xs="12" sm="6" md="3"><MudText>Cobro: @Items.Count(x => x.Category.Equals("Cobro", StringComparison.OrdinalIgnoreCase))</MudText></MudItem>
+            <MudItem xs="12" sm="6" md="3"><MudText>Control: @Items.Count(x => x.Category.Equals("Control", StringComparison.OrdinalIgnoreCase))</MudText></MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+        <MudTable T="MmReportDto" Items="@Items" Hover="true" Bordered="true" Striped="true">
+            <HeaderContent>
+                <MudTh>Nombre</MudTh>
+                <MudTh>Descripción</MudTh>
+                <MudTh>Filtros</MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Nombre">@context.Name</MudTd>
+                <MudTd DataLabel="Descripción">@context.Description</MudTd>
+                <MudTd DataLabel="Filtros">@context.Filters</MudTd>
+                <MudTd DataLabel="Acciones">
+                    <div class="d-flex flex-wrap gap-1">
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ViewReportAsync(context.Name))">Ver mock</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExportExcelAsync(context.Name))">Excel mock</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExportPdfAsync(context.Name))">PDF mock</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExportWordAsync(context.Name))">Word mock</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => PrintAsync(context.Name))">Imprimir mock</MudButton>
+                    </div>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter] public List<MmReportDto> Items { get; set; } = new();
+
+    private Task ViewReportAsync(string reportName)
+    {
+        Snackbar.Add($"Vista mock del reporte: {reportName}.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task ExportExcelAsync(string reportName)
+    {
+        Snackbar.Add($"{reportName}: Exportación disponible en implementación backend.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private Task ExportPdfAsync(string reportName)
+    {
+        Snackbar.Add($"{reportName}: Exportación disponible en implementación backend.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private Task ExportWordAsync(string reportName)
+    {
+        Snackbar.Add($"{reportName}: Exportación disponible en implementación backend.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private Task PrintAsync(string reportName)
+    {
+        Snackbar.Add($"{reportName}: Exportación disponible en implementación backend.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+}

@@ -1,0 +1,257 @@
+@using BlazorApp.Models
+@using MudBlazor
+
+<WizardShell Title="Nueva finca"
+             Subtitle="Alta guiada paso a paso para crear un nuevo expediente de bien inmueble."
+             SummaryTitle="Resumen de creación"
+             State="wizardState"
+             CurrentStepTitle="@CurrentStepTitle"
+             CurrentStepSubtitle="@CurrentStepSubtitle"
+             CanGoBack="@CanGoBack"
+             CanGoNext="@CanGoNext"
+             CanFinish="@CanFinish"
+             FinishText="Crear finca"
+             OnCancel="CancelAsync"
+             OnSaveDraft="SaveDraftAsync"
+             OnBack="GoBackAsync"
+             OnNext="GoNextAsync"
+             OnFinish="CreateFincaAsync">
+    <ChildContent>
+        @switch (currentStepIndex)
+        {
+            case 0:
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="4">
+                        <MudTextField T="string" @bind-Value="Model.NumeroFinca" @bind-Value:after="RefreshWizardState" Label="Número de finca" Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudTextField T="string" @bind-Value="Model.IdPredial" @bind-Value:after="RefreshWizardState" Label="ID predial" Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.TipoFinca" @bind-Value:after="RefreshWizardState" Label="Tipo de finca" Variant="Variant.Outlined">
+                            @foreach (var item in tiposFinca)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.EstadoRegistral" @bind-Value:after="RefreshWizardState" Label="Estado registral" Variant="Variant.Outlined">
+                            @foreach (var item in estadosRegistrales)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.Distrito" @bind-Value:after="RefreshWizardState" Label="Distrito" Variant="Variant.Outlined">
+                            @foreach (var item in distritos)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudTextField T="string" @bind-Value="Model.DireccionExacta" @bind-Value:after="RefreshWizardState" Label="Dirección exacta" Variant="Variant.Outlined" MaxLines="4" AutoGrow="true" />
+                    </MudItem>
+                </MudGrid>
+                break;
+
+            case 1:
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="8">
+                        <MudSelect T="int"
+                                   @bind-Value="Model.PropietarioPrincipalId"
+                                   @bind-Value:after="OnOwnerChangedAsync"
+                                   Label="Propietario principal vinculado a RUC"
+                                   Variant="Variant.Outlined">
+                            @foreach (var item in propietariosRuc)
+                            {
+                                <MudSelectItem T="int" Value="@item.Id">@item.NombreCompleto</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudNumericField T="decimal" @bind-Value="Model.PorcentajeDerecho" @bind-Value:after="RefreshWizardState" Label="Porcentaje de derecho" Variant="Variant.Outlined" Min="0" Max="100" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                            @(string.IsNullOrWhiteSpace(Model.PropietarioPrincipal)
+                                ? "Seleccione un propietario vinculado a RUC para completar el expediente."
+                                : $"{Model.PropietarioPrincipal} · {Model.PropietarioPrincipalIdentificacion}")
+                        </MudAlert>
+                    </MudItem>
+                </MudGrid>
+                break;
+
+            case 2:
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="4">
+                        <MudNumericField T="decimal" @bind-Value="Model.AreaTerreno" @bind-Value:after="RefreshWizardState" Label="Área de terreno" Variant="Variant.Outlined" Min="0" Step="0.01M" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.UsoInmueble" @bind-Value:after="RefreshWizardState" Label="Uso del inmueble" Variant="Variant.Outlined">
+                            @foreach (var item in usos)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.ZonaHomogenea" @bind-Value:after="RefreshWizardState" Label="Zona homogénea" Variant="Variant.Outlined">
+                            @foreach (var item in zonasHomogeneas)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="string" @bind-Value="Model.TipologiaConstructiva" @bind-Value:after="RefreshWizardState" Label="Tipología constructiva" Variant="Variant.Outlined">
+                            @foreach (var item in tipologias)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                            Los datos de uso, zona y tipología se reutilizarán en valoración, fiscalización y consultas posteriores.
+                        </MudAlert>
+                    </MudItem>
+                </MudGrid>
+                break;
+
+            case 3:
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12" md="4">
+                        <MudNumericField T="decimal" @bind-Value="Model.ValorTerreno" @bind-Value:after="RefreshWizardState" Label="Valor terreno" Variant="Variant.Outlined" Min="0" Step="0.01M" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudNumericField T="decimal" @bind-Value="Model.ValorConstruccion" @bind-Value:after="RefreshWizardState" Label="Valor construcción" Variant="Variant.Outlined" Min="0" Step="0.01M" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudTextField T="string" Value="@CalculatedValorFiscalTotal" Label="Valor fiscal total calculado" Variant="Variant.Outlined" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Calculate" OnClick="RecalcularValoracionAsync">
+                            Recalcular valoración
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+                break;
+
+            case 4:
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12">
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                            Las integraciones se muestran en modo simulado para acompañar la creación de la finca.
+                        </MudAlert>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudPaper Outlined="true" Class="pa-3 h-100">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.subtitle2">Registro Público</MudText>
+                                <MudChip T="string" Color="@(Model.RegistroPublicoSincronizado ? Color.Success : Color.Warning)" Variant="Variant.Filled">
+                                    @(Model.RegistroPublicoSincronizado ? "Simulado" : "Pendiente")
+                                </MudChip>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularRegistroPublicoAsync">Simular</MudButton>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudPaper Outlined="true" Class="pa-3 h-100">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.subtitle2">GIS</MudText>
+                                <MudChip T="string" Color="@(string.IsNullOrWhiteSpace(Model.UbicacionGis) ? Color.Warning : Color.Success)" Variant="Variant.Filled">
+                                    @(string.IsNullOrWhiteSpace(Model.UbicacionGis) ? "Pendiente" : "Simulado")
+                                </MudChip>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularGisAsync">Simular</MudButton>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudPaper Outlined="true" Class="pa-3 h-100">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.subtitle2">Hacienda</MudText>
+                                <MudChip T="string" Color="@(Model.RemitidoHacienda ? Color.Success : Color.Warning)" Variant="Variant.Filled">
+                                    @(Model.RemitidoHacienda ? "Simulado" : "Pendiente")
+                                </MudChip>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularHaciendaAsync">Simular</MudButton>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudPaper Outlined="true" Class="pa-3 h-100">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.subtitle2">Cobro</MudText>
+                                <MudChip T="string" Color="@(string.IsNullOrWhiteSpace(Model.CuentaTributaria) ? Color.Warning : Color.Success)" Variant="Variant.Filled">
+                                    @(string.IsNullOrWhiteSpace(Model.CuentaTributaria) ? "Pendiente" : "Simulado")
+                                </MudChip>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularCobroAsync">Simular</MudButton>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+                break;
+
+            case 5:
+                <MudStack Spacing="3" Class="mt-2">
+                    <MudAlert Severity="@(pendingValidations.Any() ? Severity.Warning : Severity.Success)" Variant="Variant.Outlined">
+                        @(pendingValidations.Any()
+                            ? "Revise las validaciones pendientes antes de crear la finca."
+                            : "Todo está listo para crear la finca.")
+                    </MudAlert>
+
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudPaper Outlined="true" Class="pa-3 h-100">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.subtitle2">Identificación</MudText>
+                                    @foreach (var item in identificationSummary)
+                                    {
+                                        <MudText Typo="Typo.body2">• @item</MudText>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudPaper Outlined="true" Class="pa-3 h-100">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.subtitle2">Propietario y derecho</MudText>
+                                    @foreach (var item in ownershipSummary)
+                                    {
+                                        <MudText Typo="Typo.body2">• @item</MudText>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudPaper Outlined="true" Class="pa-3 h-100">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.subtitle2">Características</MudText>
+                                    @foreach (var item in characteristicsSummary)
+                                    {
+                                        <MudText Typo="Typo.body2">• @item</MudText>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudPaper Outlined="true" Class="pa-3 h-100">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.subtitle2">Valoración e integraciones</MudText>
+                                    @foreach (var item in valuationSummary)
+                                    {
+                                        <MudText Typo="Typo.body2">• @item</MudText>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+
+                    <ValidationSummaryPanel Errors="pendingValidations" />
+                </MudStack>
+                break;
+        }
+    </ChildContent>
+</WizardShell>

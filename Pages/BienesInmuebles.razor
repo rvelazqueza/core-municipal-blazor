@@ -17,28 +17,35 @@
 </MudAlert>
 
 <MudPaper Outlined="true" Class="pa-2 pa-md-3">
-<MudTabs Outlined="true" Rounded="true" Border="true" ApplyEffectsToContainer="true" ActivePanelIndex="activePanelIndex" ActivePanelIndexChanged="OnPanelChanged" PanelClass="pa-4">
-    <MudTabPanel Text="Dashboard" Icon="@Icons.Material.Filled.SpaceDashboard">
-        <BienesDashboardPanel Items="bienes" />
-    </MudTabPanel>
-    <MudTabPanel Text="Consulta de fincas" Icon="@Icons.Material.Filled.ManageSearch">
-        <FincasFilterPanel NumeroFinca="numeroFincaFilter" NumeroFincaChanged="@(value => numeroFincaFilter = value)" IdPredial="idPredialFilter" IdPredialChanged="@(value => idPredialFilter = value)" Propietario="propietarioFilter" PropietarioChanged="@(value => propietarioFilter = value)" Distrito="distritoFilter" DistritoChanged="@(value => distritoFilter = value)" Estado="estadoFilter" EstadoChanged="@(value => estadoFilter = value)" ValorFiscalMinimo="valorFiscalMinimoFilter" ValorFiscalMinimoChanged="@(value => valorFiscalMinimoFilter = value)" Condicion="condicionFilter" CondicionChanged="@(value => condicionFilter = value)" OnSearch="LoadFilteredAsync" />
-        @if (filteredBienes.Any())
-        {
-            <FincasTable Items="filteredBienes" ViewRequested="OpenView" EditRequested="OpenEdit" />
-        }
-        else
-        {
-            <EmptyState Title="Sin resultados" Description="No hay fincas que coincidan con los filtros aplicados." Icon="@Icons.Material.Filled.FilterAltOff" />
-        }
-    </MudTabPanel>
-    <MudTabPanel Text="Expediente de finca" Icon="@Icons.Material.Filled.FolderShared">
-        <ExpedienteFincaView Model="selectedBien" />
-    </MudTabPanel>
-    <MudTabPanel Text="Formulario básico" Icon="@Icons.Material.Filled.EditNote">
-        <BienInmuebleForm Model="selectedBien" ModelChanged="OnModelChanged" OnSaved="AfterSavedAsync" />
-    </MudTabPanel>
-</MudTabs>
+    @if (isCreatingNewBien)
+    {
+        <BienInmuebleCreateWizard Model="selectedBien" ModelChanged="OnModelChanged" OnCreated="HandleWizardCreatedAsync" OnCanceled="CancelNewAsync" />
+    }
+    else
+    {
+        <MudTabs Outlined="true" Rounded="true" Border="true" ApplyEffectsToContainer="true" ActivePanelIndex="activePanelIndex" ActivePanelIndexChanged="OnPanelChanged" PanelClass="pa-4">
+            <MudTabPanel Text="Dashboard" Icon="@Icons.Material.Filled.SpaceDashboard">
+                <BienesDashboardPanel Items="bienes" />
+            </MudTabPanel>
+            <MudTabPanel Text="Consulta de fincas" Icon="@Icons.Material.Filled.ManageSearch">
+                <FincasFilterPanel NumeroFinca="numeroFincaFilter" NumeroFincaChanged="@(value => numeroFincaFilter = value)" IdPredial="idPredialFilter" IdPredialChanged="@(value => idPredialFilter = value)" Propietario="propietarioFilter" PropietarioChanged="@(value => propietarioFilter = value)" Distrito="distritoFilter" DistritoChanged="@(value => distritoFilter = value)" Estado="estadoFilter" EstadoChanged="@(value => estadoFilter = value)" ValorFiscalMinimo="valorFiscalMinimoFilter" ValorFiscalMinimoChanged="@(value => valorFiscalMinimoFilter = value)" Condicion="condicionFilter" CondicionChanged="@(value => condicionFilter = value)" OnSearch="LoadFilteredAsync" />
+                @if (filteredBienes.Any())
+                {
+                    <FincasTable Items="filteredBienes" ViewRequested="OpenView" EditRequested="OpenEdit" />
+                }
+                else
+                {
+                    <EmptyState Title="Sin resultados" Description="No hay fincas que coincidan con los filtros aplicados." Icon="@Icons.Material.Filled.FilterAltOff" />
+                }
+            </MudTabPanel>
+            <MudTabPanel Text="Expediente de finca" Icon="@Icons.Material.Filled.FolderShared">
+                <ExpedienteFincaView Model="selectedBien" />
+            </MudTabPanel>
+            <MudTabPanel Text="Formulario básico" Icon="@Icons.Material.Filled.EditNote">
+                <BienInmuebleForm Model="selectedBien" ModelChanged="OnModelChanged" OnSaved="AfterSavedAsync" />
+            </MudTabPanel>
+        </MudTabs>
+    }
 </MudPaper>
 
 @code {
@@ -52,6 +59,7 @@
     private List<BienInmuebleDto> filteredBienes = new();
     private BienInmuebleDto selectedBien = new();
     private int activePanelIndex = 0;
+    private bool isCreatingNewBien;
 
     private string numeroFincaFilter = string.Empty;
     private string idPredialFilter = string.Empty;
@@ -95,7 +103,7 @@
             PorcentajeDerecho = 100m,
             Condicion = "Al dia"
         };
-        activePanelIndex = 3;
+        isCreatingNewBien = true;
     }
 
     private async Task OpenView(int id)
@@ -125,6 +133,22 @@
     {
         await LoadAllAsync();
         selectedBien = bienes.OrderByDescending(x => x.UltimaActualizacion).FirstOrDefault(x => x.NumeroFinca == selectedBien.NumeroFinca && x.IdPredial == selectedBien.IdPredial) ?? selectedBien;
+        activePanelIndex = 1;
+    }
+
+    private async Task HandleWizardCreatedAsync(BienInmuebleDto model)
+    {
+        isCreatingNewBien = false;
+        await LoadAllAsync();
+        selectedBien = bienes.FirstOrDefault(x => x.NumeroFinca == model.NumeroFinca && x.IdPredial == model.IdPredial) ?? model;
+        activePanelIndex = 2;
+    }
+
+    private async Task CancelNewAsync()
+    {
+        isCreatingNewBien = false;
+        await LoadAllAsync();
+        selectedBien = bienes.FirstOrDefault() ?? new BienInmuebleDto();
         activePanelIndex = 1;
     }
 

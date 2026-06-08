@@ -6,13 +6,13 @@
     <MudText Typo="Typo.h6" Class="mb-3">Filtros de consulta</MudText>
     <MudGrid>
         <MudItem xs="12" md="6" lg="2">
-            <MudTextField T="string" Value="@Identificacion" ValueChanged="OnIdentificacionChanged" Label="Identificación" Variant="Variant.Outlined" />
+            <MudTextField T="string" Value="Identificacion" ValueChanged="OnIdentificacionChanged" Label="Identificación" Variant="Variant.Outlined" />
         </MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudTextField T="string" Value="@Nombre" ValueChanged="OnNombreChanged" Label="Nombre o razón social" Variant="Variant.Outlined" />
+            <MudTextField T="string" Value="Nombre" ValueChanged="OnNombreChanged" Label="Nombre o razón social" Variant="Variant.Outlined" />
         </MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudSelect T="string" Value="@TipoPersona" ValueChanged="OnTipoPersonaChanged" Label="Tipo persona" Variant="Variant.Outlined" Clearable="true">
+            <MudSelect T="string" Value="TipoPersona" ValueChanged="OnTipoPersonaChanged" Label="Tipo persona" Variant="Variant.Outlined" Clearable="true">
                 @foreach (var item in tiposPersona)
                 {
                     <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
@@ -20,7 +20,7 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudSelect T="string" Value="@Estado" ValueChanged="OnEstadoChanged" Label="Estado" Variant="Variant.Outlined" Clearable="true">
+            <MudSelect T="string" Value="Estado" ValueChanged="OnEstadoChanged" Label="Estado" Variant="Variant.Outlined" Clearable="true">
                 @foreach (var item in estados)
                 {
                     <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
@@ -28,7 +28,7 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudSelect T="string" Value="@Distrito" ValueChanged="OnDistritoChanged" Label="Distrito" Variant="Variant.Outlined" Clearable="true">
+            <MudSelect T="string" Value="Distrito" ValueChanged="OnDistritoChanged" Label="Distrito" Variant="Variant.Outlined" Clearable="true">
                 @foreach (var item in distritos)
                 {
                     <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
@@ -36,7 +36,7 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudSelect T="string" Value="@ActividadEconomica" ValueChanged="OnActividadChanged" Label="Actividad" Variant="Variant.Outlined" Clearable="true">
+            <MudSelect T="string" Value="ActividadEconomica" ValueChanged="OnActividadChanged" Label="Actividad" Variant="Variant.Outlined" Clearable="true">
                 @foreach (var item in actividades)
                 {
                     <MudSelectItem T="string" Value="@item">@item</MudSelectItem>

@@ -1,52 +1,75 @@
 @page "/auditoria"
-@inject BlazorApp.Services.IAuditoriaService AuditoriaService
+@using BlazorApp.Components.Auditoria
 @using BlazorApp.Models
+@using BlazorApp.Models.Auditoria
 @using BlazorApp.Shared
+@inject BlazorApp.Services.IAuditoriaService AuditoriaService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
-<PageTitleBar Title="Auditoría" Subtitle="Trazabilidad operativa de cambios y acciones de usuarios." Breadcrumbs="breadcrumbs" />
+<PageTitleBar Title="Auditoría del Sistema" Subtitle="Consulta y trazabilidad de eventos generados por usuarios, módulos, expedientes, integraciones y procesos del Core Municipal." Breadcrumbs="breadcrumbs" />
 
 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
-    Bitácora preparada para evolucionar hacia auditoría formal, evidencias y cumplimiento institucional.
+    Consulta y trazabilidad de eventos generados por usuarios, módulos, expedientes, integraciones y procesos del Core Municipal.
 </MudAlert>
 
 @if (isLoading)
 {
     <MudPaper Outlined="true" Class="pa-4">
-        <MudSkeleton SkeletonType="SkeletonType.Text" Width="220px" Height="32px" />
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" Class="mt-4" />
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" Class="mt-2" />
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" Class="mt-2" />
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="64px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="64px" Class="mt-2" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="320px" Class="mt-2" />
     </MudPaper>
 }
 else
 {
-    <MudCard Outlined="true">
-        <MudCardContent>
-            <div class="d-flex flex-wrap justify-space-between align-center gap-2 mb-3">
-                <div>
-                    <MudText Typo="Typo.h6">Eventos recientes</MudText>
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Registro visible de usuario, fecha, origen y nuevo valor.</MudText>
-                </div>
-                <MudChip T="string" Text="@($"{auditoria.Count} eventos")" Color="Color.Primary" Variant="Variant.Outlined" />
-            </div>
-            <MudTable Items="auditoria" Hover="true" Breakpoint="Breakpoint.Sm">
-                <HeaderContent>
-                    <MudTh>Usuario</MudTh>
-                    <MudTh>Fecha y hora</MudTh>
-                    <MudTh>Campo</MudTh>
-                    <MudTh>Origen</MudTh>
-                    <MudTh>Nuevo valor</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Usuario">@context.Usuario</MudTd>
-                    <MudTd DataLabel="Fecha y hora">@context.FechaHora.ToString("dd/MM/yyyy HH:mm")</MudTd>
-                    <MudTd DataLabel="Campo">@context.CampoModificado</MudTd>
-                    <MudTd DataLabel="Origen">@context.Origen</MudTd>
-                    <MudTd DataLabel="Nuevo valor">@context.ValorNuevo</MudTd>
-                </RowTemplate>
-            </MudTable>
-        </MudCardContent>
-    </MudCard>
+    <MudTabs @bind-ActivePanelIndex="activeTabIndex" Outlined="true" KeepPanelsAlive="true" ApplyEffectsToContainer="true">
+        <MudTabPanel Text="General" Icon="@Icons.Material.Filled.Dashboard">
+            <MudStack Spacing="3">
+                <AuditDashboardPanel
+                    EventsToday="@eventsToday"
+                    CriticalEvents="@criticalEvents"
+                    SecurityEvents="@securityEventsCount"
+                    CreationEvents="@creationEvents"
+                    ModificationEvents="@modificationEvents"
+                    QueryEvents="@queryEvents"
+                    IntegrationEvents="@integrationEventsCount"
+                    NotificationEvents="@notificationEventsCount"
+                    ExportEvents="@exportEventsCount"
+                    ActiveUsers="@activeUsers"
+                    ModuleCount="@moduleSummaries.Count"
+                    IntegrityScore="@integrityScore"
+                    TopModule="@moduleSummaries.FirstOrDefault()" />
+
+                <AuditExportActionsPanel RequestedBy="@currentUser" Module="Auditoría" ExpedientNumber="@selectedExpedientNumber" EntityName="@selectedEntityName" EntityId="@selectedEntityId" OnExported="ApplyFiltersAsync" />
+
+                <AuditFiltersPanel Filter="@filter" OnApply="ApplyFiltersAsync" OnReset="ResetFiltersAsync" />
+
+                <AuditEventsTable Events="@filteredEvents" OnDetailRequested="SelectEventAsync" OnTraceRequested="SelectTraceAsync" OnExpedientRequested="OpenRelatedExpedientAsync" OnCopyRequested="CopyReferenceAsync" />
+
+                <AuditEventDetailPanel Event="@selectedEventDetail" />
+
+                <AuditTraceTimelinePanel ExpedientNumber="@selectedExpedientNumber" Items="@traceItems" />
+
+                <AuditEntityTracePanel EntityName="@selectedEntityName" EntityId="@selectedEntityId" Events="@entityEvents" />
+
+                <AuditModuleSummaryPanel Summaries="@moduleSummaries" />
+            </MudStack>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Seguridad" Icon="@Icons.Material.Filled.Security">
+            <AuditSecurityPanel Events="@securityEvents" />
+        </MudTabPanel>
+
+        <MudTabPanel Text="Integraciones" Icon="@Icons.Material.Filled.SyncAlt">
+            <AuditIntegrationPanel Events="@integrationEvents" />
+        </MudTabPanel>
+
+        <MudTabPanel Text="Configuración" Icon="@Icons.Material.Filled.Settings">
+            <AuditConfigurationPanel Events="@configurationEvents" />
+        </MudTabPanel>
+    </MudTabs>
 }
 
 @code {
@@ -56,12 +79,176 @@ else
         new("Auditoría", href: null, disabled: true)
     };
 
-    private List<AuditoriaCambioDto> auditoria = new();
+    private readonly string currentUser = "auditor.demo";
+    private AuditFilterDto filter = new();
+    private List<AuditEventDto> allEvents = new();
+    private List<AuditEventDto> filteredEvents = new();
+    private List<AuditSecurityEventDto> securityEvents = new();
+    private List<AuditIntegrationEventDto> integrationEvents = new();
+    private List<AuditConfigurationEventDto> configurationEvents = new();
+    private List<AuditModuleSummaryDto> moduleSummaries = new();
+    private List<AuditTraceItemDto> traceItems = new();
+    private List<AuditEventDto> entityEvents = new();
+    private AuditEventDetailDto? selectedEventDetail;
+    private string selectedExpedientNumber = string.Empty;
+    private string selectedEntityName = string.Empty;
+    private string selectedEntityId = string.Empty;
     private bool isLoading = true;
+    private int activeTabIndex;
+    private int eventsToday;
+    private int criticalEvents;
+    private int securityEventsCount;
+    private int creationEvents;
+    private int modificationEvents;
+    private int queryEvents;
+    private int integrationEventsCount;
+    private int notificationEventsCount;
+    private int exportEventsCount;
+    private int activeUsers;
+    private int integrityScore = 92;
 
     protected override async Task OnInitializedAsync()
     {
-        auditoria = await AuditoriaService.GetRecentAsync();
+        await ApplyFiltersAsync();
         isLoading = false;
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        allEvents = await AuditoriaService.GetAuditEvents();
+        filteredEvents = await AuditoriaService.GetFilteredEvents(filter);
+        securityEvents = await AuditoriaService.GetSecurityEvents();
+        integrationEvents = await AuditoriaService.GetIntegrationEvents();
+        configurationEvents = await AuditoriaService.GetConfigurationEvents();
+        moduleSummaries = await AuditoriaService.GetModuleSummaries();
+
+        eventsToday = allEvents.Count(x => x.EventDate.Date == DateTime.Today);
+        criticalEvents = allEvents.Count(x => IsCritical(x.Severity));
+        securityEventsCount = securityEvents.Count;
+        creationEvents = allEvents.Count(x => x.EventType.Equals("Creación", StringComparison.OrdinalIgnoreCase));
+        modificationEvents = allEvents.Count(x => x.EventType.Equals("Modificación", StringComparison.OrdinalIgnoreCase));
+        queryEvents = allEvents.Count(x => x.EventType.Equals("Consulta", StringComparison.OrdinalIgnoreCase));
+        integrationEventsCount = integrationEvents.Count;
+        notificationEventsCount = allEvents.Count(x => x.Module.Equals("Notificaciones", StringComparison.OrdinalIgnoreCase) || x.EventType.Contains("Notificación", StringComparison.OrdinalIgnoreCase));
+        exportEventsCount = allEvents.Count(x => x.EventType.Contains("Exportación", StringComparison.OrdinalIgnoreCase));
+        activeUsers = allEvents.Select(x => x.UserName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        integrityScore = Math.Max(70, 100 - criticalEvents);
+
+        if (filteredEvents.Count > 0)
+        {
+            await SelectEventAsync(filteredEvents[0]);
+        }
+        else
+        {
+            selectedEventDetail = null;
+            selectedExpedientNumber = string.Empty;
+            selectedEntityName = string.Empty;
+            selectedEntityId = string.Empty;
+            traceItems = new List<AuditTraceItemDto>();
+            entityEvents = new List<AuditEventDto>();
+        }
+    }
+
+    private async Task ResetFiltersAsync()
+    {
+        filter = new AuditFilterDto();
+        await ApplyFiltersAsync();
+    }
+
+    private async Task SelectEventAsync(AuditEventDto item)
+    {
+        if (item is null)
+        {
+            return;
+        }
+
+        selectedEventDetail = await AuditoriaService.GetEventById(item.Id) ?? MapDetail(item);
+        selectedExpedientNumber = item.ExpedientNumber;
+        selectedEntityName = item.EntityName;
+        selectedEntityId = item.EntityId;
+        traceItems = string.IsNullOrWhiteSpace(item.ExpedientNumber)
+            ? new List<AuditTraceItemDto>()
+            : await AuditoriaService.GetTraceByExpedient(item.ExpedientNumber);
+        entityEvents = string.IsNullOrWhiteSpace(item.EntityName)
+            ? new List<AuditEventDto>()
+            : await AuditoriaService.GetEventsByEntity(item.EntityName, item.EntityId);
+    }
+
+    private Task SelectTraceAsync(AuditEventDto item) => SelectEventAsync(item);
+
+    private Task OpenRelatedExpedientAsync(AuditEventDto item)
+    {
+        var route = item.Module switch
+        {
+            "RUC" => "/ruc",
+            "Bienes Inmuebles" => "/bienes-inmuebles",
+            "Patentes" => "/patentes",
+            "Plataforma de Servicios" => "/plataforma-servicios",
+            "Permisos de Construcción" => $"/permisos-construccion/expediente/{item.ExpedientNumber}",
+            "Mercado Municipal" => $"/mercado-municipal/expediente/{item.ExpedientNumber}",
+            "Configuración" => "/configuracion",
+            _ => null
+        };
+
+        if (string.IsNullOrWhiteSpace(route))
+        {
+            Snackbar.Add("Expediente relacionado disponible en módulo correspondiente.", Severity.Info);
+            return Task.CompletedTask;
+        }
+
+        NavigationManager.NavigateTo(route);
+        return Task.CompletedTask;
+    }
+
+    private Task CopyReferenceAsync(AuditEventDto item)
+    {
+        Snackbar.Add($"Referencia mock preparada: {item.Id}", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private static bool IsCritical(string severity)
+    {
+        return severity.Equals("Crítico", StringComparison.OrdinalIgnoreCase)
+            || severity.Equals("Error", StringComparison.OrdinalIgnoreCase)
+            || severity.Equals("Advertencia", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static AuditEventDetailDto MapDetail(AuditEventDto item)
+    {
+        return new AuditEventDetailDto
+        {
+            Id = item.Id,
+            EventDate = item.EventDate,
+            UserName = item.UserName,
+            UserRole = item.UserRole,
+            Module = item.Module,
+            Action = item.Action,
+            EventType = item.EventType,
+            Severity = item.Severity,
+            Status = item.Status,
+            EntityName = item.EntityName,
+            EntityId = item.EntityId,
+            ExpedientNumber = item.ExpedientNumber,
+            TaxpayerIdentification = item.TaxpayerIdentification,
+            TaxpayerName = item.TaxpayerName,
+            PreviousValue = item.PreviousValue,
+            NewValue = item.NewValue,
+            Source = item.Source,
+            Channel = item.Channel,
+            IpAddress = item.IpAddress,
+            Device = item.Device,
+            Browser = item.Browser,
+            SessionId = item.SessionId,
+            CorrelationId = item.CorrelationId,
+            RequestId = item.RequestId,
+            ResultMessage = item.ResultMessage,
+            FieldChanged = item.Action,
+            Observation = $"Evento mock del módulo {item.Module}.",
+            TechnicalMessage = item.ResultMessage,
+            IntegrationRelated = item.Module == "Integraciones" ? item.Source : string.Empty,
+            PreviousState = item.PreviousValue,
+            NewState = item.NewValue,
+            ActionTaken = item.Action
+        };
     }
 }

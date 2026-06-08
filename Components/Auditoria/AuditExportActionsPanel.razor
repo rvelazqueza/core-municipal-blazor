@@ -1,0 +1,49 @@
+@using BlazorApp.Models.Auditoria
+@inject BlazorApp.Services.IAuditoriaService AuditoriaService
+@inject ISnackbar Snackbar
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="2">
+        <div>
+            <MudText Typo="Typo.h6">Exportaciones mock</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Las exportaciones se registran como evento simulado sin generar archivos reales.</MudText>
+        </div>
+        <MudStack Row="true" Spacing="1" Class="flex-wrap">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportExcelAsync">Exportar Excel mock</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ExportPdfAsync">Exportar PDF mock</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Tertiary" OnClick="ExportWordAsync">Exportar Word mock</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="PrintAsync">Imprimir mock</MudButton>
+        </MudStack>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public string RequestedBy { get; set; } = "auditor.demo";
+    [Parameter] public string Module { get; set; } = "Auditoría";
+    [Parameter] public string ExpedientNumber { get; set; } = string.Empty;
+    [Parameter] public string EntityName { get; set; } = string.Empty;
+    [Parameter] public string EntityId { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnExported { get; set; }
+
+    private Task ExportExcelAsync() => ExportAsync("Excel");
+    private Task ExportPdfAsync() => ExportAsync("PDF");
+    private Task ExportWordAsync() => ExportAsync("Word");
+    private Task PrintAsync() => ExportAsync("Impresión");
+
+    private async Task ExportAsync(string format)
+    {
+        await AuditoriaService.RegisterMockEventAsync(new AuditExportRequestDto
+        {
+            RequestedBy = RequestedBy,
+            Module = Module,
+            Format = format,
+            ExpedientNumber = ExpedientNumber,
+            EntityName = EntityName,
+            EntityId = EntityId,
+            Description = $"Exportación solicitada en formato {format}."
+        });
+
+        Snackbar.Add("Exportación disponible en implementación backend.", Severity.Info);
+        await OnExported.InvokeAsync();
+    }
+}

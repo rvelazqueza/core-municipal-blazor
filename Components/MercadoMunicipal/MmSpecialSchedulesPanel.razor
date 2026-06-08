@@ -1,0 +1,157 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información del local para horarios especiales.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Permisos @Items.Count</MudChip>
+                <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Aprobados @Items.Count(x => x.Status.Contains("Aprobado", StringComparison.OrdinalIgnoreCase))</MudChip>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterAsync">Registrar horario especial mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApproveAsync">Aprobar mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="NotifyAsync">Notificar mock</MudButton>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+            <MudTable T="MmSpecialScheduleDto" Items="@Items.OrderByDescending(x => x.StartDate)" Hover="true" Bordered="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Tipo permiso</MudTh>
+                    <MudTh>Local</MudTh>
+                    <MudTh>Inquilino</MudTh>
+                    <MudTh>Fecha inicio</MudTh>
+                    <MudTh>Fecha fin</MudTh>
+                    <MudTh>Horario</MudTh>
+                    <MudTh>Motivo</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh>Documento mock</MudTh>
+                    <MudTh>Notificación mock</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Tipo permiso">@context.PermissionType</MudTd>
+                    <MudTd DataLabel="Local">@context.LocalNumber</MudTd>
+                    <MudTd DataLabel="Inquilino">@context.TenantName</MudTd>
+                    <MudTd DataLabel="Fecha inicio">@context.StartDate.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Fecha fin">@context.EndDate.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Horario">@context.Schedule</MudTd>
+                    <MudTd DataLabel="Motivo">@context.Reason</MudTd>
+                    <MudTd DataLabel="Estado">@context.Status</MudTd>
+                    <MudTd DataLabel="Documento mock">@context.DocumentMock</MudTd>
+                    <MudTd DataLabel="Notificación mock">@context.NotificationMock</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public MmTenantDto? Tenant { get; set; }
+    [Parameter] public List<MmSpecialScheduleDto> Items { get; set; } = new();
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private Task RegisterAsync()
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        var item = new MmSpecialScheduleDto
+        {
+            Id = $"SCH-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            TenantId = Tenant?.Id ?? string.Empty,
+            PermissionType = "Horario especial mock",
+            LocalNumber = Local.LocalNumber,
+            TenantName = Tenant?.Name ?? "Sin asignar",
+            StartDate = DateTime.Today,
+            EndDate = DateTime.Today.AddDays(10),
+            Schedule = "06:00 a 22:00",
+            Reason = "Otro",
+            Status = "Registrado",
+            DocumentMock = "Documento pendiente",
+            NotificationMock = "Pendiente de notificación"
+        };
+
+        Items.Insert(0, item);
+        RegisterMockEvent("Registrar horario especial", string.Empty, item.PermissionType, "Horarios especiales", "Media");
+        Snackbar.Add("Horario especial mock registrado.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task ApproveAsync()
+    {
+        var item = Items.OrderByDescending(x => x.StartDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.Status = "Aprobado";
+        RegisterMockEvent("Aprobar horario especial", "Registrado", item.Status, "Horarios especiales", "Baja");
+        Snackbar.Add("Horario especial mock aprobado.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task NotifyAsync()
+    {
+        var item = Items.OrderByDescending(x => x.StartDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.NotificationMock = "Notificada mock";
+        RegisterMockEvent("Notificar horario especial", "Pendiente", item.NotificationMock, "Horarios especiales", "Media");
+        Snackbar.Add("Notificación mock de horario especial enviada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousStatus = "Registrado",
+            NewStatus = "Actualizado",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Panel horarios especiales",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde horarios especiales."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel horarios especiales",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Bitácora visual mock"
+        });
+    }
+}

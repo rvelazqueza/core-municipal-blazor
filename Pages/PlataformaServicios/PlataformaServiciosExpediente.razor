@@ -1,0 +1,460 @@
+@page "/plataforma-servicios/expediente/{Id}"
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using BlazorApp.Models.PlataformaServicios
+@using BlazorApp.Services.PlataformaServicios
+@using BlazorApp.Shared
+@using MudBlazor
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitleBar Title="Expediente de trámite"
+              Subtitle="Vista 360° del expediente con tabs para consulta y edición mock del proceso municipal.">
+    <Actions>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBackAsync">Volver</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="EditAsync">Editar trámite</MudButton>
+    </Actions>
+</PageTitleBar>
+
+@if (procedure is null)
+{
+    <EmptyState Title="Expediente no encontrado" Description="El expediente solicitado no existe en el dataset mock de esta demo." Icon="@Icons.Material.Filled.SearchOff" />
+}
+else
+{
+    <MudStack Spacing="3">
+        <MudAlert Severity="@GetDeadlineSeverity()" Variant="Variant.Outlined">
+            @GetAlertMessage()
+        </MudAlert>
+
+        <MudTabs Outlined="true" Rounded="true" Border="true" ApplyEffectsToContainer="true" @bind-ActivePanelIndex="activeTab" PanelClass="pa-4">
+            <MudTabPanel Text="Resumen 360°" Icon="@Icons.Material.Filled.SpaceDashboard">
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="4"><KpiCard Title="Expediente" Value="@procedure.CaseNumber" Subtitle="Número mock" Icon="@Icons.Material.Filled.Badge" Color="Color.Primary" /></MudItem>
+                    <MudItem xs="12" md="4"><KpiCard Title="Estado" Value="@procedure.Status" Subtitle="Estado operativo actual" Icon="@Icons.Material.Filled.Flag" Color="@GetStatusColor(procedure.Status)" /></MudItem>
+                    <MudItem xs="12" md="4"><KpiCard Title="Plazo" Value="@procedure.Deadline.Status" Subtitle="Semáforo referencial" Icon="@Icons.Material.Filled.Schedule" Color="@GetDeadlineColor(procedure.Deadline.Status)" /></MudItem>
+                </MudGrid>
+                <MudGrid Spacing="3" Class="mt-2">
+                    <MudItem xs="12" md="8">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1">Alertas y acciones rápidas</MudText>
+                                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" Class="mt-2">
+                                    @foreach (var alert in procedure.Alerts)
+                                    {
+                                        <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">@alert</MudChip>
+                                    }
+                                    <MudChip T="string" Color="@GetDeadlineColor(procedure.Deadline.Status)" Variant="Variant.Outlined">@procedure.Deadline.Status</MudChip>
+                                    <MudChip T="string" Color="@GetStatusColor(procedure.Status)" Variant="Variant.Outlined">@procedure.Status</MudChip>
+                                </MudStack>
+                                <div class="d-flex flex-wrap gap-2 mt-3">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SwapHoriz" OnClick="ShowTransferAsync">Trasladar</MudButton>
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="ShowPreventionAsync">Prevenir</MudButton>
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.TaskAlt" OnClick="ShowResolutionAsync">Resolver</MudButton>
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Notifications" OnClick="ShowNotificationAsync">Notificar</MudButton>
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.History" OnClick="@(() => activeTab = 12)">Ver auditoría</MudButton>
+                                </div>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1">Resumen operativo</MudText>
+                                <MudText Typo="Typo.body2">Canal: @procedure.Channel</MudText>
+                                <MudText Typo="Typo.body2">Solicitante: @procedure.Applicant.Name</MudText>
+                                <MudText Typo="Typo.body2">Módulo resolutor: @procedure.ResolverModule</MudText>
+                                <MudText Typo="Typo.body2">Departamento: @procedure.Department</MudText>
+                                <MudText Typo="Typo.body2">Responsable: @procedure.Responsible</MudText>
+                                <MudProgressLinear Value="@GetProgress()" Color="@GetDeadlineColor(procedure.Deadline.Status)" Rounded="true" Class="mt-3" />
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Datos generales" Icon="@Icons.Material.Filled.Info">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.CaseNumber" Label="Número de expediente" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.TypeCode" Label="Código del trámite" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.TypeName" Label="Tipo de trámite" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.Channel" Label="Canal" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@FormatDate(procedure.EntryDate)" Label="Fecha de ingreso" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.Responsible" Label="Funcionario responsable" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.Department" Label="Departamento asignado" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.Priority" Label="Prioridad" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@FormatDate(procedure.LimitDate)" Label="Fecha límite" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Solicitante" Icon="@Icons.Material.Filled.Person">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.Applicant.Identification" Label="Identificación" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.Applicant.Name" Label="Nombre o razón social" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.Applicant.PersonType" Label="Tipo de persona" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.Applicant.Phone" Label="Teléfono" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.Applicant.Email" Label="Correo" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.Applicant.PreferredNotification" Label="Medio de notificación" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="12"><MudTextField T="string" Value="@procedure.Applicant.FiscalAddress" Label="Dirección fiscal" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                        </MudGrid>
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" Class="mt-3">
+                            <MudChip T="string" Color="@(procedure.Applicant.ExistsInRuc ? Color.Success : Color.Warning)" Variant="Variant.Outlined">@procedure.Applicant.RucStatus</MudChip>
+                            <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@procedure.Applicant.RucQuality</MudChip>
+                        </MudStack>
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Badge" OnClick="ShowRucAsync">Ver RUC</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.CheckCircle" OnClick="ValidateRucAsync">Validar RUC mock</MudButton>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Objeto del trámite" Icon="@Icons.Material.Filled.Description">
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="6">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1">@procedure.Object.Kind</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">@procedure.Object.Summary</MudText>
+                                <MudDivider Class="my-3" />
+                                @if (!string.IsNullOrWhiteSpace(procedure.Object.IdPredial))
+                                {
+                                    <MudText Typo="Typo.body2">ID Predial: @procedure.Object.IdPredial</MudText>
+                                    <MudText Typo="Typo.body2">Finca: @procedure.Object.NumeroFinca</MudText>
+                                    <MudText Typo="Typo.body2">Plano: @procedure.Object.NumeroPlano</MudText>
+                                    <MudText Typo="Typo.body2">Distrito: @procedure.Object.Distrito</MudText>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(procedure.Object.NumeroLicencia))
+                                {
+                                    <MudText Typo="Typo.body2">Número de licencia: @procedure.Object.NumeroLicencia</MudText>
+                                    <MudText Typo="Typo.body2">Nombre comercial: @procedure.Object.NombreComercial</MudText>
+                                    <MudText Typo="Typo.body2">Actividad económica: @procedure.Object.ActividadEconomica</MudText>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(procedure.Object.NumeroLocal))
+                                {
+                                    <MudText Typo="Typo.body2">Número de local: @procedure.Object.NumeroLocal</MudText>
+                                    <MudText Typo="Typo.body2">Arrendatario: @procedure.Object.Arrendatario</MudText>
+                                    <MudText Typo="Typo.body2">Contrato: @procedure.Object.Contrato</MudText>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(procedure.Object.TipoActualizacionRuc))
+                                {
+                                    <MudText Typo="Typo.body2">Tipo de actualización: @procedure.Object.TipoActualizacionRuc</MudText>
+                                    <MudText Typo="Typo.body2">Datos a modificar: @procedure.Object.DatosAModificar</MudText>
+                                    <MudText Typo="Typo.body2">Origen: @procedure.Object.OrigenSolicitud</MudText>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(procedure.Object.ProfesionalResponsable))
+                                {
+                                    <MudText Typo="Typo.body2">Profesional responsable: @procedure.Object.ProfesionalResponsable</MudText>
+                                    <MudText Typo="Typo.body2">Tipo de obra: @procedure.Object.TipoObra</MudText>
+                                    <MudText Typo="Typo.body2">Área: @procedure.Object.Area</MudText>
+                                    <MudText Typo="Typo.body2">Monto estimado: @procedure.Object.MontoEstimado</MudText>
+                                }
+                                <MudButton Class="mt-3" Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.OpenInNew" OnClick="OpenRelatedModuleAsync">Ir al módulo relacionado</MudButton>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1">Alertas del objeto</MudText>
+                                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" Class="mt-2">
+                                    @foreach (var alert in procedure.Alerts)
+                                    {
+                                        <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">@alert</MudChip>
+                                    }
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Requisitos y documentos" Icon="@Icons.Material.Filled.Assignment">
+                <MudTable T="PsRequirementDto" Items="@procedure.Requirements" Dense="true" Hover="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh>Requisito</MudTh>
+                        <MudTh>Estado</MudTh>
+                        <MudTh>Documento</MudTh>
+                        <MudTh>Observación</MudTh>
+                        <MudTh>Origen</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Requisito">@context.Name</MudTd>
+                        <MudTd DataLabel="Estado"><MudChip T="string" Size="Size.Small" Color="@GetRequirementColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
+                        <MudTd DataLabel="Documento">@context.DocumentPlaceholder</MudTd>
+                        <MudTd DataLabel="Observación">@context.Observation</MudTd>
+                        <MudTd DataLabel="Origen">@context.Origin</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Análisis y control" Icon="@Icons.Material.Filled.Checklist">
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="6">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1">Análisis mock</MudText>
+                                <MudText Typo="Typo.body2">Criterio técnico: @procedure.QualityControl.Action</MudText>
+                                <MudText Typo="Typo.body2">Resultado preliminar: @procedure.QualityControl.Status</MudText>
+                                <MudText Typo="Typo.body2">Responsable: @procedure.QualityControl.Responsible</MudText>
+                                <MudText Typo="Typo.body2">Observación: @procedure.QualityControl.Observation</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1">Control de calidad</MudText>
+                                <MudChip T="string" Color="@GetQualityColor(procedure.QualityControl.Status)" Variant="Variant.Outlined">@procedure.QualityControl.Status</MudChip>
+                                <MudText Typo="Typo.body2" Class="mt-2">Motivo de devolución: @procedure.QualityControl.ReturnReason</MudText>
+                                <MudText Typo="Typo.body2">Fecha: @(procedure.QualityControl.Date?.ToString("dd/MM/yyyy") ?? "N/A")</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Traslados internos" Icon="@Icons.Material.Filled.SwapHoriz">
+                <MudTable T="PsTransferDto" Items="@procedure.Transfers" Dense="true" Hover="true">
+                    <HeaderContent>
+                        <MudTh>Origen</MudTh>
+                        <MudTh>Destino</MudTh>
+                        <MudTh>Motivo</MudTh>
+                        <MudTh>Estado</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Origen">@context.OriginDepartment</MudTd>
+                        <MudTd DataLabel="Destino">@context.DestinationDepartment</MudTd>
+                        <MudTd DataLabel="Motivo">@context.Reason</MudTd>
+                        <MudTd DataLabel="Estado">@context.Status</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Resoluciones" Icon="@Icons.Material.Filled.TaskAlt">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle1">Resolución mock</MudText>
+                        <MudText Typo="Typo.body2">Tipo: @procedure.Resolution.Type</MudText>
+                        <MudText Typo="Typo.body2">Estado: @procedure.Resolution.Status</MudText>
+                        <MudText Typo="Typo.body2">Responsable: @procedure.Resolution.Responsible</MudText>
+                        <MudText Typo="Typo.body2">Firma digital referencial: @procedure.Resolution.DigitalSignatureReference</MudText>
+                        <MudText Typo="Typo.body2">PDF referencial: @procedure.Resolution.PdfReference</MudText>
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateResolutionAsync">Generar resolución mock</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ViewResolutionAsync">Ver resolución mock</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SendToSignatureAsync">Enviar a firma mock</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="NotifyResolutionAsync">Notificar mock</MudButton>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Notificaciones" Icon="@Icons.Material.Filled.Notifications">
+                <MudTable T="PsNotificationDto" Items="@procedure.Notifications" Dense="true" Hover="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh>Tipo</MudTh>
+                        <MudTh>Medio</MudTh>
+                        <MudTh>Estado</MudTh>
+                        <MudTh>Resultado</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Tipo">@context.Type</MudTd>
+                        <MudTd DataLabel="Medio">@context.Channel</MudTd>
+                        <MudTd DataLabel="Estado"><MudChip T="string" Size="Size.Small" Color="@GetNotificationColor(context.Status)" Variant="Variant.Outlined">@context.Status</MudChip></MudTd>
+                        <MudTd DataLabel="Resultado">@context.Result</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Plazos" Icon="@Icons.Material.Filled.Schedule">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle1">Plazo mock</MudText>
+                        <MudProgressLinear Value="@GetProgress()" Color="@GetDeadlineColor(procedure.Deadline.Status)" Rounded="true" Class="my-3" />
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@FormatDate(procedure.Deadline.StartDate)" Label="Fecha de ingreso" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@FormatDate(procedure.Deadline.EndDate)" Label="Fecha límite" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" Value="@procedure.Deadline.Status" Label="Estado de plazo" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Integraciones" Icon="@Icons.Material.Filled.Hub">
+                <MudGrid Spacing="2">
+                    @foreach (var integration in procedure.Integrations)
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudCard Outlined="true" Class="h-100">
+                                <MudCardContent>
+                                    <div class="d-flex justify-space-between gap-2">
+                                        <MudText Typo="Typo.subtitle2">@integration.Name</MudText>
+                                        <MudChip T="string" Color="@GetIntegrationColor(integration.Status)" Variant="Variant.Outlined">@integration.Status</MudChip>
+                                    </div>
+                                    <MudText Typo="Typo.body2" Class="mt-2">@integration.Description</MudText>
+                                    <MudText Typo="Typo.caption">@integration.LastEvent</MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Historial" Icon="@Icons.Material.Filled.History">
+                <MudTable T="PsHistoryEventDto" Items="@procedure.History" Dense="true" Hover="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh>Fecha</MudTh>
+                        <MudTh>Usuario</MudTh>
+                        <MudTh>Acción</MudTh>
+                        <MudTh>Estado anterior</MudTh>
+                        <MudTh>Estado nuevo</MudTh>
+                        <MudTh>Departamento</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Fecha">@context.Date.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                        <MudTd DataLabel="Usuario">@context.User</MudTd>
+                        <MudTd DataLabel="Acción">@context.Action</MudTd>
+                        <MudTd DataLabel="Estado anterior">@context.PreviousStatus</MudTd>
+                        <MudTd DataLabel="Estado nuevo">@context.NewStatus</MudTd>
+                        <MudTd DataLabel="Departamento">@context.Department</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Auditoría" Icon="@Icons.Material.Filled.Policy">
+                <MudTable T="PsAuditEventDto" Items="@procedure.AuditEvents" Dense="true" Hover="true">
+                    <HeaderContent>
+                        <MudTh>Fecha</MudTh>
+                        <MudTh>Usuario</MudTh>
+                        <MudTh>Acción</MudTh>
+                        <MudTh>Descripción</MudTh>
+                        <MudTh>Severidad</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Fecha">@context.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                        <MudTd DataLabel="Usuario">@context.User</MudTd>
+                        <MudTd DataLabel="Acción">@context.Action</MudTd>
+                        <MudTd DataLabel="Descripción">@context.Description</MudTd>
+                        <MudTd DataLabel="Severidad"><MudChip T="string" Size="Size.Small" Color="@GetAuditColor(context.Severity)" Variant="Variant.Outlined">@context.Severity</MudChip></MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Reportes" Icon="@Icons.Material.Filled.Assessment">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="6">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1">Reportes mock relacionados</MudText>
+                                <MudStack Spacing="1" Class="mt-2">
+                                    @foreach (var report in reportSummaries)
+                                    {
+                                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@report</MudChip>
+                                    }
+                                </MudStack>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ExportMockAsync">Exportar mock</MudButton>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = string.Empty;
+
+    private readonly PlataformaServiciosMockService mockService = new();
+    private PsProcedureDto? procedure;
+    private int activeTab;
+    private readonly List<string> reportSummaries = new()
+    {
+        "Trámites por estado",
+        "Trámites por departamento",
+        "Trámites por canal",
+        "Trámites vencidos",
+        "Resoluciones emitidas",
+        "Notificaciones",
+        "Productividad",
+        "Integraciones"
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        procedure = await mockService.GetProcedureAsync(Id);
+        activeTab = 0;
+    }
+
+    private async Task EditAsync()
+    {
+        Snackbar.Add("Edición mock disponible desde el expediente consultado.", Severity.Info);
+        await Task.CompletedTask;
+    }
+
+    private Task ShowTransferAsync() => NotifyAsync("Traslado mock ejecutado.", Severity.Info);
+    private Task ShowPreventionAsync() => NotifyAsync("Prevención mock generada.", Severity.Warning);
+    private Task ShowResolutionAsync() => NotifyAsync("Resolución mock generada.", Severity.Success);
+    private Task ShowNotificationAsync() => NotifyAsync("Notificación mock generada.", Severity.Info);
+    private Task ShowRucAsync() => NotifyAsync("Vista RUC mock.", Severity.Info);
+    private Task ValidateRucAsync() => NotifyAsync("Validación RUC mock.", Severity.Info);
+    private Task OpenRelatedModuleAsync() => NotifyAsync("Vínculo visual al módulo relacionado.", Severity.Info);
+    private Task GenerateResolutionAsync() => NotifyAsync("Resolución mock generada.", Severity.Success);
+    private Task ViewResolutionAsync() => NotifyAsync("Resolución mock abierta.", Severity.Info);
+    private Task SendToSignatureAsync() => NotifyAsync("Firma mock solicitada.", Severity.Warning);
+    private Task NotifyResolutionAsync() => NotifyAsync("Notificación mock enviada.", Severity.Success);
+    private Task ExportMockAsync() => NotifyAsync("Exportación disponible en implementación backend.", Severity.Warning);
+
+    private Task NotifyAsync(string message, Severity severity)
+    {
+        Snackbar.Add(message, severity);
+        return Task.CompletedTask;
+    }
+
+    private Task GoBackAsync()
+    {
+        NavigationManager.NavigateTo("/plataforma-servicios");
+        return Task.CompletedTask;
+    }
+
+    private string GetAlertMessage()
+        => procedure!.Deadline.Status == "Vencido" ? "El expediente se encuentra vencido en modo demo." :
+           procedure!.Deadline.Status == "Próximo a vencer" ? "El expediente está próximo a vencer." :
+           procedure!.Alerts.FirstOrDefault() ?? "El expediente se encuentra en seguimiento normal.";
+
+    private Severity GetDeadlineSeverity()
+        => procedure!.Deadline.Status == "Vencido" ? Severity.Error : procedure!.Deadline.Status == "Próximo a vencer" ? Severity.Warning : Severity.Info;
+
+    private double GetProgress() => procedure is null ? 0 : Math.Min(100, Math.Max(5, procedure.Requirements.Count == 0 ? 25 : procedure.Requirements.Count(item => item.Status == "Presentado") * 100.0 / procedure.Requirements.Count));
+
+    private Color GetStatusColor(string status)
+        => status is "Resuelto" or "Archivado" ? Color.Success : status is "Prevenido" ? Color.Warning : status is "Vencido" ? Color.Error : Color.Info;
+
+    private Color GetDeadlineColor(string status)
+        => status is "Vencido" ? Color.Error : status is "Próximo a vencer" ? Color.Warning : Color.Success;
+
+    private Color GetRequirementColor(string status)
+        => status is "Presentado" ? Color.Success : status is "Observado" ? Color.Warning : status is "No aplica" ? Color.Info : Color.Error;
+
+    private Color GetQualityColor(string status)
+        => status is "Aprobado" ? Color.Success : status is "Devuelto" ? Color.Warning : status is "Reasignado" ? Color.Info : Color.Info;
+
+    private Color GetNotificationColor(string status)
+        => status is "Enviada mock" ? Color.Success : status is "Fallida mock" ? Color.Error : Color.Warning;
+
+    private Color GetIntegrationColor(string status)
+        => status is "Preparado" ? Color.Success : status is "Simulado" ? Color.Info : Color.Warning;
+
+    private Color GetAuditColor(string severity)
+        => severity is "Success" ? Color.Success : severity is "Warning" ? Color.Warning : Color.Info;
+
+    private static string FormatDate(DateTime date) => date.ToString("dd/MM/yyyy");
+}

@@ -1,0 +1,30 @@
+@using System
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudCard Outlined="true">
+    <MudCardContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Número certificado</MudText><MudText>@Permit.LandUse.CertificateNumber</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Estado</MudText><MudText>@Permit.LandUse.Status</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Compatibilidad</MudText><MudText>@Permit.LandUse.Compatibility</MudText></MudItem>
+            <MudItem xs="12" md="6"><MudText Typo="Typo.caption">Actividad permitida</MudText><MudText>@Permit.LandUse.AllowedActivity</MudText></MudItem>
+            <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Fecha emisión</MudText><MudText>@FormatDate(Permit.LandUse.EmittedAt)</MudText></MudItem>
+            <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Vigencia</MudText><MudText>@FormatDate(Permit.LandUse.ValidUntil)</MudText></MudItem>
+            <MudItem xs="12"><MudTextField T="string" @bind-Value="Permit.LandUse.Observations" Label="Observaciones" Variant="Variant.Outlined" Margin="Margin.Dense" AutoGrow="true" /></MudItem>
+        </MudGrid>
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton Variant="Variant.Outlined" OnClick="ValidateAsync">Validar uso de suelo mock</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ViewCertificateAsync">Ver certificado mock</MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private Task ValidateAsync() { Permit.LandUse.Status = "Aprobado"; Permit.LandUse.Compatibility = "Compatible"; Permit.LandUse.EmittedAt = DateTime.Today; Permit.LandUse.ValidUntil = DateTime.Today.AddMonths(6); Snackbar.Add("Uso de suelo validado en modo demo.", Severity.Success); return Task.CompletedTask; }
+    private Task ViewCertificateAsync() { Snackbar.Add($"Certificado mock {Permit.LandUse.CertificateNumber} visible de forma referencial.", Severity.Info); return Task.CompletedTask; }
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
+}

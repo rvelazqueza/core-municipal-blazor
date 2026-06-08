@@ -1,0 +1,40 @@
+@using System
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Estado APC</MudText><MudText>@Permit.Apc.ApcStatus</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Estado APC-R</MudText><MudText>@Permit.Apc.ApcRStatus</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Código APC</MudText><MudText>@Permit.CfiaApcCode</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Código APC-R</MudText><MudText>@Permit.ApcRCode</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Recepción</MudText><MudText>@FormatDate(Permit.Apc.ReceptionDate)</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Prevención</MudText><MudText>@FormatDate(Permit.Apc.PreventionDate)</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Subsanación</MudText><MudText>@FormatDate(Permit.Apc.CorrectionDate)</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Aprobación</MudText><MudText>@FormatDate(Permit.Apc.ApprovalDate)</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Sellado CFIA</MudText><MudText>@FormatDate(Permit.Apc.SealedAt)</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Última sincronización</MudText><MudText>@FormatDateTime(Permit.Apc.LastSyncAt)</MudText></MudItem>
+    </MudGrid>
+    <MudChip T="string" Text="@Permit.Apc.MockSyncStatus" Color="Color.Info" Variant="Variant.Outlined" Class="mt-3" />
+    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mt-4">
+        <MudButton Variant="Variant.Outlined" OnClick="ReceiveAsync">Simular recepción APC</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="PreventAsync">Simular prevención</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="CorrectAsync">Simular subsanación</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ApproveAsync">Simular aprobación</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="SyncAsync">Simular sincronización</MudButton>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private Task ReceiveAsync() { Permit.Apc.ApcStatus = "Recibido"; Permit.Apc.ReceptionDate = DateTime.Now; return NotifyAsync("Recepción APC mock registrada."); }
+    private Task PreventAsync() { Permit.Apc.ApcStatus = "Prevenido"; Permit.Apc.PreventionDate = DateTime.Now; return NotifyAsync("Prevención APC mock registrada."); }
+    private Task CorrectAsync() { Permit.Apc.ApcStatus = "Subsanado"; Permit.Apc.CorrectionDate = DateTime.Now; return NotifyAsync("Subsanación APC mock registrada."); }
+    private Task ApproveAsync() { Permit.Apc.ApcStatus = "Aprobado"; Permit.Apc.ApcRStatus = "Aprobado"; Permit.Apc.ApprovalDate = DateTime.Now; return NotifyAsync("Aprobación APC mock registrada."); }
+    private Task SyncAsync() { Permit.Apc.MockSyncStatus = "Sincronizado"; Permit.Apc.LastSyncAt = DateTime.Now; return NotifyAsync("Sincronización APC mock completada."); }
+    private Task NotifyAsync(string message) { Snackbar.Add(message, Severity.Success); return Task.CompletedTask; }
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
+    private static string FormatDateTime(DateTime? value) => value?.ToString("dd/MM/yyyy HH:mm") ?? "Pendiente";
+}

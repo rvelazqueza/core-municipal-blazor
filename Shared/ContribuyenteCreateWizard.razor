@@ -1,0 +1,277 @@
+@using BlazorApp.Models
+@using MudBlazor
+
+<WizardShell Title="Nuevo contribuyente"
+             Subtitle="Alta guiada del expediente tributario con validación progresiva por etapa."
+             SummaryTitle="Resumen del alta RUC"
+             State="wizardState"
+             CurrentStepTitle="@CurrentStep.Title"
+             CurrentStepSubtitle="@CurrentStep.Subtitle"
+             CanGoBack="@(currentStepIndex > 0)"
+             CanGoNext="@(currentStepIndex < wizardSteps.Count - 1)"
+             CanFinish="@(currentStepIndex == wizardSteps.Count - 1)"
+             FinishText="Crear contribuyente"
+             OnBack="GoBackAsync"
+             OnNext="GoNextAsync"
+             OnFinish="CreateContribuyenteAsync"
+             OnSaveDraft="SaveDraftAsync"
+             OnCancel="CancelAsync">
+    <ChildContent>
+        @switch (currentStepIndex)
+        {
+            case 0:
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.TipoPersona" Label="Tipo de persona" Variant="Variant.Outlined">
+                            @foreach (var item in tiposPersona)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.TipoIdentificacion" Label="Tipo de identificación" Variant="Variant.Outlined">
+                            @foreach (var item in tiposIdentificacion)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudTextField T="string" @bind-Value="Model.NumeroIdentificacion" Label="Número de identificación" Variant="Variant.Outlined" Required="true" RequiredError="La identificación es obligatoria" />
+                    </MudItem>
+                </MudGrid>
+                break;
+            case 1:
+                <MudGrid Spacing="3">
+                    @if (Model.TipoPersona == "Fisica")
+                    {
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="Model.Nombre" Label="Nombre" Variant="Variant.Outlined" Required="true" RequiredError="El nombre es obligatorio" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="Model.Apellidos" Label="Apellidos" Variant="Variant.Outlined" Required="true" RequiredError="Los apellidos son obligatorios" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string" @bind-Value="Model.EstadoCivil" Label="Estado civil" Variant="Variant.Outlined">
+                                @foreach (var item in estadosCiviles)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                    }
+                    else
+                    {
+                        <MudItem xs="12" md="8">
+                            <MudTextField T="string" @bind-Value="Model.RazonSocial" Label="Razón social" Variant="Variant.Outlined" Required="true" RequiredError="La razón social es obligatoria" />
+                        </MudItem>
+                    }
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" @bind-Value="Model.Nacionalidad" Label="Nacionalidad" Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="string" @bind-Value="Model.EstadoContribuyente" Label="Estado del contribuyente" Variant="Variant.Outlined">
+                            @foreach (var item in estadosContribuyente)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+                break;
+            case 2:
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.DireccionFiscal.Provincia" Label="Provincia" Variant="Variant.Outlined">
+                            @foreach (var item in provincias)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.DireccionFiscal.Canton" Label="Cantón" Variant="Variant.Outlined">
+                            @foreach (var item in cantones)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="Model.DireccionFiscal.Distrito" Label="Distrito" Variant="Variant.Outlined">
+                            @foreach (var item in distritos)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField T="string" @bind-Value="Model.DireccionFiscal.DireccionExacta" Label="Dirección exacta" Variant="Variant.Outlined" Required="true" RequiredError="La dirección exacta es obligatoria" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" @bind-Value="Model.Telefono" Label="Teléfono" Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" @bind-Value="Model.Correo" Label="Correo" Variant="Variant.Outlined" />
+                    </MudItem>
+                </MudGrid>
+                break;
+            case 3:
+                <MudGrid Spacing="3">
+                    @if (Model.TipoPersona == "Juridica")
+                    {
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="Model.RepresentanteLegal.NombreCompleto" Label="Representante legal" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Identificacion" Label="Identificación representante" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Telefono" Label="Teléfono representante" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Correo" Label="Correo representante" Variant="Variant.Outlined" />
+                        </MudItem>
+                    }
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="string" @bind-Value="Model.ActividadEconomica" Label="Actividad económica" Variant="Variant.Outlined">
+                            @foreach (var item in actividades)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                            Para persona jurídica, los datos del representante se validan antes de crear el expediente.
+                        </MudAlert>
+                    </MudItem>
+                </MudGrid>
+                break;
+            case 4:
+                <MudStack Spacing="3">
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" lg="6">
+                            <MudPaper Outlined="true" Class="pa-3 h-100">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.subtitle1">Tributos vinculados</MudText>
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" md="4">
+                                            <MudTextField T="string" @bind-Value="draftTributo.Codigo" Label="Código" Variant="Variant.Outlined" />
+                                        </MudItem>
+                                        <MudItem xs="12" md="5">
+                                            <MudTextField T="string" @bind-Value="draftTributo.Nombre" Label="Nombre" Variant="Variant.Outlined" />
+                                        </MudItem>
+                                        <MudItem xs="12" md="3">
+                                            <MudSelect T="string" @bind-Value="draftTributo.Estado" Label="Estado" Variant="Variant.Outlined">
+                                                @foreach (var item in estadosRelacion)
+                                                {
+                                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                    </MudGrid>
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddTributoAsync">Agregar tributo</MudButton>
+                                    @if (Model.TributosVinculados.Any())
+                                    {
+                                        @foreach (var tributo in Model.TributosVinculados)
+                                        {
+                                            <MudPaper Outlined="true" Class="pa-2">
+                                                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                                                    <MudStack Spacing="0">
+                                                        <MudText Typo="Typo.body1">@tributo.Nombre</MudText>
+                                                        <MudText Typo="Typo.caption">@tributo.Codigo</MudText>
+                                                    </MudStack>
+                                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                                        <MudChip T="string" Text="@tributo.Estado" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary" />
+                                                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="@(() => RemoveTributoAsync(tributo))">Quitar</MudButton>
+                                                    </MudStack>
+                                                </MudStack>
+                                            </MudPaper>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.body2">No se han agregado tributos iniciales.</MudText>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" lg="6">
+                            <MudPaper Outlined="true" Class="pa-3 h-100">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.subtitle1">Bienes vinculados</MudText>
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" md="4">
+                                            <MudTextField T="string" @bind-Value="draftBien.FincaNumero" Label="Finca" Variant="Variant.Outlined" />
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudTextField T="string" @bind-Value="draftBien.Distrito" Label="Distrito" Variant="Variant.Outlined" />
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudTextField T="string" @bind-Value="draftBien.Uso" Label="Uso" Variant="Variant.Outlined" />
+                                        </MudItem>
+                                    </MudGrid>
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddBienAsync">Agregar bien</MudButton>
+                                    @if (Model.BienesInmueblesVinculados.Any())
+                                    {
+                                        @foreach (var bien in Model.BienesInmueblesVinculados)
+                                        {
+                                            <MudPaper Outlined="true" Class="pa-2">
+                                                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                                                    <MudStack Spacing="0">
+                                                        <MudText Typo="Typo.body1">@bien.FincaNumero</MudText>
+                                                        <MudText Typo="Typo.caption">@($"{bien.Distrito} · {bien.Uso}")</MudText>
+                                                    </MudStack>
+                                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                                        <MudChip T="string" Text="@bien.Estado" Variant="Variant.Outlined" Size="Size.Small" Color="Color.Secondary" />
+                                                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="@(() => RemoveBienAsync(bien))">Quitar</MudButton>
+                                                    </MudStack>
+                                                </MudStack>
+                                            </MudPaper>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.body2">No se han agregado bienes iniciales.</MudText>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                    <MudTextField T="string" @bind-Value="Model.Observaciones" Label="Observaciones" Variant="Variant.Outlined" />
+                </MudStack>
+                break;
+            case 5:
+                <MudStack Spacing="3">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                        Revise el resumen del expediente antes de confirmar la creación del contribuyente.
+                    </MudAlert>
+                    <MudPaper Outlined="true" Class="pa-3">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle1">Resumen completo</MudText>
+                            @foreach (var item in wizardState.SummaryItems)
+                            {
+                                <MudText Typo="Typo.body2">• @item</MudText>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                </MudStack>
+                break;
+        }
+    </ChildContent>
+    <SummaryContent>
+        <MudPaper Outlined="true" Class="pa-3">
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.subtitle2">Indicadores del alta</MudText>
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudChip T="string" Text="@($"Tipo: {Model.TipoPersona}")" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Estado: {Model.EstadoContribuyente}")" Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Tributos: {Model.TributosVinculados.Count}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Bienes: {Model.BienesInmueblesVinculados.Count}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    </SummaryContent>
+</WizardShell>

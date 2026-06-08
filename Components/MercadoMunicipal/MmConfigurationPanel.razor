@@ -1,0 +1,42 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+
+<div class="d-flex flex-column gap-3">
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        Configuración referencial del módulo Mercado Municipal; no existe administración persistente en esta vista.
+    </MudAlert>
+
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="3"><MudText>Total ítems: @Items.Count</MudText></MudItem>
+            <MudItem xs="12" sm="6" md="3"><MudText>Catálogos: @Items.Count(x => x.Group.Equals("Catálogo", StringComparison.OrdinalIgnoreCase))</MudText></MudItem>
+            <MudItem xs="12" sm="6" md="3"><MudText>Parámetros: @Items.Count(x => x.Group.Equals("Parámetro", StringComparison.OrdinalIgnoreCase))</MudText></MudItem>
+            <MudItem xs="12" sm="6" md="3"><MudText>Activos: @Items.Count(x => x.Status.Equals("Activo", StringComparison.OrdinalIgnoreCase))</MudText></MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+        <MudTable T="MmCatalogItemDto" Items="@Items.OrderBy(x => x.Group).ThenBy(x => x.Name)" Hover="true" Bordered="true" Striped="true">
+            <HeaderContent>
+                <MudTh>Código</MudTh>
+                <MudTh>Grupo</MudTh>
+                <MudTh>Nombre</MudTh>
+                <MudTh>Estado</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Código">@context.Code</MudTd>
+                <MudTd DataLabel="Grupo">@context.Group</MudTd>
+                <MudTd DataLabel="Nombre">@context.Name</MudTd>
+                <MudTd DataLabel="Estado">@context.Status</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter] public List<MmCatalogItemDto> Items { get; set; } = new();
+}

@@ -1,0 +1,65 @@
+@using BlazorApp.Models.PermisosConstruccion
+
+<MudCard Outlined="true">
+    <MudCardContent>
+        <div class="d-flex flex-wrap justify-space-between align-center gap-2 mb-3">
+            <div>
+                <MudText Typo="Typo.h6">Bandeja de permisos</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Consulta rápida de expedientes, cobros, inspecciones y resolución.</MudText>
+            </div>
+            <MudChip T="string" Text="@($"{Permits.Count} registros")" Color="Color.Primary" Variant="Variant.Outlined" />
+        </div>
+
+        <MudTable T="PcPermitDto" Items="@Permits" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Expediente</MudTh>
+                <MudTh>Trámite</MudTh>
+                <MudTh>Solicitante</MudTh>
+                <MudTh>Distrito</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh>Pago</MudTh>
+                <MudTh>Resolución</MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Expediente">@context.CaseNumber</MudTd>
+                <MudTd DataLabel="Trámite">@context.TypeName</MudTd>
+                <MudTd DataLabel="Solicitante">@context.Applicant.Name</MudTd>
+                <MudTd DataLabel="Distrito">@context.District</MudTd>
+                <MudTd DataLabel="Estado"><StatusBadge Text="@context.PermitStatus" /></MudTd>
+                <MudTd DataLabel="Pago">@context.Payment.Status</MudTd>
+                <MudTd DataLabel="Resolución">@context.Resolution.Result</MudTd>
+                <MudTd DataLabel="Acciones">
+                    <div class="d-flex flex-wrap gap-1">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => OnOpenExpediente.InvokeAsync(context))">Abrir</MudButton>
+                        <MudMenu Dense="true" Label="Más" Variant="Variant.Text" Color="Color.Primary">
+                            <MudMenuItem OnClick="@(() => OnEdit.InvokeAsync(context))">Editar</MudMenuItem>
+                            <MudMenuItem OnClick="@(() => OnReview.InvokeAsync(context))">Revisión</MudMenuItem>
+                            <MudMenuItem OnClick="@(() => OnPrevention.InvokeAsync(context))">Prevención</MudMenuItem>
+                            <MudMenuItem OnClick="@(() => OnAssess.InvokeAsync(context))">Tasación</MudMenuItem>
+                            <MudMenuItem OnClick="@(() => OnSimulatePayment.InvokeAsync(context))">Pago</MudMenuItem>
+                            <MudMenuItem OnClick="@(() => OnApprove.InvokeAsync(context))">Aprobar</MudMenuItem>
+                            <MudMenuItem OnClick="@(() => OnAnnul.InvokeAsync(context))">Anular</MudMenuItem>
+                            <MudMenuItem OnClick="@(() => OnRequestInspection.InvokeAsync(context))">Inspección</MudMenuItem>
+                            <MudMenuItem OnClick="@(() => OnAudit.InvokeAsync(context))">Auditoría</MudMenuItem>
+                        </MudMenu>
+                    </div>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public List<PcPermitDto> Permits { get; set; } = new();
+    [Parameter] public EventCallback<PcPermitDto> OnOpenExpediente { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnEdit { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnReview { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnPrevention { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnAssess { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnSimulatePayment { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnApprove { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnAnnul { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnRequestInspection { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnAudit { get; set; }
+}

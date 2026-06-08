@@ -1,37 +1,207 @@
 @page "/patentes"
 @using BlazorApp.Shared
 
-<PageTitleBar Title="Patentes" Subtitle="Gestión básica de licencias comerciales, solicitudes y mantenimiento simple" Breadcrumbs="breadcrumbs">
+<PageTitleBar Title="Patentes Municipales" Subtitle="Gestión integral de licencias comerciales, licores, temporales, declaraciones, inspecciones, cobro e integraciones municipales." Breadcrumbs="breadcrumbs">
     <Actions>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.NoteAdd" OnClick="CreateNewAsync">Nueva solicitud</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.NoteAdd" OnClick="CreateNewAsync">Nueva solicitud de patente</MudButton>
     </Actions>
 </PageTitleBar>
 
-<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
-    Operación de patentes preparada para integrarse con uso de suelo, cobro, notificaciones y trazabilidad institucional.
-</MudAlert>
+<MudStack Spacing="4">
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mb-0">
+        Consulta consolidada con datos mock en memoria para seguimiento institucional y preparación de futuras pantallas operativas.
+    </MudAlert>
 
-<MudPaper Outlined="true" Class="pa-2 pa-md-3">
-<MudTabs Outlined="true" Rounded="true" Border="true" ApplyEffectsToContainer="true" PanelClass="pa-4" @bind-ActivePanelIndex="activePanelIndex">
-    <MudTabPanel Text="Dashboard" Icon="@Icons.Material.Filled.SpaceDashboard">
-        <PatentesDashboardPanel Items="licencias" />
-    </MudTabPanel>
-    <MudTabPanel Text="Consulta de licencias" Icon="@Icons.Material.Filled.ManageSearch">
-        <LicenciasFilterPanel Model="filtro" OnSearch="LoadFilteredAsync" />
-        @if (filteredLicencias.Count > 0)
+    <MudGrid Spacing="3">
+        @foreach (var item in kpiCards)
         {
-            <LicenciasTable Items="filteredLicencias" SolicitudRequested="OpenSolicitudAsync" MaintenanceRequested="OpenMaintenanceAsync" />
+            <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
+                <MudCard Outlined="true" Class="h-100">
+                    <MudCardContent>
+                        <div class="d-flex align-items-start justify-content-between gap-3">
+                            <div>
+                                <MudText Typo="Typo.caption" Class="text-uppercase">@item.Label</MudText>
+                                <MudText Typo="Typo.h5" Class="mb-0">@item.Value</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">@item.Description</MudText>
+                            </div>
+                            <MudIcon Icon="@item.Icon" Color="@item.Color" Size="Size.Large" />
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
         }
-        else
-        {
-            <EmptyState Title="Sin resultados" Description="No hay licencias que coincidan con los filtros aplicados." Icon="@Icons.Material.Filled.FilterAltOff" />
-        }
-    </MudTabPanel>
-    <MudTabPanel Text="Solicitud de licencia" Icon="@Icons.Material.Filled.NoteAdd">
-        <SolicitudPatenteForm Model="selectedSolicitud" ModelChanged="OnSolicitudChanged" OnSaved="AfterSolicitudSavedAsync" />
-    </MudTabPanel>
-    <MudTabPanel Text="Mantenimiento" Icon="@Icons.Material.Filled.BuildCircle">
-        <MantenimientoPatentePanel Model="selectedLicencia" ModelChanged="OnLicenciaChanged" OnChanged="AfterMaintenanceChangedAsync" />
-    </MudTabPanel>
-</MudTabs>
-</MudPaper>
+    </MudGrid>
+
+    <MudPaper Outlined="true" Class="pa-3 pa-md-4">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Acciones rápidas</MudText>
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.NoteAdd" OnClick="CreateNewAsync">Nueva solicitud de patente</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Timer" OnClick="ApplyTemporalTypeAsync">Licencias temporales</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.LocalBar" OnClick="ApplyLiquorTypeAsync">Licencias de licores</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" OnClick="ShowFeaturePendingAsync">Declaraciones</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Redeem" OnClick="ShowFeaturePendingAsync">Exoneraciones</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Badge" OnClick="ShowFeaturePendingAsync">Inspecciones</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="ShowFeaturePendingAsync">Denuncias</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Send" OnClick="ShowFeaturePendingAsync">Emisión</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Assessment" OnClick="ShowFeaturePendingAsync">Reportes</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Settings" OnClick="OpenConfiguracionAsync">Configuración Patentes</MudButton>
+            </div>
+        </MudStack>
+    </MudPaper>
+
+    <MudPaper Outlined="true" Class="pa-3 pa-md-4">
+        <MudStack Spacing="2">
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                <div>
+                    <MudText Typo="Typo.h6">Filtros compactos</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Aplique filtros sobre el dataset mock para explorar licencias, solicitudes y trazabilidad.</MudText>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="ApplyFiltersAsync">Filtrar</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ClearAll" OnClick="ClearFiltersAsync">Limpiar</MudButton>
+                </div>
+            </div>
+
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudTextField T="string" @bind-Value="filtro.NumeroLicencia" Label="Número de licencia" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudTextField T="string" @bind-Value="filtro.NumeroSolicitud" Label="Número de solicitud" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudTextField T="string" @bind-Value="filtro.Expediente" Label="Expediente" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudTextField T="string" @bind-Value="filtro.Identificacion" Label="Identificación" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudTextField T="string" @bind-Value="filtro.Contribuyente" Label="Contribuyente" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudTextField T="string" @bind-Value="filtro.NombreComercial" Label="Nombre comercial" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudTextField T="string" @bind-Value="filtro.ActividadEconomica" Label="Actividad económica" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSelect T="string" @bind-Value="filtro.TipoLicencia" Label="Tipo de licencia" Variant="Variant.Outlined" Dense="true">
+                        <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+                        @foreach (var tipo in tipoLicenciaOptions)
+                        {
+                            <MudSelectItem Value="@tipo">@tipo</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSelect T="string" @bind-Value="filtro.Estado" Label="Estado" Variant="Variant.Outlined" Dense="true">
+                        <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+                        @foreach (var estado in estadoOptions)
+                        {
+                            <MudSelectItem Value="@estado">@estado</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSelect T="string" @bind-Value="filtro.UsoSuelo" Label="Uso de Suelo" Variant="Variant.Outlined" Dense="true">
+                        <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+                        @foreach (var uso in usoSueloOptions)
+                        {
+                            <MudSelectItem Value="@uso">@uso</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSelect T="string" @bind-Value="filtro.Distrito" Label="Distrito" Variant="Variant.Outlined" Dense="true">
+                        <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+                        @foreach (var distrito in distritoOptions)
+                        {
+                            <MudSelectItem Value="@distrito">@distrito</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSelect T="string" @bind-Value="filtro.CanalIngreso" Label="Canal de ingreso" Variant="Variant.Outlined" Dense="true">
+                        <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+                        @foreach (var canal in canalIngresoOptions)
+                        {
+                            <MudSelectItem Value="@canal">@canal</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    </MudPaper>
+
+    <MudPaper Outlined="true" Class="pa-3 pa-md-4">
+        <MudStack Spacing="2">
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                <div>
+                    <MudText Typo="Typo.h6">Resultado de consulta</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">@resultSummary</MudText>
+                </div>
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Dataset mock en memoria</MudChip>
+            </div>
+
+            @if (filteredLicencias.Count > 0)
+            {
+                <MudTable T="LicenciaComercialDto" Items="@filteredLicencias" Hover="true" Dense="true" Striped="true" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
+                        <MudTh>Número de licencia</MudTh>
+                        <MudTh>Expediente</MudTh>
+                        <MudTh>Nombre comercial</MudTh>
+                        <MudTh>Contribuyente</MudTh>
+                        <MudTh>Identificación</MudTh>
+                        <MudTh>Tipo de licencia</MudTh>
+                        <MudTh>Actividad principal</MudTh>
+                        <MudTh>Estado</MudTh>
+                        <MudTh>Uso de Suelo</MudTh>
+                        <MudTh>Local / finca</MudTh>
+                        <MudTh>Canal</MudTh>
+                        <MudTh>Última actualización</MudTh>
+                        <MudTh>Acciones</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Número de licencia">@context.NumeroLicencia</MudTd>
+                        <MudTd DataLabel="Expediente">@GetExpediente(context)</MudTd>
+                        <MudTd DataLabel="Nombre comercial">@context.NombreComercial</MudTd>
+                        <MudTd DataLabel="Contribuyente">@context.ContribuyenteNombre</MudTd>
+                        <MudTd DataLabel="Identificación">@context.Identificacion</MudTd>
+                        <MudTd DataLabel="Tipo de licencia">@context.TipoPatente</MudTd>
+                        <MudTd DataLabel="Actividad principal">@context.ActividadEconomica</MudTd>
+                        <MudTd DataLabel="Estado">
+                            <MudChip T="string" Size="Size.Small" Color="@GetEstadoColor(context.Estado)" Variant="Variant.Outlined">@context.Estado</MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Uso de Suelo">
+                            <MudChip T="string" Size="Size.Small" Color="@GetUsoSueloColor(context)" Variant="Variant.Outlined">@GetUsoSueloLabel(context)</MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Local / finca">@GetLocalLabel(context)</MudTd>
+                        <MudTd DataLabel="Canal">
+                            <MudChip T="string" Size="Size.Small" Color="@GetCanalColor(context.CanalIngreso)" Variant="Variant.Outlined">@context.CanalIngreso</MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Última actualización">@GetLastUpdate(context)</MudTd>
+                        <MudTd DataLabel="Acciones">
+                            <div class="d-flex flex-wrap gap-1">
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.FolderOpen" OnClick="@(() => ViewExpedienteAsync(context))">Ver expediente</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Edit" OnClick="@(() => EditAsync(context))">Editar</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Autorenew" OnClick="@(() => RenewAsync(context))">Renovar</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.SwapHoriz" OnClick="@(() => ModifyAsync(context))">Modificar</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.PauseCircle" OnClick="@(() => SuspendAsync(context))">Suspender</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="@(() => RegisterComplaintAsync(context))">Registrar denuncia</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.FactCheck" OnClick="@(() => CreateRelatedProcedureAsync(context))">Crear trámite relacionado</MudButton>
+                            </div>
+                        </MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 20, 50 }" />
+                    </PagerContent>
+                </MudTable>
+            }
+            else
+            {
+                <EmptyState Title="Sin resultados" Description="No hay licencias que coincidan con los filtros aplicados." Icon="@Icons.Material.Filled.FilterAltOff" />
+            }
+        </MudStack>
+    </MudPaper>
+</MudStack>

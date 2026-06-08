@@ -312,8 +312,19 @@ public class PatentesMockService : IPatentesService
         }
     };
 
+    static PatentesMockService()
+    {
+        EnsureMinimumLicencias();
+    }
+
     public Task<List<LicenciaComercialDto>> GetAllAsync()
         => Task.FromResult(Data.OrderByDescending(x => x.FechaSolicitud).Select(CloneLicencia).ToList());
+
+    public Task<List<SolicitudPatenteDto>> GetSolicitudesAsync()
+        => Task.FromResult(Data.Select(x => CloneSolicitud(x.Solicitud)).OrderByDescending(x => x.FechaSolicitud).ToList());
+
+    public Task<PatentesModuleSnapshotDto> GetModuleSnapshotAsync()
+        => Task.FromResult(PatentesMockDatasetFactory.BuildSnapshot(Data.Select(CloneLicencia).ToList()));
 
     public Task<LicenciaComercialDto> GetByIdAsync(int id)
         => Task.FromResult(CloneLicencia(Data.FirstOrDefault(x => x.Id == id) ?? new LicenciaComercialDto()));
@@ -436,11 +447,106 @@ public class PatentesMockService : IPatentesService
         return Task.FromResult(CloneLicencia(target));
     }
 
+    private static void EnsureMinimumLicencias()
+    {
+        if (Data.Count >= 10)
+        {
+            return;
+        }
+
+        var additionalLicencias = new List<LicenciaComercialDto>
+        {
+            CreateSupplementalLicencia(6, "PAT-2025-031", 4, "2-3456-7890", "Distribuidora El Roble S.R.L.", "Licorera El Roble", "Frente a la estación, local 4", "SJ-009901", "Expendio de bebidas alcohólicas", "5630", "Licores", "Merced", "Aprobado", DateTime.Today.AddMonths(-4), DateTime.Today.AddMonths(-4).AddDays(6), DateTime.Today.AddYears(5), "Carolina Muñoz", "Expediente con licencia especial vinculada.", new UsoSueloVinculadoDto { NumeroCertificado = "US-2025-311", Estado = "Conforme", EsConforme = true, FechaValidacion = DateTime.Today.AddMonths(-4), Observaciones = "Compatible con actividad especial.", Fuente = "Uso de Suelo" }, true),
+            CreateSupplementalLicencia(7, "PAT-2025-041", 5, "1-9876-5432", "María Fernanda Quesada", "Consultoría Integral", "Cobertura cantonal sin establecimiento permanente", "Sin local físico", "Servicios profesionales sin local físico", "4789", "Servicios sin local", "Zapote", "Pendiente validación", DateTime.Today.AddDays(-18), null, null, "Sofía Rojas", "Actividad declarada sin local físico; pendiente revisión documental.", new UsoSueloVinculadoDto { NumeroCertificado = "SLF-2025-041", Estado = "Pendiente", EsConforme = false, FechaValidacion = DateTime.Today.AddDays(-10), Observaciones = "Actividad exceptuada de local fijo en validación mock.", Fuente = "Patentes" }, false),
+            CreateSupplementalLicencia(8, "PAT-2024-088", 6, "3-102-456789", "Eventos Metropolitanos S.A.", "Eventos Metro", "Centro comercial sur, local 19", "SJ-870011", "Organización de eventos temporales", "8230", "Temporal", "Mata Redonda", "En revision", DateTime.Today.AddMonths(-2), null, DateTime.Today.AddMonths(4), "Daniel Zúñiga", "Renovación con inspección pendiente.", new UsoSueloVinculadoDto { NumeroCertificado = "US-2024-771", Estado = "Pendiente", EsConforme = false, FechaValidacion = DateTime.Today.AddDays(-12), Observaciones = "Pendiente criterio técnico para evento recurrente.", Fuente = "Uso de Suelo" }, false),
+            CreateSupplementalLicencia(9, "PAT-2025-052", 8, "3-101-223344", "Logística del Valle S.A.", "Centro Logístico del Valle", "Zona industrial oeste, bodega 12", "SJ-440022", "Transporte privado referencial", "4922", "Transporte", "Uruca", "Aprobado", DateTime.Today.AddMonths(-5), DateTime.Today.AddMonths(-5).AddDays(9), DateTime.Today.AddMonths(7), "Mauricio Porras", "Licencia de logística con cobro mock sincronizado.", new UsoSueloVinculadoDto { NumeroCertificado = "US-2025-402", Estado = "Conforme", EsConforme = true, FechaValidacion = DateTime.Today.AddMonths(-5), Observaciones = "Zonificación compatible para bodega y despacho.", Fuente = "Uso de Suelo" }, true),
+            CreateSupplementalLicencia(10, "PAT-2025-061", 9, "1-2233-4455", "Karen Brenes Alpízar", "Punto Navideño Catedral", "Boulevard peatonal, módulo temporal", "SIN-LOCAL-02", "Comercio ambulante autorizado", "4789", "Ambulante", "Catedral", "Borrador", DateTime.Today.AddDays(-3), null, null, "Analista Demo", "Solicitud reciente ingresada desde ventanilla digital.", new UsoSueloVinculadoDto { NumeroCertificado = "US-2025-611", Estado = "Pendiente", EsConforme = false, FechaValidacion = DateTime.Today.AddDays(-2), Observaciones = "Pendiente validación simplificada para ubicación temporal.", Fuente = "Uso de Suelo" }, false)
+        };
+
+        foreach (var licencia in additionalLicencias.Where(x => Data.All(y => y.NumeroLicencia != x.NumeroLicencia)))
+        {
+            Data.Add(licencia);
+        }
+    }
+
+    private static LicenciaComercialDto CreateSupplementalLicencia(int id, string numeroLicencia, int contribuyenteId, string identificacion, string contribuyenteNombre, string nombreComercial, string direccionLocal, string fincaOIdPredial, string actividadEconomica, string codigoCaecr, string tipoPatente, string distrito, string estado, DateTime fechaSolicitud, DateTime? fechaAprobacion, DateTime? fechaVencimiento, string responsable, string observaciones, UsoSueloVinculadoDto usoSuelo, bool requisitosCompletos)
+    {
+        var solicitud = new SolicitudPatenteDto
+        {
+            Id = id,
+            LicenciaId = id,
+            NumeroSolicitud = $"SOL-{numeroLicencia}",
+            NumeroExpediente = $"EXP-{numeroLicencia}",
+            CanalIngreso = ResolveCanalIngreso(tipoPatente, estado, direccionLocal, fincaOIdPredial, fechaSolicitud),
+            ContribuyenteId = contribuyenteId,
+            ContribuyenteRuc = identificacion,
+            Identificacion = identificacion,
+            ContribuyenteNombre = contribuyenteNombre,
+            NombreComercial = nombreComercial,
+            DireccionLocal = direccionLocal,
+            FincaOIdPredial = fincaOIdPredial,
+            ActividadEconomica = actividadEconomica,
+            CodigoCaecr = codigoCaecr,
+            TipoPatente = tipoPatente,
+            NumeroCertificadoUsoSuelo = usoSuelo.NumeroCertificado,
+            EstadoUsoSuelo = usoSuelo.Estado,
+            UsoSueloConforme = usoSuelo.EsConforme,
+            FechaSolicitud = fechaSolicitud,
+            Responsable = responsable,
+            Estado = estado,
+            Observaciones = observaciones,
+            Adjuntos = new List<string> { "Documento de identidad", "Declaración jurada", "Croquis referencial" },
+            Requisitos = DefaultRequirements(requisitosCompletos),
+            UsoSuelo = CloneUsoSuelo(usoSuelo),
+            Distrito = distrito
+        };
+
+        return new LicenciaComercialDto
+        {
+            Id = id,
+            NumeroLicencia = numeroLicencia,
+            Expediente = $"EXP-{numeroLicencia}",
+            CanalIngreso = ResolveCanalIngreso(tipoPatente, estado, direccionLocal, fincaOIdPredial, fechaSolicitud),
+            ContribuyenteId = contribuyenteId,
+            ContribuyenteRuc = identificacion,
+            Identificacion = identificacion,
+            ContribuyenteNombre = contribuyenteNombre,
+            NombreComercial = nombreComercial,
+            DireccionLocal = direccionLocal,
+            FincaOIdPredial = fincaOIdPredial,
+            ActividadEconomica = actividadEconomica,
+            CodigoCaecr = codigoCaecr,
+            TipoPatente = tipoPatente,
+            Distrito = distrito,
+            Estado = estado,
+            FechaSolicitud = fechaSolicitud,
+            FechaAprobacion = fechaAprobacion,
+            FechaVencimiento = fechaVencimiento,
+            Responsable = responsable,
+            Observaciones = observaciones,
+            PendienteUsoSuelo = !usoSuelo.EsConforme,
+            EmisionSemestralPendiente = fechaAprobacion.HasValue && estado != "Aprobado",
+            NotificacionPendiente = estado != "Aprobado",
+            CobroSincronizado = fechaAprobacion.HasValue,
+            GisValidado = usoSuelo.Estado != "Pendiente",
+            UsoSuelo = CloneUsoSuelo(usoSuelo),
+            Solicitud = solicitud,
+            Requisitos = DefaultRequirements(requisitosCompletos),
+            Movimientos = new List<MovimientoPatenteDto>
+            {
+                new() { FechaHora = fechaSolicitud.AddHours(8), TipoMovimiento = "Solicitud", Motivo = "Ingreso mock complementario de patente", Usuario = "Plataforma", EstadoResultante = "Borrador", Origen = "Patentes" },
+                new() { FechaHora = fechaSolicitud.AddDays(1).AddHours(10), TipoMovimiento = "Revisión", Motivo = "Expediente técnico en modo demo", Usuario = responsable, EstadoResultante = estado, Origen = "Patentes" }
+            }
+        };
+    }
+
     private static void MapSolicitud(LicenciaComercialDto target, SolicitudPatenteDto solicitud)
     {
         target.ContribuyenteId = solicitud.ContribuyenteId;
         target.ContribuyenteRuc = solicitud.ContribuyenteRuc;
         target.Identificacion = solicitud.Identificacion;
+        target.Expediente = string.IsNullOrWhiteSpace(solicitud.NumeroExpediente) ? target.Expediente : solicitud.NumeroExpediente;
+        target.CanalIngreso = string.IsNullOrWhiteSpace(solicitud.CanalIngreso) ? target.CanalIngreso : solicitud.CanalIngreso;
         target.ContribuyenteNombre = solicitud.ContribuyenteNombre;
         target.NombreComercial = solicitud.NombreComercial;
         target.DireccionLocal = solicitud.DireccionLocal;
@@ -469,6 +575,10 @@ public class PatentesMockService : IPatentesService
         target.UsoSuelo = usoSuelo;
         target.Requisitos = solicitud.Requisitos.Select(CloneRequisito).ToList();
         target.Solicitud = CloneSolicitud(solicitud);
+        target.Expediente = string.IsNullOrWhiteSpace(target.Expediente) ? $"EXP-{target.NumeroLicencia}" : target.Expediente;
+        target.CanalIngreso = string.IsNullOrWhiteSpace(target.CanalIngreso)
+            ? ResolveCanalIngreso(target.TipoPatente, target.Estado, target.DireccionLocal, target.FincaOIdPredial, target.FechaSolicitud)
+            : target.CanalIngreso;
     }
 
     private static string GenerateNumeroLicencia()
@@ -492,6 +602,8 @@ public class PatentesMockService : IPatentesService
     {
         Id = item.Id,
         NumeroLicencia = item.NumeroLicencia,
+        Expediente = string.IsNullOrWhiteSpace(item.Expediente) ? $"EXP-{item.NumeroLicencia}" : item.Expediente,
+        CanalIngreso = string.IsNullOrWhiteSpace(item.CanalIngreso) ? ResolveCanalIngreso(item.TipoPatente, item.Estado, item.DireccionLocal, item.FincaOIdPredial, item.FechaSolicitud) : item.CanalIngreso,
         ContribuyenteId = item.ContribuyenteId,
         ContribuyenteRuc = item.ContribuyenteRuc,
         Identificacion = item.Identificacion,
@@ -525,6 +637,8 @@ public class PatentesMockService : IPatentesService
         Id = item.Id,
         LicenciaId = item.LicenciaId,
         NumeroSolicitud = item.NumeroSolicitud,
+        NumeroExpediente = string.IsNullOrWhiteSpace(item.NumeroExpediente) ? $"EXP-{item.NumeroSolicitud}" : item.NumeroExpediente,
+        CanalIngreso = string.IsNullOrWhiteSpace(item.CanalIngreso) ? "Ventanilla digital" : item.CanalIngreso,
         ContribuyenteId = item.ContribuyenteId,
         ContribuyenteRuc = item.ContribuyenteRuc,
         Identificacion = item.Identificacion,
@@ -538,6 +652,24 @@ public class PatentesMockService : IPatentesService
         NumeroCertificadoUsoSuelo = item.NumeroCertificadoUsoSuelo,
         EstadoUsoSuelo = item.EstadoUsoSuelo,
         UsoSueloConforme = item.UsoSueloConforme,
+        TipoTasacion = item.TipoTasacion,
+        EstadoTasacion = item.EstadoTasacion,
+        MontoAnualMock = item.MontoAnualMock,
+        MontoTrimestralMock = item.MontoTrimestralMock,
+        TimbreBiodiversidad = item.TimbreBiodiversidad,
+        PublicidadExterior = item.PublicidadExterior,
+        Multa = item.Multa,
+        Intereses = item.Intereses,
+        FechaInicioCobro = item.FechaInicioCobro,
+        CobroProporcionalVisual = item.CobroProporcionalVisual,
+        EstadoCobro = item.EstadoCobro,
+        EstadoCuentaTributariaMock = item.EstadoCuentaTributariaMock,
+        ReferenciaCuentaPorCobrarMock = item.ReferenciaCuentaPorCobrarMock,
+        EstadoResolucion = item.EstadoResolucion,
+        ObservacionesResolucion = item.ObservacionesResolucion,
+        NotificacionSimulada = item.NotificacionSimulada,
+        FirmaDigitalReferencial = item.FirmaDigitalReferencial,
+        EstadoFinalExpediente = item.EstadoFinalExpediente,
         FechaSolicitud = item.FechaSolicitud,
         Responsable = item.Responsable,
         Estado = item.Estado,
@@ -560,10 +692,14 @@ public class PatentesMockService : IPatentesService
 
     private static RequisitoPatenteDto CloneRequisito(RequisitoPatenteDto item) => new()
     {
+        Clave = item.Clave,
         Nombre = item.Nombre,
         Obligatorio = item.Obligatorio,
         Cumplido = item.Cumplido,
-        Observacion = item.Observacion
+        Estado = item.Estado,
+        Observacion = item.Observacion,
+        DocumentoPlaceholder = item.DocumentoPlaceholder,
+        Origen = item.Origen
     };
 
     private static MovimientoPatenteDto CloneMovimiento(MovimientoPatenteDto item) => new()
@@ -578,9 +714,29 @@ public class PatentesMockService : IPatentesService
 
     private static List<RequisitoPatenteDto> DefaultRequirements(bool completed) => new()
     {
-        new() { Nombre = "Documento de identidad", Cumplido = completed, Observacion = completed ? "Adjunto" : "Pendiente" },
-        new() { Nombre = "Certificado de uso de suelo", Cumplido = completed, Observacion = completed ? "Validado" : "Pendiente validación" },
-        new() { Nombre = "Plano o croquis", Cumplido = completed, Observacion = completed ? "Adjunto" : "Pendiente" },
-        new() { Nombre = "Declaración jurada", Cumplido = completed, Observacion = completed ? "Adjunto" : "Pendiente" }
+        new() { Clave = "identificacion", Nombre = "Documento de identidad", Cumplido = completed, Estado = completed ? "Cumple" : "Pendiente", Observacion = completed ? "Adjunto" : "Pendiente", DocumentoPlaceholder = "Documento de identidad mock", Origen = "Mock" },
+        new() { Clave = "uso-suelo", Nombre = "Certificado de uso de suelo", Cumplido = completed, Estado = completed ? "Cumple" : "Pendiente", Observacion = completed ? "Validado" : "Pendiente validación", DocumentoPlaceholder = "Certificado de uso de suelo mock", Origen = "Mock" },
+        new() { Clave = "croquis", Nombre = "Plano o croquis", Cumplido = completed, Estado = completed ? "Cumple" : "Pendiente", Observacion = completed ? "Adjunto" : "Pendiente", DocumentoPlaceholder = "Croquis mock", Origen = "Manual" },
+        new() { Clave = "declaracion-jurada", Nombre = "Declaración jurada", Cumplido = completed, Estado = completed ? "Cumple" : "Pendiente", Observacion = completed ? "Adjunto" : "Pendiente", DocumentoPlaceholder = "Declaración jurada mock", Origen = "Manual" }
     };
+
+    private static string ResolveCanalIngreso(string tipoPatente, string estado, string direccionLocal, string fincaOIdPredial, DateTime fechaSolicitud)
+    {
+        if (!string.IsNullOrWhiteSpace(direccionLocal) && direccionLocal.Contains("sin local físico", StringComparison.OrdinalIgnoreCase))
+            return "Digital";
+
+        if (!string.IsNullOrWhiteSpace(fincaOIdPredial) && fincaOIdPredial.Contains("SIN-LOCAL", StringComparison.OrdinalIgnoreCase))
+            return "Digital";
+
+        if (tipoPatente.Equals("Licores", StringComparison.OrdinalIgnoreCase))
+            return "Ventanilla especializada";
+
+        if (tipoPatente.Equals("Temporal", StringComparison.OrdinalIgnoreCase))
+            return "Ventanilla presencial";
+
+        if (estado.Equals("Borrador", StringComparison.OrdinalIgnoreCase))
+            return "Canal digital";
+
+        return fechaSolicitud.Day % 2 == 0 ? "Canal digital" : "Ventanilla presencial";
+    }
 }

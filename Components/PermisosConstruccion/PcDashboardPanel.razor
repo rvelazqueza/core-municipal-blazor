@@ -1,0 +1,153 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="3">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <div>
+                <MudText Typo="Typo.h6">Dashboard operativo ampliado</MudText>
+                <MudText Typo="Typo.body2">Indicadores mock de revisión, cobro, inspección, GIS, BI y productividad.</MudText>
+            </div>
+            <MudChip T="string" Text="@($"Avance promedio {AverageProgress:0}%")" Color="Color.Info" Variant="Variant.Filled" />
+        </MudStack>
+
+        <MudGrid Spacing="2">
+            @foreach (var metric in Metrics)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudCard Outlined="true" Class="h-100">
+                        <MudCardContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudAvatar Color="@metric.Color" Variant="Variant.Filled">
+                                    <MudIcon Icon="@metric.Icon" />
+                                </MudAvatar>
+                                <div class="flex-grow-1">
+                                    <MudText Typo="Typo.subtitle2">@metric.Label</MudText>
+                                    <MudText Typo="Typo.h5">@metric.Value</MudText>
+                                </div>
+                            </MudStack>
+                            <MudText Typo="Typo.caption" Class="mt-2">@metric.Description</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+
+        <MudProgressLinear Value="@AverageProgress" Color="Color.Primary" Rounded="true" />
+
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudPaper Outlined="true" Class="pa-4 h-100">
+                    <MudText Typo="Typo.subtitle1">Trámites por distrito</MudText>
+                    <MudTable T="DistrictRow" Items="@TopDistricts" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Distrito</MudTh><MudTh>Cantidad</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Name</MudTd>
+                            <MudTd>@context.Count</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Outlined="true" Class="pa-4 h-100">
+                    <MudText Typo="Typo.subtitle1">Trámites por tipo de obra</MudText>
+                    <MudTable T="DistrictRow" Items="@TopTypes" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Tipo</MudTh><MudTh>Cantidad</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Name</MudTd>
+                            <MudTd>@context.Count</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Outlined="true" Class="pa-4 h-100">
+                    <MudText Typo="Typo.subtitle1">Productividad mock</MudText>
+                    <MudTable T="ProductivityRow" Items="@ProductivityRows" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Rol</MudTh><MudTh>Cerrados</MudTh><MudTh>Abiertos</MudTh><MudTh>Meta</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Role</MudTd>
+                            <MudTd>@context.Closed</MudTd>
+                            <MudTd>@context.Open</MudTd>
+                            <MudTd>
+                                <MudProgressLinear Value="@context.Goal" Color="Color.Success" Rounded="true" Size="Size.Small" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public IEnumerable<PcPermitDto> Permits { get; set; } = [];
+
+    private double AverageProgress => Permits.Any() ? Permits.Average(x => (double)x.ProgressPercent) : 0;
+
+    private IReadOnlyList<(string Label, string Value, string Icon, Color Color, string Description)> Metrics =>
+    [
+        ("Trámites en bandeja", Permits.Count().ToString(), Icons.Material.Filled.Inbox, Color.Primary, "Permisos activos y en seguimiento"),
+        ("Pendientes de revisión", CountPermitStatusContains("revisión").ToString(), Icons.Material.Filled.Rule, Color.Warning, "Revisión técnica y control"),
+        ("En prevención", CountPermitStatusContains("prevención").ToString(), Icons.Material.Filled.ReportProblem, Color.Error, "Observaciones activas"),
+        ("Pendientes de inspección", (CountInspectionsByStatus("Solicitada") + CountInspectionsByStatus("Asignada")).ToString(), Icons.Material.Filled.Quickreply, Color.Warning, "Inspección inicial y seguimiento"),
+        ("Permisos tasados", CountAssessmentStatus("Al cobro"), Icons.Material.Filled.Calculate, Color.Success, "Tasación mock"),
+        ("Pendientes de pago", CountPaymentStatus("Pendiente"), Icons.Material.Filled.PendingActions, Color.Warning, "Cobro por verificar"),
+        ("Pagos infructuosos", CountPaymentFlags(x => x.Payment.Infructuous).ToString(), Icons.Material.Filled.WarningAmber, Color.Error, "Reversión requerida"),
+        ("Obras > 80%", CountByProgress(80).ToString(), Icons.Material.Filled.TrendingUp, Color.Success, "Avance alto de obra"),
+        ("GIS pendiente", CountGisStatus("Pendiente").ToString(), Icons.Material.Filled.Map, Color.Info, "Tareas GIS en curso"),
+        ("BI pendiente", CountBiStatus("Pendiente").ToString(), Icons.Material.Filled.HomeWork, Color.Warning, "Actualización referencial"),
+        ("Tareas vencidas", CountNearDue().ToString(), Icons.Material.Filled.Schedule, Color.Error, "Fechas próximas o vencidas"),
+        ("Origen APC/CFIA", CountChannelContains("APC").ToString(), Icons.Material.Filled.Architecture, Color.Secondary, "Ingresos técnicos"),
+        ("Origen APC-R", CountApcROrigin().ToString(), Icons.Material.Filled.MergeType, Color.Secondary, "Radicaciones complementarias"),
+        ("Origen MIMUNIENCASA", CountMimuniOrigin().ToString(), Icons.Material.Filled.Home, Color.Info, "Canal digital"),
+        ("Aprobados", CountPermitStatus("Aprobado").ToString(), Icons.Material.Filled.CheckCircle, Color.Success, "Resoluciones favorables")
+    ];
+
+    private IReadOnlyList<DistrictRow> TopDistricts => Permits
+        .GroupBy(x => string.IsNullOrWhiteSpace(x.District) ? "Sin distrito" : x.District)
+        .Select(x => new DistrictRow(x.Key, x.Count()))
+        .OrderByDescending(x => x.Count)
+        .Take(4)
+        .ToList();
+
+    private IReadOnlyList<DistrictRow> TopTypes => Permits
+        .GroupBy(x => string.IsNullOrWhiteSpace(x.TechnicalWork.WorkType) ? "Sin tipo" : x.TechnicalWork.WorkType)
+        .Select(x => new DistrictRow(x.Key, x.Count()))
+        .OrderByDescending(x => x.Count)
+        .Take(4)
+        .ToList();
+
+    private IReadOnlyList<ProductivityRow> ProductivityRows =>
+    [
+        new("Analista Urbanismo", CountPermitStatusContains("revisión"), CountPermitStatusContains("prevención"), Math.Min(100, AverageProgress + 5)),
+        new("Inspector", CountInspectionsByStatus("Finalizada"), CountInspectionsByStatus("Solicitada") + CountInspectionsByStatus("Asignada"), Math.Min(100, CountInspectionsByStatus("Finalizada") * 12)),
+        new("Topógrafo", CountGisStatus("Georreferenciado"), CountGisStatus("Pendiente") + CountGisStatus("Inconsistente"), Math.Min(100, CountGisStatus("Georreferenciado") * 18))
+    ];
+
+    private string CountPermitStatus(string status) => Permits.Count(x => string.Equals(x.PermitStatus, status, StringComparison.OrdinalIgnoreCase)).ToString();
+    private int CountPermitStatusContains(string text) => Permits.Count(x => x.PermitStatus.Contains(text, StringComparison.OrdinalIgnoreCase));
+    private string CountAssessmentStatus(string status) => Permits.Count(x => string.Equals(x.Assessment.Status, status, StringComparison.OrdinalIgnoreCase)).ToString();
+    private string CountPaymentStatus(string status) => Permits.Count(x => string.Equals(x.PaymentStatus, status, StringComparison.OrdinalIgnoreCase)).ToString();
+    private int CountByProgress(decimal min) => Permits.Count(x => x.ProgressPercent >= min);
+    private int CountNearDue() => Permits.Count(x => x.DueDate.HasValue && x.DueDate.Value <= DateTime.Today.AddDays(5));
+    private int CountChannelContains(string text) => Permits.Count(x => x.Channel.Contains(text, StringComparison.OrdinalIgnoreCase));
+    private int CountApcROrigin() => Permits.Count(x => !string.IsNullOrWhiteSpace(x.ApcRCode));
+    private int CountMimuniOrigin() => Permits.Count(x => x.Requirements.Any(r => r.Origin.Contains("MIMUNIENCASA", StringComparison.OrdinalIgnoreCase)));
+    private int CountPaymentFlags(Func<PcPermitDto, bool> predicate) => Permits.Count(predicate);
+    private int CountInspectionsByStatus(string status) => Permits.Sum(x => x.Inspections.Count(i => string.Equals(i.Status, status, StringComparison.OrdinalIgnoreCase)));
+    private int CountGisStatus(string status) => Permits.Sum(x => x.GisTasks.Count(i => string.Equals(i.Status, status, StringComparison.OrdinalIgnoreCase)));
+    private int CountBiStatus(string status) => Permits.Sum(x => x.BiUpdates.Count(i => string.Equals(i.Status, status, StringComparison.OrdinalIgnoreCase)));
+
+    private sealed record DistrictRow(string Name, int Count);
+    private sealed record ProductivityRow(string Role, int Closed, int Open, double Goal);
+}

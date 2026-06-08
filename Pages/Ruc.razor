@@ -33,8 +33,15 @@
             <EmptyState Title="Sin resultados" Description="No hay contribuyentes que coincidan con los filtros aplicados." Icon="@Icons.Material.Filled.FilterAltOff" />
         }
     </MudTabPanel>
-    <MudTabPanel Text="Formulario de contribuyente" Icon="@Icons.Material.Filled.EditNote">
-        <ContribuyenteForm Model="selectedContribuyente" ModelChanged="OnModelChanged" OnSaved="AfterSavedAsync" />
+    <MudTabPanel Text="@(isCreatingNewContribuyente ? "Alta de contribuyente" : "Formulario de contribuyente")" Icon="@Icons.Material.Filled.EditNote">
+        @if (isCreatingNewContribuyente)
+        {
+            <ContribuyenteCreateWizard Model="selectedContribuyente" ModelChanged="OnModelChanged" Created="HandleWizardCreatedAsync" Cancelled="CancelNewAsync" />
+        }
+        else
+        {
+            <ContribuyenteForm Model="selectedContribuyente" ModelChanged="OnModelChanged" OnSaved="AfterSavedAsync" />
+        }
     </MudTabPanel>
 </MudTabs>
 </MudPaper>
@@ -51,6 +58,7 @@
     private List<AuditoriaCambioDto> recentChanges = new();
     private ContribuyenteDto selectedContribuyente = new();
     private int activePanelIndex = 0;
+    private bool isCreatingNewContribuyente;
 
     private string identificacionFilter = string.Empty;
     private string nombreFilter = string.Empty;
@@ -80,6 +88,7 @@
 
     private void CreateNew()
     {
+        isCreatingNewContribuyente = true;
         selectedContribuyente = new ContribuyenteDto
         {
             TipoPersona = "Fisica",
@@ -91,6 +100,7 @@
 
     private async Task OpenView(int id)
     {
+        isCreatingNewContribuyente = false;
         selectedContribuyente = await ContribuyentesService.GetByIdAsync(id);
         activePanelIndex = 2;
     }
@@ -101,6 +111,7 @@
         var result = await dialog.Result;
         if (!result.Canceled)
         {
+            isCreatingNewContribuyente = false;
             selectedContribuyente = await ContribuyentesService.GetByIdAsync(id);
             activePanelIndex = 2;
         }
@@ -114,8 +125,24 @@
 
     private async Task AfterSavedAsync()
     {
+        isCreatingNewContribuyente = false;
         await LoadAllAsync();
         activePanelIndex = 1;
+    }
+
+    private async Task HandleWizardCreatedAsync(ContribuyenteDto model)
+    {
+        isCreatingNewContribuyente = false;
+        selectedContribuyente = await ContribuyentesService.GetByIdAsync(model.Id);
+        await LoadAllAsync();
+        activePanelIndex = 2;
+    }
+
+    private Task CancelNewAsync()
+    {
+        isCreatingNewContribuyente = false;
+        activePanelIndex = 1;
+        return Task.CompletedTask;
     }
 
     private Task OnPanelChanged(int index)

@@ -1,0 +1,134 @@
+@using BlazorApp.Models.Auditoria
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="2">
+        <div class="d-flex flex-wrap justify-space-between align-center gap-2">
+            <div>
+                <MudText Typo="Typo.h6">Panorama de Auditoría</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">KPIs transversales de trazabilidad y control.</MudText>
+            </div>
+            @if (TopModule is not null)
+            {
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">
+                    Módulo líder: @TopModule.Module
+                </MudChip>
+            }
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">Eventos registrados hoy</MudText>
+                        <MudText Typo="Typo.h4">@EventsToday</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">Eventos críticos</MudText>
+                        <MudText Typo="Typo.h4">@CriticalEvents</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">Eventos de seguridad</MudText>
+                        <MudText Typo="Typo.h4">@SecurityEvents</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">Eventos de creación</MudText>
+                        <MudText Typo="Typo.h4">@CreationEvents</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">Eventos de modificación</MudText>
+                        <MudText Typo="Typo.h4">@ModificationEvents</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">Eventos de consulta</MudText>
+                        <MudText Typo="Typo.h4">@QueryEvents</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">Integraciones simuladas</MudText>
+                        <MudText Typo="Typo.h4">@IntegrationEvents</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">Notificaciones mock</MudText>
+                        <MudText Typo="Typo.h4">@NotificationEvents</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">Exportaciones mock</MudText>
+                        <MudText Typo="Typo.h4">@ExportEvents</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">Usuarios activos con eventos</MudText>
+                        <MudText Typo="Typo.h4">@ActiveUsers</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">Módulos con mayor actividad</MudText>
+                        <MudText Typo="Typo.h4">@ModuleCount</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12">
+                <MudPaper Outlined="true" Class="pa-4">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <MudText Typo="Typo.subtitle2">Índice de integridad mock</MudText>
+                        <MudText Typo="Typo.body2">@IntegrityScore%</MudText>
+                    </div>
+                    <MudProgressLinear Color="Color.Success" Rounded="true" Value="@IntegrityScore" />
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public int EventsToday { get; set; }
+    [Parameter] public int CriticalEvents { get; set; }
+    [Parameter] public int SecurityEvents { get; set; }
+    [Parameter] public int CreationEvents { get; set; }
+    [Parameter] public int ModificationEvents { get; set; }
+    [Parameter] public int QueryEvents { get; set; }
+    [Parameter] public int IntegrationEvents { get; set; }
+    [Parameter] public int NotificationEvents { get; set; }
+    [Parameter] public int ExportEvents { get; set; }
+    [Parameter] public int ActiveUsers { get; set; }
+    [Parameter] public int ModuleCount { get; set; }
+    [Parameter] public int IntegrityScore { get; set; }
+    [Parameter] public AuditModuleSummaryDto? TopModule { get; set; }
+}

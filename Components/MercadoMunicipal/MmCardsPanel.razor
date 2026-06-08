@@ -1,0 +1,153 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información del local para carnés.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Vigentes @Items.Count(x => x.Status.Equals("Vigente", StringComparison.OrdinalIgnoreCase))</MudChip>
+                <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Próximos a vencer @Items.Count(x => x.Status.Contains("Próximo", StringComparison.OrdinalIgnoreCase))</MudChip>
+                <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined">Vencidos @Items.Count(x => x.Status.Equals("Vencido", StringComparison.OrdinalIgnoreCase))</MudChip>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterCardAsync">Registrar carné mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="RenewCardAsync">Renovar carné mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="GenerateExpirationAlertAsync">Generar alerta vencimiento</MudButton>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+            <MudTable T="MmCardDto" Items="@Items.OrderByDescending(x => x.ExpirationDate)" Hover="true" Bordered="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Número carné</MudTh>
+                    <MudTh>Nombre</MudTh>
+                    <MudTh>Identificación</MudTh>
+                    <MudTh>Condición</MudTh>
+                    <MudTh>Fotografía</MudTh>
+                    <MudTh>Fecha emisión</MudTh>
+                    <MudTh>Fecha vencimiento</MudTh>
+                    <MudTh>Estado</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Número carné">@context.CardNumber</MudTd>
+                    <MudTd DataLabel="Nombre">@context.Name</MudTd>
+                    <MudTd DataLabel="Identificación">@context.Identification</MudTd>
+                    <MudTd DataLabel="Condición">@context.Condition</MudTd>
+                    <MudTd DataLabel="Fotografía">@context.PhotoPlaceholder</MudTd>
+                    <MudTd DataLabel="Fecha emisión">@context.IssueDate.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Fecha vencimiento">@context.ExpirationDate.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Estado">@context.Status</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public MmTenantDto? Tenant { get; set; }
+    [Parameter] public List<MmCardDto> Items { get; set; } = new();
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private Task RegisterCardAsync()
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        var item = new MmCardDto
+        {
+            Id = $"CRD-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            TenantId = Tenant?.Id ?? string.Empty,
+            CardNumber = $"CAR-MOCK-{DateTime.Now:HHmmss}",
+            Name = Tenant?.Name ?? "Colaborador temporal",
+            Identification = Tenant?.Identification ?? "0-000-000",
+            Condition = Tenant is null ? "Colaborador" : "Inquilino",
+            PhotoPlaceholder = "https://placehold.co/140x180?text=Carn%C3%A9+Mock",
+            IssueDate = DateTime.Today,
+            ExpirationDate = DateTime.Today.AddMonths(12),
+            Status = "Vigente"
+        };
+
+        Items.Insert(0, item);
+        RegisterMockEvent("Registrar carné", string.Empty, item.CardNumber, "Carnés", "Baja");
+        Snackbar.Add("Carné mock registrado.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task RenewCardAsync()
+    {
+        var item = Items.OrderBy(x => x.ExpirationDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.ExpirationDate = item.ExpirationDate.AddMonths(12);
+        item.Status = "Vigente";
+        RegisterMockEvent("Renovar carné", "Vencimiento previo", item.ExpirationDate.ToString("dd/MM/yyyy"), "Carnés", "Baja");
+        Snackbar.Add("Carné mock renovado.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task GenerateExpirationAlertAsync()
+    {
+        var item = Items.OrderBy(x => x.ExpirationDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.Status = item.ExpirationDate <= DateTime.Today ? "Vencido" : "Próximo a vencer";
+        RegisterMockEvent("Generar alerta de vencimiento", string.Empty, item.Status, "Carnés", "Media");
+        Snackbar.Add("Alerta de vencimiento mock generada.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousStatus = "Registrado",
+            NewStatus = "Actualizado",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Panel de carnés",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde carnés."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel de carnés",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Bitácora visual mock"
+        });
+    }
+}

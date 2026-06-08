@@ -1,0 +1,107 @@
+@using System
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.caption">Estado BI</MudText>
+                <MudText Typo="Typo.subtitle1">@Permit.Property.BiUpdateStatus</MudText>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.caption">Finca asociada</MudText>
+                <MudText Typo="Typo.subtitle1">@($"{Permit.Property.PropertyNumber} / {Permit.Property.IdPredial}")</MudText>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.caption">Última actualización mock</MudText>
+                <MudText Typo="Typo.subtitle1">@FormatDate(Permit.BiUpdates.OrderByDescending(x => x.UpdatedAt ?? x.RequestedAt).FirstOrDefault()?.UpdatedAt)</MudText>
+            </MudItem>
+        </MudGrid>
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+            La actualización de Bienes Inmuebles es solo referencial; no se modifica ningún sistema externo.
+        </MudAlert>
+    </MudPaper>
+
+    <MudTable T="PcBiUpdateDto" Items="@Permit.BiUpdates" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Estado</MudTh><MudTh>Tipo</MudTh><MudTh>Origen</MudTh><MudTh>Solicitada</MudTh><MudTh>Actualizada</MudTh><MudTh>Observaciones</MudTh><MudTh>Acciones</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd><MudChip T="string" Text="@context.Status" Color="@ResolveColor(context.Status)" Variant="Variant.Outlined" Size="Size.Small" /></MudTd>
+            <MudTd>@context.UpdateType</MudTd>
+            <MudTd>@context.Origin</MudTd>
+            <MudTd>@FormatDate(context.RequestedAt)</MudTd>
+            <MudTd>@FormatDate(context.UpdatedAt)</MudTd>
+            <MudTd>@context.Notes</MudTd>
+            <MudTd>
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => CreateBiTask(context))">Crear tarea BI mock</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => MarkUpdated(context))">Marcar BI actualizado mock</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="ViewProperty">Ver finca</MudButton>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+
+    private void CreateBiTask(PcBiUpdateDto item)
+    {
+        item.Status = "Generada";
+        item.RequestedAt = DateTime.Today;
+        Permit.Property.BiUpdateStatus = "Pendiente actualización";
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "bienes.demo",
+            Action = "Crear tarea BI",
+            PreviousStatus = "Pendiente",
+            NewStatus = item.Status,
+            Department = "Bienes Inmuebles",
+            Comment = item.Notes,
+            Origin = "Bienes Inmuebles"
+        });
+        Snackbar.Add("Tarea BI mock generada.", Severity.Info);
+    }
+
+    private void MarkUpdated(PcBiUpdateDto item)
+    {
+        item.Status = "Actualizada mock";
+        item.UpdatedAt = DateTime.Today;
+        Permit.Property.BiUpdateStatus = "Actualizado mock";
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "bienes.demo",
+            Action = "Actualizar BI mock",
+            PreviousStatus = "Generada",
+            NewStatus = item.Status,
+            Department = "Bienes Inmuebles",
+            Comment = item.Notes,
+            Origin = "Bienes Inmuebles"
+        });
+        Snackbar.Add("Actualización BI mock registrada.", Severity.Success);
+    }
+
+    private void ViewProperty()
+    {
+        Navigation.NavigateTo("/bienes-inmuebles");
+    }
+
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
+    private static Color ResolveColor(string status) => status switch
+    {
+        "No requerida" => Color.Dark,
+        "Pendiente" => Color.Warning,
+        "Generada" => Color.Info,
+        "Actualizada mock" => Color.Success,
+        _ => Color.Secondary
+    };
+}

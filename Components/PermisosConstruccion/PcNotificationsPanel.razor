@@ -1,0 +1,58 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" @bind-Value="selectedType" Label="Tipo" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    @foreach (var item in types) { <MudSelectItem T="string" Value="@item">@item</MudSelectItem> }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" @bind-Value="selectedMedium" Label="Medio" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    @foreach (var item in media) { <MudSelectItem T="string" Value="@item">@item</MudSelectItem> }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4" Class="d-flex align-end">
+                <MudButton Variant="Variant.Outlined" OnClick="GenerateAsync">Generar notificación mock</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+    <MudTable T="NotificationItem" Items="items" Dense="true" Hover="true">
+        <HeaderContent><MudTh>Tipo</MudTh><MudTh>Medio</MudTh><MudTh>Estado</MudTh><MudTh>Fecha</MudTh></HeaderContent>
+        <RowTemplate><MudTd>@context.Type</MudTd><MudTd>@context.Medium</MudTd><MudTd>@context.Status</MudTd><MudTd>@context.Date.ToString("dd/MM/yyyy HH:mm")</MudTd></RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private readonly string[] types = ["Prevención", "Subsanación", "Aprobación", "Rechazo", "Anulación", "Pago pendiente", "Inspección", "Resolución"];
+    private readonly string[] media = ["Correo", "SMS", "Portal municipal", "Domicilio fiscal"];
+    private readonly List<NotificationItem> items = new();
+    private string selectedType = "Resolución";
+    private string selectedMedium = "Correo";
+
+    protected override void OnParametersSet()
+    {
+        if (items.Count == 0)
+        {
+            items.Add(new NotificationItem { Type = "Resolución", Medium = Permit.Applicant.PreferredNotification, Status = Permit.Resolution.NotificationSimulated, Date = DateTime.Now.AddDays(-1) });
+            items.Add(new NotificationItem { Type = "Pago pendiente", Medium = "Portal municipal", Status = "Pendiente", Date = DateTime.Now.AddDays(-2) });
+        }
+    }
+
+    private Task GenerateAsync()
+    {
+        items.Insert(0, new NotificationItem { Type = selectedType, Medium = selectedMedium, Status = "Generada", Date = DateTime.Now });
+        Snackbar.Add("Notificación mock generada.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private sealed class NotificationItem { public string Type { get; set; } = string.Empty; public string Medium { get; set; } = string.Empty; public string Status { get; set; } = string.Empty; public DateTime Date { get; set; } = DateTime.Now; }
+}

@@ -1,0 +1,118 @@
+@using System
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.caption">Estado GIS</MudText>
+                <MudText Typo="Typo.subtitle1">@Permit.Property.GisStatus</MudText>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.caption">Capa relacionada</MudText>
+                <MudText Typo="Typo.subtitle1">@Permit.GisTasks.FirstOrDefault()?.Layer</MudText>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.caption">Relación</MudText>
+                <MudText Typo="Typo.subtitle1">@Permit.GisTasks.FirstOrDefault()?.Relation</MudText>
+            </MudItem>
+        </MudGrid>
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+            GIS completamente simulado. No se integran mapas externos ni servicios geoespaciales reales.
+        </MudAlert>
+    </MudPaper>
+
+    <MudTable T="PcGisStatusDto" Items="@Permit.GisTasks" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Tarea</MudTh><MudTh>Estado</MudTh><MudTh>Capa</MudTh><MudTh>Última actualización</MudTh><MudTh>Relación</MudTh><MudTh>Acciones</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.TaskNumber</MudTd>
+            <MudTd><MudChip T="string" Text="@context.Status" Color="@ResolveColor(context.Status)" Variant="Variant.Outlined" Size="Size.Small" /></MudTd>
+            <MudTd>@context.Layer</MudTd>
+            <MudTd>@FormatDate(context.LastUpdatedAt)</MudTd>
+            <MudTd>@context.Relation</MudTd>
+            <MudTd>
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => CreateTask(context))">Crear tarea GIS mock</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => ValidateTask(context))">Validar GIS mock</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => MarkInconsistency(context))">Marcar inconsistencia mock</MudButton>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+
+    private void CreateTask(PcGisStatusDto item)
+    {
+        item.Status = "Pendiente";
+        item.LastUpdatedAt = DateTime.Today;
+        Permit.Property.GisStatus = "Pendiente";
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "gis.demo",
+            Action = "Crear tarea GIS",
+            PreviousStatus = "Georreferenciado",
+            NewStatus = item.Status,
+            Department = "GIS",
+            Comment = item.Notes,
+            Origin = "GIS"
+        });
+        Snackbar.Add("Tarea GIS mock creada.", Severity.Info);
+    }
+
+    private void ValidateTask(PcGisStatusDto item)
+    {
+        item.Status = "Georreferenciado";
+        item.LastUpdatedAt = DateTime.Today;
+        Permit.Property.GisStatus = "Georreferenciado";
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "gis.demo",
+            Action = "Validar GIS",
+            PreviousStatus = "Pendiente",
+            NewStatus = item.Status,
+            Department = "GIS",
+            Comment = item.Layer,
+            Origin = "GIS"
+        });
+        Snackbar.Add("GIS validado en modo demo.", Severity.Success);
+    }
+
+    private void MarkInconsistency(PcGisStatusDto item)
+    {
+        item.Status = "Inconsistente";
+        item.LastUpdatedAt = DateTime.Today;
+        Permit.Property.GisStatus = "Inconsistente";
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "gis.demo",
+            Action = "Marcar inconsistencia GIS",
+            PreviousStatus = "Georreferenciado",
+            NewStatus = item.Status,
+            Department = "GIS",
+            Comment = item.Notes,
+            Origin = "GIS"
+        });
+        Snackbar.Add("Inconsistencia GIS marcada en modo demo.", Severity.Warning);
+    }
+
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
+    private static Color ResolveColor(string status) => status switch
+    {
+        "Georreferenciado" => Color.Success,
+        "Pendiente" => Color.Warning,
+        "Inconsistente" => Color.Error,
+        _ => Color.Info
+    };
+}

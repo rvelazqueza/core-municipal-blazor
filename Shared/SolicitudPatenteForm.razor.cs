@@ -71,7 +71,17 @@ public partial class SolicitudPatenteForm : ComponentBase
         Model.UsoSuelo ??= new UsoSueloVinculadoDto();
         Model.Adjuntos ??= new List<string>();
         if (!Model.Requisitos.Any())
-            Model.Requisitos = solicitudBase.Requisitos.Select(x => new RequisitoPatenteDto { Nombre = x.Nombre, Obligatorio = x.Obligatorio, Cumplido = x.Cumplido, Observacion = x.Observacion }).ToList();
+            Model.Requisitos = solicitudBase.Requisitos.Select(x => new RequisitoPatenteDto
+            {
+                Clave = x.Clave,
+                Nombre = x.Nombre,
+                Obligatorio = x.Obligatorio,
+                Cumplido = x.Cumplido,
+                Estado = x.Estado,
+                Observacion = x.Observacion,
+                DocumentoPlaceholder = x.DocumentoPlaceholder,
+                Origen = x.Origen
+            }).ToList();
         UpdateRequirements();
     }
 

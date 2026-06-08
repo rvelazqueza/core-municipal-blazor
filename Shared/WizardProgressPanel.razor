@@ -1,0 +1,93 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using BlazorApp.Models
+@using MudBlazor
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="3">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.subtitle1">Avance del proceso</MudText>
+            <DraftStatusBadge Status="@Status" LastSavedAt="@LastSavedAt" />
+        </MudStack>
+
+        <div>
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.body2">Paso @displayStep de @resolvedTotalSteps</MudText>
+                <MudText Typo="Typo.body2">@($"{resolvedProgress}%")</MudText>
+            </MudStack>
+            <MudProgressLinear Value="@resolvedProgress" Rounded="true" Color="Color.Primary" Size="Size.Medium" />
+        </div>
+
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+            <MudChip T="string" Text="@($"Completados: {completedCount}")" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Small" />
+            <MudChip T="string" Text="@($"Pendientes: {pendingCount}")" Color="Color.Warning" Variant="Variant.Outlined" Size="Size.Small" />
+            <MudChip T="string" Text="@($"Errores: {errorCount}")" Color="Color.Error" Variant="Variant.Outlined" Size="Size.Small" />
+        </MudStack>
+
+        <MudStack Spacing="2">
+            @foreach (var step in orderedSteps)
+            {
+                <MudPaper Outlined="true" Class="pa-3">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.subtitle2">@($"Paso {step.Index + 1}. {step.Title}")</MudText>
+                            @if (!string.IsNullOrWhiteSpace(step.Description) || !string.IsNullOrWhiteSpace(step.Subtitle))
+                            {
+                                <MudText Typo="Typo.caption">@(string.IsNullOrWhiteSpace(step.Description) ? step.Subtitle : step.Description)</MudText>
+                            }
+                        </MudStack>
+                        <MudChip T="string" Text="@ResolveStepLabel(step)" Color="@ResolveStepColor(step)" Variant="Variant.Outlined" Size="Size.Small" />
+                    </MudStack>
+                </MudPaper>
+            }
+        </MudStack>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public List<WizardStepDto> Steps { get; set; } = new();
+    [Parameter] public int CurrentStepIndex { get; set; }
+    [Parameter] public int TotalSteps { get; set; }
+    [Parameter] public double ProgressPercent { get; set; }
+    [Parameter] public string Status { get; set; } = "Borrador";
+    [Parameter] public DateTime? LastSavedAt { get; set; }
+
+    private List<WizardStepDto> orderedSteps => Steps.OrderBy(x => x.Index).ToList();
+    private int resolvedTotalSteps => TotalSteps > 0 ? TotalSteps : orderedSteps.Count;
+    private int displayStep => resolvedTotalSteps == 0 ? 0 : Math.Min(CurrentStepIndex + 1, resolvedTotalSteps);
+    private double resolvedProgress => ProgressPercent < 0 ? 0 : ProgressPercent;
+    private int completedCount => orderedSteps.Count(step => step.IsCompleted);
+    private int errorCount => orderedSteps.Count(step => step.HasErrors);
+    private int pendingCount => Math.Max(resolvedTotalSteps - completedCount, 0);
+
+    private static string ResolveStepLabel(WizardStepDto step)
+    {
+        if (step.IsSkipped)
+            return "Omitido";
+        if (step.HasErrors)
+            return "Con errores";
+        if (step.HasWarnings)
+            return "Con alertas";
+        if (step.IsCompleted)
+            return "Completo";
+        if (step.IsActive)
+            return "En progreso";
+        return "Pendiente";
+    }
+
+    private static Color ResolveStepColor(WizardStepDto step)
+    {
+        if (step.IsSkipped)
+            return Color.Default;
+        if (step.HasErrors)
+            return Color.Error;
+        if (step.HasWarnings)
+            return Color.Warning;
+        if (step.IsCompleted)
+            return Color.Success;
+        if (step.IsActive)
+            return Color.Info;
+        return Color.Default;
+    }
+}

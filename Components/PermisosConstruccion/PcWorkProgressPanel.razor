@@ -1,0 +1,173 @@
+@using System
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.caption">Porcentaje de avance</MudText>
+                <MudText Typo="Typo.h4">@($"{CurrentProgress:0}%")</MudText>
+                <MudProgressLinear Value="@((double)CurrentProgress)" Color="Color.Primary" Class="mt-2" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.caption">Estado referencial</MudText>
+                <MudText Typo="Typo.subtitle1">@CurrentStatus</MudText>
+                <MudText Typo="Typo.caption" Class="d-block mt-2">Inspector: @CurrentInspector</MudText>
+                <MudText Typo="Typo.caption">Fecha último avance: @FormatDate(CurrentLastDate)</MudText>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.caption">Multa / intereses referenciales</MudText>
+                <MudText Typo="Typo.subtitle2">@($"{CurrentFine:N0} / {CurrentInterest:N0}")</MudText>
+                <MudAlert Severity="@(CurrentProgress >= 80 ? Severity.Warning : Severity.Info)" Variant="Variant.Outlined" Dense="true" Class="mt-2">
+                    @((CurrentProgress >= 80) ? "Al alcanzar 80% se crea una tarea referencial para Bienes Inmuebles." : "El avance opera solo como mock visual.")
+                </MudAlert>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTable T="PcWorkProgressDto" Items="@Permit.WorkProgressEntries.OrderByDescending(x => x.ProgressPercent)" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Estado</MudTh><MudTh>Avance</MudTh><MudTh>Fecha</MudTh><MudTh>Inspector</MudTh><MudTh>Multa</MudTh><MudTh>Intereses</MudTh><MudTh>Tarea BI</MudTh><MudTh>Acciones</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd><MudChip T="string" Text="@context.Status" Color="@ResolveColor(context.Status)" Variant="Variant.Outlined" Size="Size.Small" /></MudTd>
+            <MudTd>@($"{context.ProgressPercent:0}%")</MudTd>
+            <MudTd>@FormatDate(context.LastProgressDate)</MudTd>
+            <MudTd>@context.Inspector</MudTd>
+            <MudTd>@context.FineReference.ToString("N0")</MudTd>
+            <MudTd>@context.InterestReference.ToString("N0")</MudTd>
+            <MudTd>@context.BiTaskStatus</MudTd>
+            <MudTd>
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => RegisterProgress(context))">Registrar avance</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => SimulateEighty(context))">Simular avance 80%</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => CreateBiTask(context))">Generar tarea BI mock</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => FinishWork(context))">Marcar obra finalizada mock</MudButton>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+
+    private PcWorkProgressDto? CurrentEntry => Permit.WorkProgressEntries.OrderByDescending(x => x.LastProgressDate ?? DateTime.MinValue).FirstOrDefault();
+    private decimal CurrentProgress => CurrentEntry?.ProgressPercent ?? Permit.ProgressPercent;
+    private string CurrentStatus => CurrentEntry?.Status ?? "Sin iniciar";
+    private string CurrentInspector => CurrentEntry?.Inspector ?? Permit.QualityControl.Inspector;
+    private DateTime? CurrentLastDate => CurrentEntry?.LastProgressDate;
+    private decimal CurrentFine => CurrentEntry?.FineReference ?? 0;
+    private decimal CurrentInterest => CurrentEntry?.InterestReference ?? 0;
+
+    private void RegisterProgress(PcWorkProgressDto item)
+    {
+        var previousStatus = item.Status;
+        item.ProgressPercent = Math.Min(100, item.ProgressPercent + 10);
+        item.LastProgressDate = DateTime.Today;
+        item.Status = item.ProgressPercent switch
+        {
+            >= 100 => "Finalizada",
+            >= 80 => "80%",
+            >= 50 => "50%",
+            >= 25 => "25%",
+            > 0 => "En ejecución",
+            _ => "Sin iniciar"
+        };
+
+        if (item.ProgressPercent >= 80)
+            Permit.Property.BiUpdateStatus = "Pendiente actualización";
+
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "fiscalizacion.demo",
+            Action = "Registrar avance",
+            PreviousStatus = previousStatus,
+            NewStatus = item.Status,
+            Department = "Fiscalización",
+            Comment = $"{item.ProgressPercent:0}%",
+            Origin = "Cobro"
+        });
+
+        Snackbar.Add($"Avance registrado: {item.ProgressPercent:0}%.", Severity.Success);
+    }
+
+    private void SimulateEighty(PcWorkProgressDto item)
+    {
+        item.ProgressPercent = 80;
+        item.Status = "80%";
+        item.BiTaskStatus = "Generada";
+        item.LastProgressDate = DateTime.Today;
+        Permit.Property.BiUpdateStatus = "Pendiente actualización";
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "fiscalizacion.demo",
+            Action = "Simular avance 80%",
+            PreviousStatus = "50%",
+            NewStatus = "80%",
+            Department = "Fiscalización",
+            Comment = "Tarea BI generada",
+            Origin = "Cobro"
+        });
+        Snackbar.Add("Avance simulado al 80% y tarea BI generada.", Severity.Warning);
+    }
+
+    private void CreateBiTask(PcWorkProgressDto item)
+    {
+        item.BiTaskStatus = "Generada";
+        Permit.Property.BiUpdateStatus = "Pendiente actualización";
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "bienes.demo",
+            Action = "Generar tarea BI",
+            PreviousStatus = item.Status,
+            NewStatus = "Pendiente actualización",
+            Department = "Bienes Inmuebles",
+            Comment = "Generada desde avance de obra",
+            Origin = "Bienes Inmuebles"
+        });
+        Snackbar.Add("Tarea BI mock generada por avance de obra.", Severity.Info);
+    }
+
+    private void FinishWork(PcWorkProgressDto item)
+    {
+        var previousStatus = item.Status;
+        item.ProgressPercent = 100;
+        item.Status = "Finalizada";
+        item.BiTaskStatus = "Actualizada";
+        item.LastProgressDate = DateTime.Today;
+        Permit.ProgressPercent = 100;
+        Permit.FinishedAt = DateTime.Today;
+        Permit.Property.BiUpdateStatus = "Actualizado mock";
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "fiscalizacion.demo",
+            Action = "Marcar obra finalizada",
+            PreviousStatus = previousStatus,
+            NewStatus = "Finalizada",
+            Department = "Fiscalización",
+            Comment = "Obra cerrada en demo",
+            Origin = "Cobro"
+        });
+        Snackbar.Add("Obra finalizada en modo demo.", Severity.Success);
+    }
+
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
+    private static Color ResolveColor(string status) => status switch
+    {
+        "Sin iniciar" => Color.Default,
+        "En ejecución" => Color.Info,
+        "25%" or "50%" => Color.Warning,
+        "80%" => Color.Error,
+        "Finalizada" => Color.Success,
+        _ => Color.Secondary
+    };
+}

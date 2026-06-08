@@ -9,11 +9,6 @@
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
-<MudThemeProvider />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
-
 @if (currentUser?.IsAuthenticated == true)
 {
     <MudLayout Class="cm-shell">
@@ -42,6 +37,9 @@
                 <MudNavLink Href="/ruc" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Badge">RUC</MudNavLink>
                 <MudNavLink Href="/bienes-inmuebles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.HomeWork">Bienes Inmuebles</MudNavLink>
                 <MudNavLink Href="/patentes" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Store">Patentes</MudNavLink>
+                <MudNavLink Href="/plataforma-servicios" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Storefront">Plataforma de Servicios</MudNavLink>
+                <MudNavLink Href="/permisos-construccion" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Construction">Permisos de Construcción</MudNavLink>
+                <MudNavLink Href="/mercado-municipal" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Storefront">Mercado Municipal</MudNavLink>
                 <MudNavLink Href="/auditoria" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.FactCheck">Auditoría</MudNavLink>
                 <MudNavLink Href="/configuracion" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">Configuración</MudNavLink>
             </MudNavMenu>
@@ -59,7 +57,7 @@
             <MudSpacer />
 
             <div class="d-none d-md-flex cm-search-wrapper">
-                <MudTextField T="string" Value="@searchText" ValueChanged="OnSearchChanged" Placeholder="Buscar contribuyentes, fincas, licencias o trámites" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" FullWidth="true" Margin="Margin.Dense" Class="cm-search-field" />
+                <MudTextField T="string" Value="searchText" ValueChanged="OnSearchChanged" Placeholder="Buscar contribuyentes, fincas, licencias o trámites" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" FullWidth="true" Margin="Margin.Dense" Class="cm-search-field" />
             </div>
 
             <MudPaper Outlined="true" Class="cm-topbar-icon me-2">
@@ -79,10 +77,10 @@
                     </MudPaper>
                 </ActivatorContent>
                 <ChildContent>
-                    <MudMenuItem Disabled="true">@currentUser.NombreCompleto</MudMenuItem>
-                    <MudMenuItem Disabled="true">@currentUser.Rol</MudMenuItem>
-                    <MudMenuItem Icon="@Icons.Material.Filled.LockReset" OnClick="@(_ => OpenChangePasswordAsync())">Cambiar contraseña</MudMenuItem>
-                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="@(_ => LogoutAsync())">Cerrar sesión</MudMenuItem>
+                    <MudMenuItem Label="@currentUser.NombreCompleto" Disabled="true" />
+                    <MudMenuItem Label="@currentUser.Rol" Disabled="true" />
+                    <MudMenuItem Label="Cambiar contraseña" Icon="@Icons.Material.Filled.LockReset" OnClick="@(_ => OpenChangePasswordAsync())" />
+                    <MudMenuItem Label="Cerrar sesión" Icon="@Icons.Material.Filled.Logout" OnClick="@(_ => LogoutAsync())" />
                 </ChildContent>
             </MudMenu>
         </MudAppBar>

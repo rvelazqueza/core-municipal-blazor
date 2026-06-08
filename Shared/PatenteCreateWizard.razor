@@ -1,0 +1,898 @@
+@using BlazorApp.Models
+@using MudBlazor
+
+<WizardShell Title="Nueva solicitud de patente"
+             Subtitle="Registro guiado en modo demo con navegación progresiva, validaciones básicas y guardado temporal en memoria."
+             SummaryTitle="Resumen de la solicitud"
+             State="wizardState"
+             CurrentStepTitle="@CurrentStep.Title"
+             CurrentStepSubtitle="@CurrentStep.Subtitle"
+             CanGoBack="@(currentStepIndex > 0)"
+             CanGoNext="@(currentStepIndex < wizardSteps.Count - 1)"
+             CanFinish="@(currentStepIndex == wizardSteps.Count - 1)"
+             FinishText="Finalizar"
+             SaveDraftMessage="Borrador de Patente guardado correctamente."
+             CancelDialogTitle="Cancelar solicitud de patente"
+             CancelDialogMessage="¿Desea cancelar la solicitud de patente? Los datos no guardados se perderán."
+             CancelledMessage="Solicitud de patente cancelada."
+             OnBack="GoBackAsync"
+             OnNext="GoNextAsync"
+             OnFinish="FinalizeAsync"
+             OnSaveDraft="SaveDraftAsync"
+             OnCancel="CancelAsync">
+    <ChildContent>
+        @switch (currentStepIndex)
+        {
+            case 0:
+                <MudStack Spacing="3">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Defina el trámite inicial, el tipo de licencia y el canal de ingreso; el expediente mock se genera automáticamente para la demo.</MudAlert>
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="6">
+                            <MudSelect T="string" @bind-Value="model.TipoSolicitud" Label="Tipo de solicitud" Variant="Variant.Outlined">
+                                @foreach (var item in tiposSolicitud)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudSelect T="string" @bind-Value="model.TipoLicencia" @bind-Value:after="OnTipoLicenciaChangedAsync" Label="Tipo de licencia" Variant="Variant.Outlined">
+                                @foreach (var item in tiposLicencia)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string" @bind-Value="model.CanalIngreso" Label="Canal de ingreso" Variant="Variant.Outlined">
+                                @foreach (var item in canalesIngreso)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.NumeroExpediente" Label="Número de expediente mock" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string" @bind-Value="model.EstadoInicial" Label="Estado inicial" Variant="Variant.Outlined">
+                                @foreach (var item in estadosIniciales)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudSwitch T="bool" @bind-Value="model.TieneDeclaracionJurada" @bind-Value:after="OnDeclaracionJuradaChangedAsync" Color="Color.Primary" Label="Solicitud bajo modalidad de Declaración Jurada" />
+                        </MudItem>
+                        <MudItem xs="12" md="6" Class="d-flex align-center">
+<MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="GenerateMockExpedienteAsync">Generar expediente mock</MudButton>
+                        </MudItem>
+                    </MudGrid>
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                        <MudChip T="string" Text="@($"Expediente: {model.NumeroExpediente}")" Variant="Variant.Outlined" Color="Color.Info" />
+                        <MudChip T="string" Text="@($"Estado inicial: {model.EstadoInicial}")" Variant="Variant.Outlined" Color="Color.Secondary" />
+                        <MudChip T="string" Text="@($"Declaración Jurada: {model.ModalidadDeclaracionJurada}")" Variant="Variant.Outlined" Color="Color.Primary" />
+                        @if (!model.RequiereLocalFisico)
+                        {
+                            <MudChip T="string" Text="Actividad sin local físico" Variant="Variant.Outlined" Color="Color.Warning" />
+                        }
+                    </MudStack>
+                </MudStack>
+                break;
+            case 1:
+                <MudStack Spacing="3">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Seleccione un contribuyente del mock o marque el registro pendiente para continuar con captura manual.</MudAlert>
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="8">
+                            <MudSelect T="string" @bind-Value="selectedContribuyenteId" @bind-Value:after="OnContribuyenteChangedAsync" Label="Contribuyente desde RUC mock" Variant="Variant.Outlined">
+                                <MudSelectItem T="string" Value="@(string.Empty)">Seleccionar contribuyente</MudSelectItem>
+                                @foreach (var item in contribuyentes)
+                                {
+                                    <MudSelectItem T="string" Value="@item.Id.ToString()">@($"{item.NombreCompleto} · {item.NumeroIdentificacion}")</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSwitch T="bool" @bind-Value="model.PendienteRegistroContribuyente" @bind-Value:after="OnPendienteRegistroChangedAsync" Color="Color.Warning" Label="Pendiente de registro" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="model.Identificacion" Label="Identificación" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="model.ContribuyenteNombre" Label="Nombre o razón social" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string" @bind-Value="model.TipoPersona" Label="Tipo de persona" Variant="Variant.Outlined">
+                                @foreach (var item in tiposPersona)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.Correo" Label="Correo" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.Telefono" Label="Teléfono" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField T="string" @bind-Value="model.DireccionFiscal" Label="Dirección fiscal" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudSelect T="string" @bind-Value="model.MedioNotificacion" Label="Medio de notificación" Variant="Variant.Outlined">
+                                @foreach (var item in mediosNotificacion)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudSelect T="string" @bind-Value="model.EstadoContribuyente" Label="Estado del contribuyente" Variant="Variant.Outlined">
+                                @foreach (var item in estadosContribuyente)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudSelect T="string" @bind-Value="model.CalidadDatosRuc" Label="Calidad de datos RUC" Variant="Variant.Outlined">
+                                @foreach (var item in calidadesRuc)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                    </MudGrid>
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Visibility" OnClick="ViewRucAsync">Ver RUC</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.VerifiedUser" OnClick="ValidateContribuyenteAsync">Validar contribuyente</MudButton>
+<MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="CreateOrConsultContribuyenteAsync">Crear/consultar contribuyente</MudButton>
+                    </MudStack>
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                        <MudChip T="string" Text="@($"Contribuyente: {(model.PendienteRegistroContribuyente ? "Pendiente de registro" : string.IsNullOrWhiteSpace(model.ContribuyenteNombre) ? "Sin seleccionar" : model.ContribuyenteNombre)}")" Variant="Variant.Outlined" Color="Color.Primary" />
+                        <MudChip T="string" Text="@($"RUC: {model.CalidadDatosRuc}")" Variant="Variant.Outlined" Color="Color.Info" />
+                        <MudChip T="string" Text="@($"Estado: {model.EstadoContribuyente}")" Variant="Variant.Outlined" Color="Color.Secondary" />
+                    </MudStack>
+                </MudStack>
+                break;
+            case 2:
+                <MudStack Spacing="3">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Seleccione una finca o local mock para completar el domicilio del trámite. Si la licencia no requiere local físico, podrá continuar con la modalidad sin local.</MudAlert>
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="6">
+                            <MudSelect T="string" @bind-Value="selectedLocalId" @bind-Value:after="OnLocalChangedAsync" Label="Local / finca mock" Variant="Variant.Outlined">
+                                <MudSelectItem T="string" Value="@(string.Empty)">Seleccione un local</MudSelectItem>
+                                @foreach (var item in localesMock)
+                                {
+                                    <MudSelectItem T="string" Value="@item.Id.ToString()">@($"{item.NombreLocal} · {item.Distrito} · {item.EstadoGis}")</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudTextField T="string" @bind-Value="model.IdPredial" Label="ID Predial" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudTextField T="string" @bind-Value="model.NumeroFinca" Label="Número de finca" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="model.DireccionLocal" Label="Dirección del local" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudSelect T="string" @bind-Value="model.Distrito" Label="Distrito" Variant="Variant.Outlined">
+                                @foreach (var item in distritos)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudTextField T="string" @bind-Value="model.Dueno" Label="Dueño de la propiedad" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string" @bind-Value="model.CondicionOcupacion" Label="Condición de ocupación" Variant="Variant.Outlined">
+                                <MudSelectItem T="string" Value="@("Propietario")">Propietario</MudSelectItem>
+                                <MudSelectItem T="string" Value="@("Arrendatario")">Arrendatario</MudSelectItem>
+                                <MudSelectItem T="string" Value="@("Ocupante autorizado")">Ocupante autorizado</MudSelectItem>
+                                <MudSelectItem T="string" Value="@("No aplica por actividad sin local físico")">No aplica por actividad sin local físico</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.AreaLocal" Label="Área del local" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.CuentaServiciosMunicipales" Label="Cuenta de servicios municipales" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="model.NombreComercialLocal" Label="Nombre comercial del local" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudTextField T="string" @bind-Value="model.EstadoGis" Label="Estado GIS" Variant="Variant.Outlined" />
+                        </MudItem>
+                    </MudGrid>
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                        @if (model.TipoUbicacion == "Actividad sin local físico")
+                        {
+                            <MudChip T="string" Text="Actividad sin local físico" Variant="Variant.Outlined" Color="Color.Warning" />
+                        }
+                        <MudChip T="string" Text="@($"Estado GIS: {model.EstadoGis}")" Variant="Variant.Outlined" Color="Color.Info" />
+                        <MudChip T="string" Text="@($"Cuenta: {model.CuentaServiciosMunicipales}")" Variant="Variant.Outlined" Color="Color.Secondary" />
+                    </MudStack>
+                    @if (model.EstadoGis.Contains("Pendiente", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">El estado GIS está pendiente en el demo y no bloquea el avance.</MudAlert>
+                    }
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Map" OnClick="ViewFincaAsync">Ver finca</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.FactCheck" OnClick="ValidateLocalAsync">Validar local</MudButton>
+                    </MudStack>
+                </MudStack>
+                break;
+            case 3:
+                <MudStack Spacing="3">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Complete la actividad comercial principal y los indicadores operativos del negocio con datos mock.</MudAlert>
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="8">
+                            <MudSelect T="string" @bind-Value="selectedActividadCodigo" @bind-Value:after="OnActividadChangedAsync" Label="Actividad económica CAECR mock" Variant="Variant.Outlined">
+                                <MudSelectItem T="string" Value="@(string.Empty)">Seleccione una actividad</MudSelectItem>
+                                @foreach (var item in actividadesEconomicasMock)
+                                {
+                                    <MudSelectItem T="string" Value="@item.CodigoCaecr">@($"{item.CodigoCaecr} · {item.Descripcion}")</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.CodigoCiiuVisual" Label="Código CIIU/CAECR visual" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="model.NombreComercial" Label="Nombre comercial" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="model.ActividadPrincipal" Label="Actividad principal" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField T="string" @bind-Value="model.ActividadesSecundarias" Label="Actividades secundarias" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.CategoriaActividad" Label="Categoría de actividad" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string" @bind-Value="model.RiesgoActividad" Label="Tipo de riesgo" Variant="Variant.Outlined">
+                                <MudSelectItem T="string" Value="@("Bajo")">Bajo</MudSelectItem>
+                                <MudSelectItem T="string" Value="@("Medio")">Medio</MudSelectItem>
+                                <MudSelectItem T="string" Value="@("Alto")">Alto</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.HorarioAtencion" Label="Horario de operación" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.Empleados" Label="Cantidad estimada de empleados" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.AreaLocal" Label="Área de atención al público" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.ActividadesEnOtrosCantones" Label="Actividades en otros cantones" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudSwitch T="bool" @bind-Value="model.RequiereLicores" Color="Color.Warning" Label="Requiere licencia de licores" />
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudSwitch T="bool" @bind-Value="model.RequierePermisoSanitario" @bind-Value:after="OnRequierePermisoSanitarioChangedAsync" Color="Color.Info" Label="Requiere permiso sanitario" />
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudSwitch T="bool" @bind-Value="model.RequiereInspeccion" @bind-Value:after="OnRequiereInspeccionChangedAsync" Color="Color.Primary" Label="Requiere inspección" />
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudSwitch T="bool" @bind-Value="model.ActividadTemporal" Color="Color.Secondary" Label="Actividad temporal" />
+                        </MudItem>
+                    </MudGrid>
+                    @if (model.RequiereLicores)
+                    {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Revisión especial de licencias de licores en modo demo.</MudAlert>
+                    }
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                        <MudChip T="string" Text="@($"Riesgo: {model.RiesgoActividad}")" Variant="Variant.Outlined" Color="Color.Secondary" />
+                        <MudChip T="string" Text="@($"Licores: {(model.RequiereLicores ? "Sí" : "No")}")" Variant="Variant.Outlined" Color="Color.Warning" />
+                        <MudChip T="string" Text="@($"Inspección: {(model.RequiereInspeccion ? "Sí" : "No")}")" Variant="Variant.Outlined" Color="Color.Primary" />
+                    </MudStack>
+                </MudStack>
+                break;
+            case 4:
+                <MudStack Spacing="3">
+                    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No se debe otorgar patente sin uso de suelo conforme.</MudAlert>
+                    @if (IsActivityWithoutPhysicalLocal())
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">La validación de Uso de Suelo puede ser referencial según el tipo de licencia porque la actividad se tramita sin local físico.</MudAlert>
+                    }
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.NumeroCertificadoUsoSuelo" Label="Número de certificado de Uso de Suelo" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string" @bind-Value="model.EstadoUsoSuelo" @bind-Value:after="OnEstadoUsoSueloChangedAsync" Label="Estado" Variant="Variant.Outlined">
+                                @foreach (var item in estadosUsoSuelo)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.Zonificacion" Label="Zonificación mock" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="model.ActividadEconomica" Label="Actividad solicitada" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="model.ActividadesAutorizadas" Label="Actividades autorizadas" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" @bind-Value="model.CompatibilidadUsoSuelo" Label="Compatibilidad de actividad" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudDatePicker Label="Fecha de emisión" PickerVariant="PickerVariant.Dialog" Date="model.FechaValidacionUsoSuelo" DateChanged="@(value => model.FechaValidacionUsoSuelo = value)" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudDatePicker Label="Fecha de vencimiento" PickerVariant="PickerVariant.Dialog" Date="model.FechaVencimientoUsoSuelo" DateChanged="@(value => model.FechaVencimientoUsoSuelo = value)" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string" @bind-Value="model.ResultadoUsoSuelo" Label="Resultado de validación" Variant="Variant.Outlined">
+                                @foreach (var item in resultadosUsoSuelo)
+                                {
+                                    <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="8">
+                            <MudTextField T="string" @bind-Value="model.Observaciones" Label="Observaciones" Variant="Variant.Outlined" />
+                        </MudItem>
+                    </MudGrid>
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                        @if (model.EstadoUsoSuelo == "Conforme")
+                        {
+                            <MudChip T="string" Text="Uso de Suelo conforme" Variant="Variant.Outlined" Color="Color.Success" />
+                        }
+                        else if (model.EstadoUsoSuelo == "Pendiente")
+                        {
+                            <MudChip T="string" Text="Uso de Suelo pendiente" Variant="Variant.Outlined" Color="Color.Warning" />
+                        }
+                        else
+                        {
+                            <MudChip T="string" Text="@($"Uso de Suelo {model.EstadoUsoSuelo}")" Variant="Variant.Outlined" Color="Color.Error" />
+                        }
+                        <MudChip T="string" Text="@($"Resultado: {model.ResultadoUsoSuelo}")" Variant="Variant.Outlined" Color="Color.Info" />
+                        <MudChip T="string" Text="@($"Compatibilidad: {model.CompatibilidadUsoSuelo}")" Variant="Variant.Outlined" Color="Color.Secondary" />
+                    </MudStack>
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FactCheck" OnClick="SimulateUsoSueloValidationAsync">Simular validación de Uso de Suelo</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" OnClick="ViewUsoSueloCertificateAsync">Ver certificado</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.NoteAdd" OnClick="RequestUsoSueloAsync">Solicitar Uso de Suelo</MudButton>
+                    </MudStack>
+                </MudStack>
+                break;
+            case 5:
+                <MudStack Spacing="3">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Complete el checklist documental en modo demo; los pendientes y observaciones quedarán reflejados en resolución sin bloquear totalmente el wizard.</MudAlert>
+                    @if (GetNonCompliantRequirementsCount() > 0)
+                    {
+                        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Hay requisitos en estado “No cumple”; la resolución no podrá aprobarse directamente.</MudAlert>
+                    }
+                    @if (GetPendingRequirementsCount() > 0)
+                    {
+                        <MudAlert Severity="@GetRequirementsPendingAlertSeverity()" Variant="Variant.Outlined">@((model.TieneDeclaracionJurada ? "Existen requisitos pendientes permitidos temporalmente por Declaración Jurada." : "Existen requisitos pendientes; en modo demo se permite continuar, pero el expediente queda pendiente de validación."))</MudAlert>
+                    }
+
+                    <MudPaper Class="pa-4">
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12" md="4">
+                                <MudText Typo="Typo.subtitle2">Completitud documental</MudText>
+                                <MudProgressLinear Color="Color.Primary" Value="@GetRequirementsCompletionPercent()" Class="mt-2" />
+                                <MudText Typo="Typo.caption">@($"{GetRequirementsCompletionPercent()}% de requisitos aplicables completos")</MudText>
+                            </MudItem>
+                            <MudItem xs="12" md="8">
+                                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                    <MudChip T="string" Text="@($"Completos: {GetCompletedRequirementsCount()}")" Variant="Variant.Outlined" Color="Color.Success" />
+                                    <MudChip T="string" Text="@($"Pendientes: {GetPendingRequirementsCount()}")" Variant="Variant.Outlined" Color="Color.Warning" />
+                                    <MudChip T="string" Text="@($"No cumplen: {GetNonCompliantRequirementsCount()}")" Variant="Variant.Outlined" Color="Color.Error" />
+                                    <MudChip T="string" Text="@($"DJ: {(model.TieneDeclaracionJurada ? "Sí" : "No")}")" Variant="Variant.Outlined" Color="Color.Info" />
+                                    <MudChip T="string" Text="@($"Estado general: {model.EstadoRequisitos}")" Variant="Variant.Outlined" Color="Color.Secondary" />
+                                </MudStack>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+
+                    <MudTable T="RequisitoPatenteDto" Items="@model.Requisitos" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Requisito</MudTh>
+                            <MudTh>Estado</MudTh>
+                            <MudTh>Observación</MudTh>
+                            <MudTh>Documento placeholder</MudTh>
+                            <MudTh>Origen</MudTh>
+                            <MudTh>Indicador</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Requisito">@context.Nombre</MudTd>
+                            <MudTd DataLabel="Estado">
+                                <MudSelect T="string" @bind-Value="context.Estado" @bind-Value:after="SyncRequirementsAfterEditAsync" Variant="Variant.Outlined" Dense="true">
+                                    @foreach (var estado in estadosCumplimiento)
+                                    {
+                                        <MudSelectItem T="string" Value="@estado">@estado</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudTd>
+                            <MudTd DataLabel="Observación">
+                                <MudTextField T="string" @bind-Value="context.Observacion" @bind-Value:after="SyncRequirementsAfterEditAsync" Variant="Variant.Outlined" />
+                            </MudTd>
+                            <MudTd DataLabel="Documento placeholder">
+                                <MudTextField T="string" @bind-Value="context.DocumentoPlaceholder" @bind-Value:after="SyncRequirementsAfterEditAsync" Variant="Variant.Outlined" />
+                            </MudTd>
+                            <MudTd DataLabel="Origen">
+                                <MudSelect T="string" @bind-Value="context.Origen" @bind-Value:after="SyncRequirementsAfterEditAsync" Variant="Variant.Outlined" Dense="true">
+                                    @foreach (var origen in origenesRequisito)
+                                    {
+                                        <MudSelectItem T="string" Value="@origen">@origen</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudTd>
+                            <MudTd DataLabel="Indicador">
+                                <MudChip T="string" Text="@context.Estado" Variant="Variant.Outlined" Color="@GetRequirementStatusColor(context.Estado)" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    @if (model.TieneDeclaracionJurada)
+                    {
+                        <MudPaper Class="pa-4">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.h6">Sección especial de Declaración Jurada</MudText>
+                                <MudGrid Spacing="3">
+                                    <MudItem xs="12" md="6">
+                                        <MudTextField T="string" @bind-Value="model.FechaInicioActividad" @bind-Value:after="SyncRequirementsAfterEditAsync" Label="Fecha de inicio de actividad" Variant="Variant.Outlined" />
+                                    </MudItem>
+                                    <MudItem xs="12" md="6">
+                                        <MudTextField T="int" @bind-Value="model.DeclaracionJuradaDiasHabiles" @bind-Value:after="SyncRequirementsAfterEditAsync" Label="Contador mock de 60 días hábiles" Variant="Variant.Outlined" />
+                                    </MudItem>
+                                </MudGrid>
+                                <MudProgressLinear Color="Color.Info" Value="@GetDeclaracionJuradaDeadlinePercent()" />
+                                <MudChip T="string" Text="@($"Plazo mock: {model.DeclaracionJuradaDiasHabiles} días hábiles")" Variant="Variant.Outlined" Color="Color.Info" />
+                                <MudAlert Severity="@GetDeclaracionJuradaDeadlineSeverity()" Variant="Variant.Outlined">@GetDeclaracionJuradaDeadlineMessage()</MudAlert>
+                            </MudStack>
+                        </MudPaper>
+                    }
+
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" @bind-Value="model.Observaciones" Label="Observaciones del expediente" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" md="6" Class="d-flex align-center">
+                            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="GeneratePreventionMockAsync">Generar prevención mock</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FactCheck" OnClick="ValidateRequirementsMockAsync">Validar requisitos mock</MudButton>
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
+                </MudStack>
+                break;
+            case 6:
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="string" @bind-Value="model.EstadoHacienda" Label="Hacienda" Variant="Variant.Outlined">
+                            @foreach (var item in estadosIntegracion)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="string" @bind-Value="model.EstadoCcss" Label="CCSS" Variant="Variant.Outlined">
+                            @foreach (var item in estadosIntegracion)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="string" @bind-Value="model.EstadoFodesaf" Label="FODESAF" Variant="Variant.Outlined">
+                            @foreach (var item in estadosIntegracion)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="string" @bind-Value="model.EstadoIns" Label="INS" Variant="Variant.Outlined">
+                            @foreach (var item in estadosIntegracion)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+                break;
+            case 7:
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="model.EstadoMorosidad" Label="Morosidad" Variant="Variant.Outlined">
+                            @foreach (var item in estadosRevision)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="model.EstadoInspeccion" Label="Inspección" Variant="Variant.Outlined">
+                            @foreach (var item in estadosInspeccion)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" @bind-Value="model.EstadoRevision" Label="Revisión técnica" Variant="Variant.Outlined">
+                            @foreach (var item in estadosRevision)
+                            {
+                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+                break;
+            case 8:
+                <MudStack Spacing="3">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">La tasación, el cobro y la resolución de este paso son simulados para la demo institucional; no generan fórmulas, cuentas, firma digital ni notificaciones reales.</MudAlert>
+                    @if (HasApprovalBlockers())
+                    {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No es posible aprobar directamente. El expediente queda Pendiente validación o Prevenido en modo demo.</MudAlert>
+                        <MudPaper Outlined="true" Class="pa-3">
+                            <MudStack Spacing="1">
+                                @foreach (var blocker in GetApprovalBlockingMessages())
+                                {
+                                    <MudText Typo="Typo.body2">• @blocker</MudText>
+                                }
+                            </MudStack>
+                        </MudPaper>
+                    }
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" lg="4">
+                            <MudCard Outlined="true">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.subtitle1">Tasación</MudText>
+                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                            <MudChip T="string" Text="@($"Tipo: {model.TipoTasacion}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Estado: {model.EstadoTasacion}")" Variant="Variant.Outlined" Color="@GetTasacionStatusColor(model.EstadoTasacion)" Size="Size.Small" />
+                                        </MudStack>
+                                        <MudSelect T="string" @bind-Value="model.TipoTasacion" Label="Tipo de tasación" Variant="Variant.Outlined">
+                                            @foreach (var item in tiposTasacionMock)
+                                            {
+                                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                        <MudSelect T="string" @bind-Value="model.EstadoTasacion" Label="Estado de tasación" Variant="Variant.Outlined">
+                                            @foreach (var item in estadosTasacionMock)
+                                            {
+                                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                        <MudTextField T="decimal" @bind-Value="model.MontoAnualMock" Label="Monto anual mock" Variant="Variant.Outlined" />
+                                        <MudTextField T="decimal" @bind-Value="model.MontoTrimestralMock" Label="Monto trimestral mock" Variant="Variant.Outlined" />
+                                        <MudTextField T="decimal" @bind-Value="model.TimbreBiodiversidad" Label="Timbre de biodiversidad anual" Variant="Variant.Outlined" />
+                                        <MudText Typo="Typo.body2">Timbre trimestral visual: @FormatCurrency(GetQuarterlyComponent(model.TimbreBiodiversidad))</MudText>
+                                        <MudTextField T="decimal" @bind-Value="model.PublicidadExterior" Label="Publicidad exterior anual" Variant="Variant.Outlined" />
+                                        <MudText Typo="Typo.body2">Publicidad trimestral visual: @FormatCurrency(GetQuarterlyComponent(model.PublicidadExterior))</MudText>
+                                        <MudTextField T="decimal" @bind-Value="model.Multa" Label="Multa mock" Variant="Variant.Outlined" />
+                                        <MudTextField T="decimal" @bind-Value="model.Intereses" Label="Intereses mock" Variant="Variant.Outlined" />
+                                        <MudTextField T="string" @bind-Value="model.FechaInicioCobro" Label="Fecha de inicio del cobro" Variant="Variant.Outlined" />
+                                        <MudTextField T="string" @bind-Value="model.CobroProporcionalVisual" Label="Cobro proporcional visual" Variant="Variant.Outlined" MaxLines="3" AutoGrow="true" />
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Calculate" OnClick="SimulateTasacionMockAsync">Simular tasación</MudButton>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" lg="4">
+                            <MudCard Outlined="true">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.subtitle1">Cobro mock</MudText>
+                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                            <MudChip T="string" Text="@($"Cobro: {model.EstadoCobro}")" Variant="Variant.Outlined" Color="@GetCobroStatusColor(model.EstadoCobro)" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Cuenta: {model.EstadoCuentaTributariaMock}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                                        </MudStack>
+                                        <MudSelect T="string" @bind-Value="model.EstadoCobro" Label="Estado de cobro" Variant="Variant.Outlined">
+                                            @foreach (var item in estadosCobroMock)
+                                            {
+                                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                        <MudTextField T="string" @bind-Value="model.EstadoCuentaTributariaMock" Label="Estado de cuenta tributaria mock" Variant="Variant.Outlined" MaxLines="3" AutoGrow="true" />
+                                        <MudTextField T="string" @bind-Value="model.ReferenciaCuentaPorCobrarMock" Label="Referencia de cuenta por cobrar mock" Variant="Variant.Outlined" />
+                                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">El cobro proporcional y la cuenta tributaria son referenciales para demo; no generan movimiento financiero real.</MudAlert>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" lg="4">
+                            <MudCard Outlined="true">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.subtitle1">Resolución</MudText>
+                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                            <MudChip T="string" Text="@($"Resolución: {model.EstadoResolucion}")" Variant="Variant.Outlined" Color="@GetResolucionStatusColor(model.EstadoResolucion)" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Firma: {model.FirmaDigitalReferencial}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                                        </MudStack>
+                                        <MudSelect T="string" @bind-Value="model.EstadoResolucion" Label="Estado de resolución" Variant="Variant.Outlined">
+                                            @foreach (var item in estadosResolucionMock)
+                                            {
+                                                <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                        <MudTextField T="string" @bind-Value="model.ObservacionesResolucion" Label="Observaciones de resolución" Variant="Variant.Outlined" MaxLines="4" AutoGrow="true" />
+                                        <MudSwitch T="bool" @bind-Value="model.NotificacionSimulada" Color="Color.Primary" Label="Notificación simulada" />
+                                        <MudTextField T="string" @bind-Value="model.FirmaDigitalReferencial" Label="Firma digital referencial" Variant="Variant.Outlined" />
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" OnClick="GenerateResolutionMockAsync">Generar resolución mock</MudButton>
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="SendPreventionMockAsync">Enviar prevención mock</MudButton>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.CheckCircle" OnClick="ApproveSolicitudMockAsync">Aprobar solicitud mock</MudButton>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.Cancel" OnClick="RejectSolicitudMockAsync">Rechazar solicitud mock</MudButton>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    </MudGrid>
+                </MudStack>
+                break;
+            case 9:
+                <MudStack Spacing="3">
+                    <MudAlert Severity="@GetFinalizationAlertSeverity()" Variant="Variant.Outlined">@GetFinalizationAlertMessage()</MudAlert>
+
+                    @if (HasApprovalBlockers())
+                    {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                            No es posible finalizar como aprobada mientras existan bloqueos críticos. El expediente demo quedará @GetFinalizationOutcomePreview().
+                        </MudAlert>
+                    }
+
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="6">
+                            <MudCard Outlined="true" Class="h-100">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">Datos generales</MudText>
+                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                            <MudChip T="string" Text="@($"Estado: {GetGeneralWorkflowState()}")" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Licencia: {GetDisplayValue(model.TipoLicencia)}")" Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Canal: {GetDisplayValue(model.CanalIngreso)}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                                        </MudStack>
+                                        <MudText Typo="Typo.body2">Tipo de solicitud: @GetDisplayValue(model.TipoSolicitud)</MudText>
+                                        <MudText Typo="Typo.body2">Tipo de licencia: @GetDisplayValue(model.TipoLicencia)</MudText>
+                                        <MudText Typo="Typo.body2">Canal: @GetDisplayValue(model.CanalIngreso)</MudText>
+                                        <MudText Typo="Typo.body2">Número de expediente: @GetDisplayValue(model.NumeroExpediente)</MudText>
+                                        <MudText Typo="Typo.body2">Estado del trámite: @GetGeneralWorkflowState()</MudText>
+                                        <MudText Typo="Typo.body2">Modalidad Declaración Jurada: @GetDisplayValue(model.ModalidadDeclaracionJurada)</MudText>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudCard Outlined="true" Class="h-100">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">Solicitante</MudText>
+                                        <MudText Typo="Typo.body2">Identificación: @GetDisplayValue(model.Identificacion)</MudText>
+                                        <MudText Typo="Typo.body2">Nombre o razón social: @(model.PendienteRegistroContribuyente ? "Pendiente de registro" : GetDisplayValue(model.ContribuyenteNombre))</MudText>
+                                        <MudText Typo="Typo.body2">Tipo de persona: @GetDisplayValue(model.TipoPersona)</MudText>
+                                        <MudText Typo="Typo.body2">Correo: @GetDisplayValue(model.Correo)</MudText>
+                                        <MudText Typo="Typo.body2">Teléfono: @GetDisplayValue(model.Telefono)</MudText>
+                                        <MudText Typo="Typo.body2">Medio de notificación: @GetDisplayValue(model.MedioNotificacion)</MudText>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudCard Outlined="true" Class="h-100">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">Local / finca</MudText>
+                                        <MudText Typo="Typo.body2">ID Predial: @GetDisplayValue(model.IdPredial)</MudText>
+                                        <MudText Typo="Typo.body2">Número de finca: @GetDisplayValue(string.IsNullOrWhiteSpace(model.NumeroFinca) ? model.FincaOIdPredial : model.NumeroFinca)</MudText>
+                                        <MudText Typo="Typo.body2">Dirección: @GetDisplayValue(model.DireccionLocal)</MudText>
+                                        <MudText Typo="Typo.body2">Distrito: @GetDisplayValue(model.Distrito)</MudText>
+                                        <MudText Typo="Typo.body2">Condición de ocupación: @GetDisplayValue(model.CondicionOcupacion)</MudText>
+                                        <MudText Typo="Typo.body2">Cuenta de servicios municipales: @GetDisplayValue(model.CuentaServiciosMunicipales)</MudText>
+                                        @if (IsActivityWithoutPhysicalLocal())
+                                        {
+                                            <MudChip T="string" Text="Sin local físico" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                                        }
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudCard Outlined="true" Class="h-100">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">Actividad económica</MudText>
+                                        <MudText Typo="Typo.body2">Nombre comercial: @GetDisplayValue(model.NombreComercial)</MudText>
+                                        <MudText Typo="Typo.body2">Actividad principal: @GetDisplayValue(model.ActividadPrincipal)</MudText>
+                                        <MudText Typo="Typo.body2">Código CAECR/CIIU visual: @GetDisplayValue(model.CodigoCaecr) / @GetDisplayValue(model.CodigoCiiuVisual)</MudText>
+                                        <MudText Typo="Typo.body2">Riesgo: @GetDisplayValue(model.RiesgoActividad)</MudText>
+                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                            <MudChip T="string" Text="@($"Licores: {(model.RequiereLicores ? "Sí" : "No")}")" Variant="Variant.Outlined" Color="@(model.RequiereLicores ? Color.Warning : Color.Default)" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Permiso sanitario: {(model.RequierePermisoSanitario ? "Sí" : "No")}")" Variant="Variant.Outlined" Color="@(model.RequierePermisoSanitario ? Color.Info : Color.Default)" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Inspección: {(model.RequiereInspeccion ? "Sí" : "No")}")" Variant="Variant.Outlined" Color="@(model.RequiereInspeccion ? Color.Info : Color.Default)" Size="Size.Small" />
+                                        </MudStack>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudCard Outlined="true" Class="h-100">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">Uso de Suelo</MudText>
+                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                            <MudChip T="string" Text="@($"Estado: {GetDisplayValue(model.EstadoUsoSuelo)}")" Variant="Variant.Outlined" Color="@(HasUsoSueloWorkflowAlert() ? Color.Warning : Color.Success)" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Resultado: {GetDisplayValue(model.ResultadoUsoSuelo)}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                                        </MudStack>
+                                        <MudText Typo="Typo.body2">Número de certificado: @GetDisplayValue(model.NumeroCertificadoUsoSuelo)</MudText>
+                                        <MudText Typo="Typo.body2">Estado: @GetDisplayValue(model.EstadoUsoSuelo)</MudText>
+                                        <MudText Typo="Typo.body2">Compatibilidad: @GetDisplayValue(model.CompatibilidadUsoSuelo)</MudText>
+                                        <MudText Typo="Typo.body2">Resultado: @GetDisplayValue(model.ResultadoUsoSuelo)</MudText>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudCard Outlined="true" Class="h-100">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">Requisitos y Declaración Jurada</MudText>
+                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                            <MudChip T="string" Text="@($"Completitud: {GetRequirementsCompletionPercent()}%")" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Cumplidos: {GetCompletedRequirementsCount()}")" Variant="Variant.Outlined" Color="Color.Success" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Pendientes: {GetPendingRequirementsCount()}")" Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"No cumplidos: {GetNonCompliantRequirementsCount()}")" Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" />
+                                        </MudStack>
+                                        <MudText Typo="Typo.body2">Porcentaje de completitud: @GetRequirementsCompletionPercent()%</MudText>
+                                        <MudText Typo="Typo.body2">Requisitos cumplidos: @GetCompletedRequirementsCount()</MudText>
+                                        <MudText Typo="Typo.body2">Requisitos pendientes: @GetPendingRequirementsCount()</MudText>
+                                        <MudText Typo="Typo.body2">Requisitos no cumplidos: @GetNonCompliantRequirementsCount()</MudText>
+                                        <MudText Typo="Typo.body2">Estado de Declaración Jurada: @(model.TieneDeclaracionJurada ? GetDeclaracionJuradaDeadlineMessage() : "No aplica")</MudText>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudCard Outlined="true" Class="h-100">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">Hacienda / Seguridad Social / Seguros</MudText>
+                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                            <MudChip T="string" Text="@($"Hacienda: {GetDisplayValue(model.EstadoHacienda)}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"CCSS: {GetDisplayValue(model.EstadoCcss)}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"FODESAF: {GetDisplayValue(model.EstadoFodesaf)}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"INS: {GetDisplayValue(model.EstadoIns)}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                                        </MudStack>
+                                        <MudText Typo="Typo.body2">Estado Hacienda: @GetDisplayValue(model.EstadoHacienda)</MudText>
+                                        <MudText Typo="Typo.body2">Estado CCSS: @GetDisplayValue(model.EstadoCcss)</MudText>
+                                        <MudText Typo="Typo.body2">Estado FODESAF: @GetDisplayValue(model.EstadoFodesaf)</MudText>
+                                        <MudText Typo="Typo.body2">Estado INS: @GetDisplayValue(model.EstadoIns)</MudText>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudCard Outlined="true" Class="h-100">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">Morosidad e inspección</MudText>
+                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                            <MudChip T="string" Text="@($"Morosidad: {GetDisplayValue(model.ResultadoMorosidad)}")" Variant="Variant.Outlined" Color="@(IsMorosityBlocking() ? Color.Warning : Color.Success)" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Inspección: {GetDisplayValue(model.EstadoInspeccion)}")" Variant="Variant.Outlined" Color="@(RequiresPendingInspectionBlocker() ? Color.Warning : Color.Success)" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Revisión: {GetDisplayValue(model.ResultadoRevision)}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                                        </MudStack>
+                                        <MudText Typo="Typo.body2">Resultado de morosidad: @GetDisplayValue(model.ResultadoMorosidad)</MudText>
+                                        <MudText Typo="Typo.body2">Estado de inspección: @GetDisplayValue(model.EstadoInspeccion)</MudText>
+                                        <MudText Typo="Typo.body2">Resultado de revisión: @GetDisplayValue(model.ResultadoRevision)</MudText>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudCard Outlined="true">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">Tasación / cobro / resolución</MudText>
+                                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                            <MudChip T="string" Text="@($"Tasación: {GetDisplayValue(model.EstadoTasacion)}")" Variant="Variant.Outlined" Color="@GetTasacionStatusColor(model.EstadoTasacion)" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Cobro: {GetDisplayValue(model.EstadoCobro)}")" Variant="Variant.Outlined" Color="@GetCobroStatusColor(model.EstadoCobro)" Size="Size.Small" />
+                                            <MudChip T="string" Text="@($"Resolución: {GetDisplayValue(model.EstadoResolucion)}")" Variant="Variant.Outlined" Color="@GetResolucionStatusColor(model.EstadoResolucion)" Size="Size.Small" />
+                                        </MudStack>
+                                        <MudGrid Spacing="2">
+                                            <MudItem xs="12" md="4">
+                                                <MudText Typo="Typo.body2">Monto anual mock: @FormatCurrency(model.MontoAnualMock)</MudText>
+                                            </MudItem>
+                                            <MudItem xs="12" md="4">
+                                                <MudText Typo="Typo.body2">Monto trimestral mock: @FormatCurrency(model.MontoTrimestralMock)</MudText>
+                                            </MudItem>
+                                            <MudItem xs="12" md="4">
+                                                <MudText Typo="Typo.body2">Estado de cobro: @GetDisplayValue(model.EstadoCobro)</MudText>
+                                            </MudItem>
+                                            <MudItem xs="12" md="6">
+                                                <MudText Typo="Typo.body2">Estado de resolución: @GetDisplayValue(model.EstadoResolucion)</MudText>
+                                            </MudItem>
+                                            <MudItem xs="12" md="6">
+                                                <MudText Typo="Typo.body2">Observaciones de resolución: @GetDisplayValue(model.ObservacionesResolucion)</MudText>
+                                            </MudItem>
+                                        </MudGrid>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudCard Outlined="true">
+                                <MudCardContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">Integraciones simuladas</MudText>
+                                        <MudText Typo="Typo.body2">RUC mock: @GetRucMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Bienes Inmuebles mock: @GetBienesInmueblesMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Uso de Suelo mock: @GetUsoSueloMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Cobro mock: @GetCobroMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Cuenta Tributaria mock: @GetCuentaTributariaMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Notificaciones mock: @GetNotificacionesMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Auditoría mock: @GetAuditoriaMockSummary()</MudText>
+                                        <MudDivider DividerType="DividerType.Middle" Class="my-1" />
+                                        <MudText Typo="Typo.body2">Las acciones finales se ejecutan con la barra del wizard: Anterior, Guardar borrador, Cancelar y Finalizar.</MudText>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    </MudGrid>
+                </MudStack>
+                break;
+        }
+    </ChildContent>
+    <SummaryContent>
+        <MudPaper Outlined="true" Class="pa-3">
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.subtitle2">Indicadores del trámite</MudText>
+                <MudProgressLinear Color="Color.Primary" Rounded="true" Value="wizardState.ProgressPercent" />
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudChip T="string" Text="@($"Estado: {currentStatus}")" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Expediente: {model.NumeroExpediente}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Canal: {model.CanalIngreso}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Tipo: {model.TipoSolicitud}")" Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Licencia: {model.TipoLicencia}")" Variant="Variant.Outlined" Color="Color.Tertiary" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Anual: {FormatCurrency(model.MontoAnualMock)}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Trimestral: {FormatCurrency(model.MontoTrimestralMock)}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Cobro: {model.EstadoCobro}")" Variant="Variant.Outlined" Color="@GetCobroStatusColor(model.EstadoCobro)" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Resolución: {model.EstadoResolucion}")" Variant="Variant.Outlined" Color="@GetResolucionStatusColor(model.EstadoResolucion)" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Bloqueos: {GetApprovalBlockersCount()}")" Variant="Variant.Outlined" Color="@(HasApprovalBlockers() ? Color.Warning : Color.Success)" Size="Size.Small" />
+                    <MudChip T="string" Text="@($"Estado final: {model.EstadoFinalExpediente}")" Variant="Variant.Outlined" Color="@(HasApprovalBlockers() ? Color.Warning : Color.Success)" Size="Size.Small" />
+                </MudStack>
+
+                <MudDivider DividerType="DividerType.Middle" Class="my-1" />
+                <MudText Typo="Typo.caption">Resultado esperado de finalización</MudText>
+                <MudText Typo="Typo.body2">@GetFinalizationOutcomePreview()</MudText>
+
+                @if (HasApprovalBlockers())
+                {
+                    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true">No es posible aprobar directamente. El expediente queda Pendiente validación o Prevenido en modo demo.</MudAlert>
+                    @foreach (var blocker in GetApprovalBlockingMessages())
+                    {
+                        <MudText Typo="Typo.body2">• @blocker</MudText>
+                    }
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Dense="true">Sin bloqueos críticos para una aprobación demo.</MudAlert>
+                }
+            </MudStack>
+        </MudPaper>
+    </SummaryContent>
+</WizardShell>

@@ -16,8 +16,8 @@ else
         <MudTabs Outlined="true">
             <MudTabPanel Text="Datos básicos" Icon="@Icons.Material.Filled.EditNote">
                 <MudGrid Class="mt-2">
-                    <MudItem xs="12" md="4"><MudTextField T="string" Value="@Model.NumeroLicencia" Label="Número de licencia" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
-                    <MudItem xs="12" md="4"><MudTextField T="string" Value="@Model.ContribuyenteNombre" Label="Contribuyente" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" Value="Model.NumeroLicencia" Label="Número de licencia" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" Value="Model.ContribuyenteNombre" Label="Contribuyente" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
                     <MudItem xs="12" md="4"><MudChip T="string" Color="Color.Primary">Estado actual: @Model.Estado</MudChip></MudItem>
                     <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.NombreComercial" Label="Nombre comercial" Variant="Variant.Outlined" /></MudItem>
                     <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.DireccionLocal" Label="Dirección del local" Variant="Variant.Outlined" MaxLines="3" AutoGrow="true" /></MudItem>
@@ -45,7 +45,7 @@ else
             <MudTabPanel Text="Acciones de mantenimiento" Icon="@Icons.Material.Filled.SettingsSuggest">
                 <MudGrid Class="mt-2">
                     <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="usuarioResponsable" Label="Usuario responsable" Variant="Variant.Outlined" /></MudItem>
-                    <MudItem xs="12" md="4"><MudTextField T="string" Value="@fechaMovimientoInput" ValueChanged="OnFechaChanged" Label="Fecha del movimiento (AAAA-MM-DD)" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="4"><MudTextField T="string" Value="fechaMovimientoInput" ValueChanged="OnFechaChanged" Label="Fecha del movimiento (AAAA-MM-DD)" Variant="Variant.Outlined" /></MudItem>
                     <MudItem xs="12" md="4"><MudTextField T="string" Value="@(Model.FechaVencimiento?.ToString("yyyy-MM-dd") ?? string.Empty)" Label="Fecha de vencimiento" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
                     <MudItem xs="12"><MudTextField T="string" @bind-Value="motivoMovimiento" Label="Motivo del mantenimiento" Variant="Variant.Outlined" MaxLines="4" AutoGrow="true" /></MudItem>
                     <MudItem xs="12" md="4"><MudChip T="string" Color="@(Model.UsoSuelo.EsConforme ? Color.Success : Color.Warning)">@($"Uso de suelo: {Model.UsoSuelo.Estado}")</MudChip></MudItem>

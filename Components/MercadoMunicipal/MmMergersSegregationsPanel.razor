@@ -1,0 +1,156 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información del local para fusiones / segregaciones.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SimulateMergerAsync">Simular fusión</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="SimulateSegregationAsync">Simular segregación</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="GenerateGisTaskAsync">Generar tarea GIS mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="GenerateCommercialTaskAsync">Generar tarea Comercial mock</MudButton>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+            <MudTable T="MmMergerSegregationDto" Items="@Items.OrderByDescending(x => x.SourceLocal)" Hover="true">
+                <HeaderContent>
+                    <MudTh>Tipo</MudTh>
+                    <MudTh>Local origen</MudTh>
+                    <MudTh>Local destino</MudTh>
+                    <MudTh>Área anterior</MudTh>
+                    <MudTh>Área nueva</MudTh>
+                    <MudTh>CxC afectadas</MudTh>
+                    <MudTh>Requiere Concejo</MudTh>
+                    <MudTh>Estado</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Type</MudTd>
+                    <MudTd>@context.SourceLocal</MudTd>
+                    <MudTd>@context.TargetLocal</MudTd>
+                    <MudTd>@context.PreviousArea</MudTd>
+                    <MudTd>@context.NewArea</MudTd>
+                    <MudTd>@context.AffectedReceivables</MudTd>
+                    <MudTd>@(context.RequiresCouncilAgreement ? "Sí" : "No")</MudTd>
+                    <MudTd>@context.Status</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public List<MmMergerSegregationDto> Items { get; set; } = new();
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private Task SimulateMergerAsync()
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        Items.Insert(0, new MmMergerSegregationDto
+        {
+            Id = $"FSG-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            Type = "Fusión",
+            SourceLocal = Local.LocalNumber,
+            TargetLocal = $"{Local.LocalNumber}-FUS",
+            PreviousArea = Local.AreaM2,
+            NewArea = Local.AreaM2 + 6m,
+            AffectedReceivables = 2,
+            RequiresCouncilAgreement = true,
+            Status = "Registrada"
+        });
+
+        RegisterMockEvent("Simular fusión", Local.LocalNumber, $"{Local.LocalNumber}-FUS", "Fusiones / segregaciones", "Alta");
+        Snackbar.Add("Fusión mock registrada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task SimulateSegregationAsync()
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        Items.Insert(0, new MmMergerSegregationDto
+        {
+            Id = $"FSG-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            Type = "Segregación",
+            SourceLocal = Local.LocalNumber,
+            TargetLocal = $"{Local.LocalNumber}-A / {Local.LocalNumber}-B",
+            PreviousArea = Local.AreaM2,
+            NewArea = Math.Round(Local.AreaM2 / 2, 2),
+            AffectedReceivables = 1,
+            RequiresCouncilAgreement = true,
+            Status = "Registrada"
+        });
+
+        RegisterMockEvent("Simular segregación", Local.LocalNumber, $"{Local.LocalNumber}-A / {Local.LocalNumber}-B", "Fusiones / segregaciones", "Alta");
+        Snackbar.Add("Segregación mock registrada.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task GenerateGisTaskAsync()
+    {
+        RegisterMockEvent("Generar tarea GIS", "Pendiente", "Tarea GIS mock generada", "Fusiones / segregaciones", "Media");
+        Snackbar.Add("Tarea GIS mock generada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task GenerateCommercialTaskAsync()
+    {
+        RegisterMockEvent("Generar tarea Comercial", "Pendiente", "Tarea Comercial mock generada", "Fusiones / segregaciones", "Media");
+        Snackbar.Add("Tarea Comercial mock generada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Coordinación Mercado",
+            Action = action,
+            PreviousStatus = "Registrado",
+            NewStatus = "Actualizado",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Panel fusiones y segregaciones",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde fusiones / segregaciones."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Coordinación Mercado",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel fusiones y segregaciones",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Tarea mock"
+        });
+    }
+}

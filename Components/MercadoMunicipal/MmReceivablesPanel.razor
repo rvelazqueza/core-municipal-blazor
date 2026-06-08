@@ -1,0 +1,177 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información del local para cuentas por cobrar.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Cuentas por cobrar</MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6" md="3"><MudText>Total registros: @Items.Count</MudText></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudText>Monto acumulado: @FormatCurrency(Items.Sum(x => x.Amount))</MudText></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudText>Pendientes o morosas: @Items.Count(x => x.Status.Contains("Pendiente", StringComparison.OrdinalIgnoreCase) || x.Status.Contains("Moroso", StringComparison.OrdinalIgnoreCase))</MudText></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudText>Contribuyente: @(Tenant?.Name ?? "Sin asignar")</MudText></MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="AddReceivableAsync">Agregar cuenta por cobrar mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ModifyLatestReceivableAsync">Modificar cuenta por cobrar mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="DeleteLatestReceivableAsync">Eliminar cuenta por cobrar mock</MudButton>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+            <MudTable T="MmReceivableDto" Items="@Items.OrderByDescending(x => x.CreatedAt)" Hover="true">
+                <HeaderContent>
+                    <MudTh>Número emisión</MudTh>
+                    <MudTh>Período fiscal</MudTh>
+                    <MudTh>Mes</MudTh>
+                    <MudTh>Cuenta local</MudTh>
+                    <MudTh>Tipo local</MudTh>
+                    <MudTh>Actividad</MudTh>
+                    <MudTh>Tipo persona</MudTh>
+                    <MudTh>Contribuyente</MudTh>
+                    <MudTh>Tributo</MudTh>
+                    <MudTh>Subtributo</MudTh>
+                    <MudTh>Monto</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh>Creación</MudTh>
+                    <MudTh>Vencimiento</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.EmissionNumber</MudTd>
+                    <MudTd>@context.FiscalYear</MudTd>
+                    <MudTd>@context.Month</MudTd>
+                    <MudTd>@context.LocalAccount</MudTd>
+                    <MudTd>@context.LocalType</MudTd>
+                    <MudTd>@context.BusinessActivity</MudTd>
+                    <MudTd>@(Tenant?.PersonType ?? "N/D")</MudTd>
+                    <MudTd>@context.TaxpayerName</MudTd>
+                    <MudTd>@context.TaxCode</MudTd>
+                    <MudTd>@context.SubTaxCode</MudTd>
+                    <MudTd>@FormatCurrency(context.Amount)</MudTd>
+                    <MudTd>@context.Status</MudTd>
+                    <MudTd>@context.CreatedAt.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd>@context.DueDate.ToString("dd/MM/yyyy")</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public MmTenantDto? Tenant { get; set; }
+    [Parameter] public List<MmReceivableDto> Items { get; set; } = new();
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private Task AddReceivableAsync()
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        var item = new MmReceivableDto
+        {
+            Id = $"REC-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            EmissionNumber = $"EM-MOCK-{DateTime.Now:HHmmss}",
+            FiscalYear = DateTime.Today.Year,
+            Month = DateTime.Today.Month,
+            LocalAccount = Local.AccountNumber,
+            LocalType = Local.LocalType,
+            BusinessActivity = Local.BusinessActivity,
+            TaxpayerName = Tenant?.Name ?? "Sin asignar",
+            TaxCode = "Canon mercado",
+            SubTaxCode = "Generación manual",
+            Amount = Math.Max(1500m, Local.RentAmount),
+            Status = "Pendiente",
+            CreatedAt = DateTime.Today,
+            DueDate = DateTime.Today.AddDays(15)
+        };
+
+        Items.Insert(0, item);
+        RegisterMockEvent("Agregar cuenta por cobrar", string.Empty, item.EmissionNumber, "Cuentas por cobrar", "Alta");
+        Snackbar.Add("Cuenta por cobrar mock agregada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task ModifyLatestReceivableAsync()
+    {
+        var item = Items.OrderByDescending(x => x.CreatedAt).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        var previous = item.Amount;
+        item.Amount += 250m;
+        item.Status = "Pendiente";
+        item.SubTaxCode = "Modificación mock";
+        RegisterMockEvent("Modificar cuenta por cobrar", FormatCurrency(previous), FormatCurrency(item.Amount), "Cuentas por cobrar", "Media");
+        Snackbar.Add("Cuenta por cobrar mock modificada.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task DeleteLatestReceivableAsync()
+    {
+        var item = Items.OrderByDescending(x => x.CreatedAt).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        Items.Remove(item);
+        RegisterMockEvent("Eliminar cuenta por cobrar", item.EmissionNumber, "Eliminada mock", "Cuentas por cobrar", "Alta");
+        Snackbar.Add("Cuenta por cobrar mock eliminada.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousStatus = "Registrado",
+            NewStatus = "Actualizado",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Pantalla de cuentas por cobrar",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde cuentas por cobrar."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel cuentas por cobrar",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Bitácora visual mock"
+        });
+    }
+
+    private static string FormatCurrency(decimal value) => $"CRC {value:N2}";
+}

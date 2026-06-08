@@ -1,0 +1,123 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Tenant is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">El local no tiene un inquilino asignado actualmente.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Inquilino / padrón fotográfico</MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6"><MudText>Identificación: @Tenant.Identification</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Nombre o razón social: @Tenant.Name</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Tipo persona: @Tenant.PersonType</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Estado RUC: @Tenant.RucStatus</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Teléfono: @Tenant.Phone</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Correo: @Tenant.Email</MudText></MudItem>
+                    <MudItem xs="12"><MudText>Dirección: @Tenant.Address</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Representante legal: @Tenant.LegalRepresentative</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Nombre comercial: @Tenant.BusinessName</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Actividad económica: @Tenant.EconomicActivity</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Condición: @Tenant.Condition</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Estado de validación: @Tenant.DataQualityStatus</MudText></MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="6">
+                <MudCard Outlined="true">
+                    <MudCardMedia Image="@ResolveTenantImage()" Height="260" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle2">Fotografía placeholder del inquilino</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudCard Outlined="true">
+                    <MudCardMedia Image="@ResolveLocalImage()" Height="260" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle2">Fotografía placeholder del local</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <MudText Typo="Typo.subtitle1" Class="mb-3">Historial de inquilinos</MudText>
+            <MudTable T="MmTenantDto" Items="@historyItems" Hover="true">
+                <HeaderContent>
+                    <MudTh>Identificación</MudTh>
+                    <MudTh>Nombre</MudTh>
+                    <MudTh>Condición</MudTh>
+                    <MudTh>Actividad</MudTh>
+                    <MudTh>RUC</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Identification</MudTd>
+                    <MudTd>@context.Name</MudTd>
+                    <MudTd>@context.Condition</MudTd>
+                    <MudTd>@context.EconomicActivity</MudTd>
+                    <MudTd>@context.RucStatus</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ViewRucAsync">Ver RUC</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ValidateTenantAsync">Validar inquilino mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ViewPhotographicRegisterAsync">Ver padrón fotográfico</MudButton>
+            </div>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmTenantDto? Tenant { get; set; }
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public IEnumerable<MmTenantDto> TenantHistory { get; set; } = Enumerable.Empty<MmTenantDto>();
+
+    private IEnumerable<MmTenantDto> historyItems => TenantHistory.Take(5);
+
+    private Task ViewRucAsync()
+    {
+        Snackbar.Add("Consulta mock de RUC disponible solo como referencia visual.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task ValidateTenantAsync()
+    {
+        if (Tenant is not null)
+        {
+            Tenant.DataQualityStatus = "Validada";
+            Tenant.RucStatus = "Activo";
+        }
+
+        Snackbar.Add("Inquilino validado en modo mock.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task ViewPhotographicRegisterAsync()
+    {
+        Snackbar.Add("Padrón fotográfico mock mostrado dentro del tab actual.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private string ResolveTenantImage() => string.IsNullOrWhiteSpace(Tenant?.PhotoPlaceholder)
+        ? "https://placehold.co/800x420?text=Inquilino"
+        : Tenant.PhotoPlaceholder;
+
+    private string ResolveLocalImage() => string.IsNullOrWhiteSpace(Local?.PhotoPlaceholder)
+        ? "https://placehold.co/800x420?text=Local"
+        : Local.PhotoPlaceholder;
+}

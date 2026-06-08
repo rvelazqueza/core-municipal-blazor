@@ -1,0 +1,658 @@
+@page "/permisos-construccion/nuevo"
+@using System
+@using System.Collections.Generic
+@using BlazorApp.Models
+@using BlazorApp.Models.PermisosConstruccion
+@using BlazorApp.Services.PermisosConstruccion
+@using BlazorApp.Shared
+@using System.Linq
+@using System.Threading.Tasks
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitleBar Title="Nuevo permiso de construcción" Subtitle="Flujo demo paso a paso para registro de APC, obra menor, regularización y trámites relacionados." />
+
+<WizardShell Title="Permisos de Construcción"
+             Subtitle="Registro inicial del permiso en modo demo."
+             ModuleName="Permisos de Construcción"
+             ProcessCode="@draft.SystemCode"
+             State="@wizardState"
+             ProcessSummaryItems="@wizardState.ProcessSummaryItems"
+             CurrentStepTitle="@GetCurrentStepTitle()"
+             CurrentStepSubtitle="@GetCurrentStepSubtitle()"
+             DraftSavedBy="@wizardState.DraftState.SavedBy"
+             DraftMessage="@wizardState.DraftState.Message"
+             CanGoBack="@CanGoBack"
+             CanGoNext="@CanGoNext"
+             CanFinish="@CanFinish"
+             ShowValidationSummary="true"
+             IsBusy="@isBusy"
+             IsSavingDraft="@isSavingDraft"
+             IsCancelling="@isCancelling"
+             IsFinishing="@isFinishing"
+             OnBack="GoBackAsync"
+             OnNext="GoNextAsync"
+             OnSaveDraft="SaveDraftAsync"
+             OnCancel="CancelAsync"
+             OnFinish="FinishAsync">
+    <ChildContent>
+        @switch (currentStepIndex)
+        {
+            case 0:
+                @Step1()
+                break;
+            case 1:
+                @Step2()
+                break;
+            case 2:
+                @Step3()
+                break;
+            case 3:
+                @Step4()
+                break;
+            case 4:
+                @Step5()
+                break;
+            case 5:
+                @Step6()
+                break;
+            case 6:
+                @Step7()
+                break;
+            case 7:
+                @Step8()
+                break;
+            case 8:
+                @Step9()
+                break;
+            case 9:
+                @Step10()
+                break;
+            default:
+                @Step11()
+                break;
+        }
+    </ChildContent>
+</WizardShell>
+
+@code {
+    private readonly PermisosConstruccionMockService service = new();
+    private WizardStateDto wizardState = new();
+    private PcPermitDto draft = new();
+    private List<PcPermitTypeDto> permitTypes = [];
+    private List<PcIntegrationStatusDto> integrations = [];
+    private List<PcRequirementDto> requirementCatalog = [];
+    private List<PcDocumentDto> documentCatalog = [];
+    private DateTime? createdAt;
+    private int currentStepIndex;
+    private bool isBusy;
+    private bool isSavingDraft;
+    private bool isCancelling;
+    private bool isFinishing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        permitTypes = await service.GetPermitTypesAsync();
+        integrations = await service.GetIntegrationsAsync();
+        requirementCatalog = await service.GetRequirementCatalogAsync();
+        documentCatalog = await service.GetDocumentCatalogAsync();
+        draft = await service.GetDraftPermitAsync();
+        createdAt = draft.CreatedAt;
+        currentStepIndex = 0;
+        RefreshWizardState();
+    }
+
+    private bool CanGoBack => currentStepIndex > 0;
+    private bool CanGoNext => currentStepIndex < 10;
+    private bool CanFinish => currentStepIndex == 10;
+
+    private Task GoBackAsync()
+    {
+        if (currentStepIndex > 0)
+            currentStepIndex--;
+        RefreshWizardState();
+        return Task.CompletedTask;
+    }
+
+    private Task GoNextAsync()
+    {
+        if (ValidateCurrentStep())
+            currentStepIndex = Math.Min(10, currentStepIndex + 1);
+        RefreshWizardState();
+        return Task.CompletedTask;
+    }
+
+    private async Task SaveDraftAsync()
+    {
+        isSavingDraft = true;
+        await service.SaveDraftAsync(draft);
+        wizardState.DraftState = new DraftStateDto
+        {
+            DraftId = draft.Id,
+            ProcessId = draft.Id,
+            ModuleName = "Permisos de Construcción",
+            ProcessName = draft.SystemCode,
+            Status = "Borrador",
+            LastSavedAt = DateTime.Now,
+            SavedBy = "demo.user",
+            HasUnsavedChanges = false,
+            Message = "Borrador de permiso guardado correctamente."
+        };
+        isSavingDraft = false;
+        RefreshWizardState();
+    }
+
+    private Task CancelAsync()
+    {
+        isCancelling = false;
+        Navigation.NavigateTo("/permisos-construccion");
+        return Task.CompletedTask;
+    }
+
+    private async Task FinishAsync()
+    {
+        if (!ValidateAllSteps())
+        {
+            isFinishing = false;
+            return;
+        }
+
+        isFinishing = true;
+        draft.Resolution.Result = draft.Payment.Verified ? "Aprobado" : "Pendiente pago";
+        draft.Resolution.PermitNumber = string.IsNullOrWhiteSpace(draft.Resolution.PermitNumber) ? $"LIC-{DateTime.Now:yy}{Random.Shared.Next(1000, 9999)}" : draft.Resolution.PermitNumber;
+        draft.Resolution.ApprovalDate = DateTime.Today;
+        draft.PermitStatus = draft.Resolution.Result;
+        draft.ResolutionStatus = "Generada";
+        draft.FinishedAt = DateTime.Now;
+        draft.UpdatedAt = DateTime.Now;
+        draft.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "demo.user",
+            Action = "Finalización demo",
+            PreviousStatus = "En proceso",
+            NewStatus = draft.PermitStatus,
+            Department = draft.UnitOwner,
+            Comment = "Permiso registrado en modo demo.",
+            Origin = "Permisos de Construcción"
+        });
+        draft.AuditEvents.Insert(0, new PcAuditEventDto
+        {
+            Date = DateTime.Now,
+            User = "demo.user",
+            Action = "Finalizar permiso",
+            Entity = draft.CaseNumber,
+            Details = draft.Resolution.Result,
+            Origin = "Permisos de Construcción"
+        });
+
+        await service.RegisterPermitAsync(draft);
+        Snackbar.Add("Permiso de construcción registrado en modo demo.", Severity.Success);
+        isFinishing = false;
+        Navigation.NavigateTo("/permisos-construccion");
+    }
+
+    private bool ValidateCurrentStep()
+    {
+        wizardState.PendingValidations.Clear();
+        wizardState.ValidationResults.Clear();
+
+        switch (currentStepIndex)
+        {
+            case 0:
+                Require(draft.TypeCode, "Tipo de trámite");
+                Require(draft.Channel, "Canal de ingreso");
+                Require(draft.UnitOwner, "Unidad propietaria");
+                break;
+            case 1:
+                Require(draft.Applicant.Identification, "Identificación del solicitante");
+                Require(draft.Applicant.Name, "Nombre del solicitante");
+                Require(draft.Owner.Identification, "Identificación del propietario");
+                Require(draft.Owner.Name, "Nombre del propietario");
+                break;
+            case 2:
+                Require(draft.Property.IdPredial, "ID Predial");
+                Require(draft.Property.PropertyNumber, "Número de finca");
+                Require(draft.Property.PlanNumber, "Número de plano catastro");
+                break;
+            case 3:
+                Require(draft.Professional.Name, "Nombre profesional");
+                Require(draft.Professional.LicenseNumber, "Carné profesional");
+                break;
+            case 4:
+                Require(draft.TechnicalWork.ProjectName, "Nombre del proyecto");
+                Require(draft.TechnicalWork.ProjectType, "Tipo de proyecto");
+                break;
+            case 5:
+                Require(draft.CfiaApcCode, "Código CFIA/APC");
+                break;
+            case 6:
+                Require(draft.RoadAlignment.Responsible, "Responsable de alineamiento");
+                Require(draft.LandUse.CertificateNumber, "Número de certificado de uso de suelo");
+                break;
+            case 7:
+                Require(draft.MunicipalReview.Technician, "Técnico municipal");
+                Require(draft.QualityControl.Responsible, "Responsable de control de calidad");
+                break;
+            case 8:
+                Require(draft.Assessment.CaseNumber, "Consecutivo de tasación");
+                Require(draft.Payment.PaymentMethod, "Medio de pago");
+                break;
+            case 9:
+                Require(draft.Resolution.Result, "Resultado de resolución");
+                Require(draft.Resolution.PermitNumber, "Número de permiso");
+                break;
+        }
+
+        return !wizardState.PendingValidations.Any();
+    }
+
+    private bool ValidateAllSteps()
+    {
+        var pending = new List<string>();
+        var results = new List<StepValidationResultDto>();
+        var valid = true;
+        for (var i = 0; i < 10; i++)
+        {
+            currentStepIndex = i;
+            valid &= ValidateCurrentStep();
+            if (wizardState.PendingValidations.Any())
+                pending.AddRange(wizardState.PendingValidations);
+            if (wizardState.ValidationResults.Any())
+                results.AddRange(wizardState.ValidationResults);
+        }
+        wizardState.PendingValidations = pending.Distinct().ToList();
+        wizardState.ValidationResults = results;
+        currentStepIndex = 10;
+        RefreshWizardState();
+        return valid;
+    }
+
+    private void Require(string value, string label)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            wizardState.PendingValidations.Add($"{label} es obligatorio.");
+            wizardState.ValidationResults.Add(new StepValidationResultDto
+            {
+                StepId = $"step-{currentStepIndex}",
+                StepIndex = currentStepIndex,
+                StepTitle = GetCurrentStepTitle(),
+                Field = label,
+                Message = $"{label} es obligatorio.",
+                Severity = "Error",
+                IsValid = false,
+                HasWarnings = false,
+                Code = "REQ"
+            });
+        }
+    }
+
+    private void RefreshWizardState()
+    {
+        var steps = new[]
+        {
+            "Origen, tipo de trámite y expediente",
+            "Solicitante, propietario y unidad propietaria",
+            "Finca / inmueble",
+            "Profesional responsable",
+            "Datos técnicos de obra",
+            "APC/APC-R, requisitos, planos y documentos",
+            "Alineamiento vial, uso de suelo y servicios públicos",
+            "Revisión técnica, control de calidad e inspección inicial",
+            "Tasación, cobros, póliza INS y pago mock",
+            "Resolución, emisión de licencia y cierre",
+            "Resumen y finalización"
+        };
+
+        wizardState.ProcessId = draft.Id;
+        wizardState.ProcessKey = "PC";
+        wizardState.ProcessCode = draft.SystemCode;
+        wizardState.ProcessName = "Permisos de Construcción";
+        wizardState.ProcessTitle = draft.TypeName;
+        wizardState.ModuleName = "Permisos de Construcción";
+        wizardState.CurrentStepIndex = currentStepIndex;
+        wizardState.CurrentStepId = $"step-{currentStepIndex + 1}";
+        wizardState.TotalSteps = steps.Length;
+        wizardState.ProgressPercent = ((currentStepIndex + 1) / (double)steps.Length) * 100;
+        wizardState.ProgressPercentage = (decimal)wizardState.ProgressPercent;
+        wizardState.Status = wizardState.PendingValidations.Any()
+            ? "Pendiente validación"
+            : currentStepIndex == 10
+                ? "Completado"
+                : currentStepIndex == 0
+                    ? "Borrador"
+                    : "En progreso";
+        wizardState.StartedAt ??= DateTime.Now;
+        wizardState.UpdatedAt = DateTime.Now;
+        wizardState.LastSavedAt = wizardState.DraftState.LastSavedAt;
+        wizardState.Steps = steps.Select((title, index) => new WizardStepDto
+        {
+            Id = $"step-{index + 1}",
+            Order = index + 1,
+            Index = index,
+            Title = title,
+            Description = title,
+            Subtitle = index == 0 ? "Inicio del flujo" : string.Empty,
+            Icon = index switch
+            {
+                0 => Icons.Material.Filled.Description,
+                1 => Icons.Material.Filled.Person,
+                2 => Icons.Material.Filled.HomeWork,
+                3 => Icons.Material.Filled.Engineering,
+                4 => Icons.Material.Filled.Build,
+                5 => Icons.Material.Filled.Checklist,
+                6 => Icons.Material.Filled.Route,
+                7 => Icons.Material.Filled.Rule,
+                8 => Icons.Material.Filled.Calculate,
+                9 => Icons.Material.Filled.Verified,
+                _ => Icons.Material.Filled.Flag
+            },
+            IsRequired = true,
+            IsOptional = false,
+            IsCompleted = index < currentStepIndex,
+            IsActive = index == currentStepIndex,
+            HasErrors = false,
+            HasWarnings = false,
+            IsSkipped = false,
+            Status = index < currentStepIndex ? "Completado" : index == currentStepIndex ? "En progreso" : "Pendiente"
+        }).ToList();
+        SyncDerivedFields();
+        wizardState.ProcessSummaryItems = BuildSummaryItems();
+        wizardState.SummaryItems = BuildSummaryItems().Select(x => $"{x.Label}: {x.Value}").ToList();
+        if (string.IsNullOrWhiteSpace(wizardState.DraftState.DraftId))
+        {
+            wizardState.DraftState = new DraftStateDto
+            {
+                DraftId = draft.Id,
+                ProcessId = draft.Id,
+                ModuleName = "Permisos de Construcción",
+                ProcessName = draft.SystemCode,
+                Status = "Borrador",
+                LastSavedAt = DateTime.Now,
+                SavedBy = "demo.user",
+                HasUnsavedChanges = true,
+                Message = "Borrador inicial preparado."
+            };
+        }
+
+        wizardState.DraftState.Status = wizardState.Status;
+        wizardState.DraftState.Message = wizardState.Status == "Borrador"
+            ? "Borrador inicial preparado."
+            : wizardState.Status == "Pendiente validación"
+                ? "Existen validaciones pendientes."
+                : wizardState.Status == "Completado"
+                    ? "Proceso completado."
+                    : "Flujo en progreso.";
+    }
+
+    private void SyncDerivedFields()
+    {
+        draft.TypeName = permitTypes.FirstOrDefault(x => x.Code == draft.TypeCode)?.Name ?? draft.TypeName;
+        draft.WorkAmount = draft.TechnicalWork.WorkAmount;
+        draft.TechnicalWork.WorkAmount = draft.WorkAmount;
+        draft.District = draft.Property.District;
+        draft.Apc.CfiaApcCode = draft.CfiaApcCode;
+        draft.Assessment.CaseNumber = draft.Assessment.CaseNumber == string.Empty ? draft.CaseNumber : draft.Assessment.CaseNumber;
+        draft.Assessment.TotalWorkValue = draft.Assessment.TotalWorkValue == 0 ? draft.WorkAmount : draft.Assessment.TotalWorkValue;
+        draft.Assessment.ConstructionTax = draft.Assessment.ConstructionTax == 0 ? draft.Assessment.TotalWorkValue * 0.015m : draft.Assessment.ConstructionTax;
+        draft.Assessment.TotalToPay = draft.Assessment.TotalToPay == 0
+            ? draft.Assessment.ConstructionTax + draft.Assessment.Fine + draft.Assessment.Interest + draft.Assessment.UrbanServices
+            : draft.Assessment.TotalToPay;
+        draft.Resolution.PermitNumber = string.IsNullOrWhiteSpace(draft.Resolution.PermitNumber) ? draft.CaseNumber.Replace("PC", "LIC") : draft.Resolution.PermitNumber;
+        draft.Resolution.LicenseMock = string.IsNullOrWhiteSpace(draft.Resolution.LicenseMock) ? draft.Resolution.PermitNumber : draft.Resolution.LicenseMock;
+        draft.CreatedAt = createdAt ?? draft.CreatedAt;
+    }
+
+    private List<ProcessSummaryItemDto> BuildSummaryItems() =>
+    [
+        new() { Label = "Expediente", Value = draft.CaseNumber, Icon = Icons.Material.Filled.Tag, Severity = "Info", Group = "General" },
+        new() { Label = "Trámite", Value = draft.TypeName, Icon = Icons.Material.Filled.Description, Severity = "Info", Group = "General" },
+        new() { Label = "Canal", Value = draft.Channel, Icon = Icons.Material.Filled.IosShare, Severity = "Info", Group = "General" },
+        new() { Label = "Solicitante", Value = draft.Applicant.Name, Icon = Icons.Material.Filled.Person, Severity = "Success", Group = "Partes" },
+        new() { Label = "Propietario", Value = draft.Owner.Name, Icon = Icons.Material.Filled.House, Severity = "Success", Group = "Partes" },
+        new() { Label = "Finca", Value = draft.Property.PropertyNumber, Icon = Icons.Material.Filled.HomeWork, Severity = "Primary", Group = "Inmueble" },
+        new() { Label = "Profesional", Value = draft.Professional.Name, Icon = Icons.Material.Filled.Engineering, Severity = "Primary", Group = "Técnico" },
+        new() { Label = "Obra", Value = draft.TechnicalWork.WorkType, Icon = Icons.Material.Filled.Build, Severity = "Primary", Group = "Técnico" },
+        new() { Label = "APC", Value = draft.Apc.ApcStatus, Icon = Icons.Material.Filled.Checklist, Severity = "Warning", Group = "APC" },
+        new() { Label = "Cobro", Value = draft.Payment.Status, Icon = Icons.Material.Filled.Payments, Severity = "Warning", Group = "Finanzas" },
+        new() { Label = "Resolución", Value = draft.Resolution.Result, Icon = Icons.Material.Filled.Verified, Severity = "Info", Group = "Cierre" },
+        new() { Label = "Integraciones", Value = integrations.Count.ToString(), Icon = Icons.Material.Filled.Api, Severity = "Info", Group = "Integraciones" }
+    ];
+
+    private string GetCurrentStepTitle() => currentStepIndex switch
+    {
+        0 => "Origen, tipo de trámite y expediente",
+        1 => "Solicitante, propietario y unidad propietaria",
+        2 => "Finca / inmueble",
+        3 => "Profesional responsable",
+        4 => "Datos técnicos de obra",
+        5 => "APC/APC-R, requisitos, planos y documentos",
+        6 => "Alineamiento vial, uso de suelo y servicios públicos",
+        7 => "Revisión técnica, control de calidad e inspección inicial",
+        8 => "Tasación, cobros, póliza INS y pago mock",
+        9 => "Resolución, emisión de licencia y cierre",
+        _ => "Resumen y finalización"
+    };
+
+    private string GetCurrentStepSubtitle() => currentStepIndex switch
+    {
+        0 => "Defina el origen y la clasificación del permiso.",
+        1 => "Vincule solicitante y propietario desde RUC mock.",
+        2 => "Complete la referencia del inmueble.",
+        3 => "Asigne el profesional responsable.",
+        4 => "Capture los datos técnicos principales.",
+        5 => "Revise APC, checklist y documentos.",
+        6 => "Valide alineamiento, uso de suelo y servicios.",
+        7 => "Revise técnica, calidad e inspección.",
+        8 => "Simule tasación, cobro y pago.",
+        9 => "Genere la resolución mock.",
+        _ => "Revise el resumen integral y finalice."
+    };
+
+    private RenderFragment Step1() => @<MudGrid Spacing="2">
+        <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.TypeCode" Label="Tipo de trámite" Variant="Variant.Outlined" Margin="Margin.Dense">@foreach (var item in permitTypes){<MudSelectItem T="string" Value="@item.Code">@item.Name</MudSelectItem>}</MudSelect></MudItem>
+        <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Channel" Label="Canal de ingreso" Variant="Variant.Outlined" Margin="Margin.Dense"><MudSelectItem T="string" Value="@("APC/CFIA simulado")">APC/CFIA simulado</MudSelectItem><MudSelectItem T="string" Value="@("APC-R simulado")">APC-R simulado</MudSelectItem><MudSelectItem T="string" Value="@("Plataforma de Servicios")">Plataforma de Servicios</MudSelectItem><MudSelectItem T="string" Value="@("MIMUNIENCASA")">MIMUNIENCASA</MudSelectItem><MudSelectItem T="string" Value="@("VUI")">VUI</MudSelectItem><MudSelectItem T="string" Value="@("Presencial")">Presencial</MudSelectItem><MudSelectItem T="string" Value="@("Gestión interna")">Gestión interna</MudSelectItem></MudSelect></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.CaseNumber" Label="Consecutivo del expediente" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.SystemCode" Label="Código generado por el sistema" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.CfiaApcCode" Label="Código CFIA/APC" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.ApcRCode" Label="Código APC-R" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudDatePicker @bind-Date="createdAt" Label="Fecha de ingreso" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.UnitOwner" Label="Unidad propietaria" Variant="Variant.Outlined" Margin="Margin.Dense"><MudSelectItem T="string" Value="@("Dirección de Urbanismo")">Dirección de Urbanismo</MudSelectItem><MudSelectItem T="string" Value="@("Alineamientos")">Alineamientos</MudSelectItem><MudSelectItem T="string" Value="@("Inspecciones")">Inspecciones</MudSelectItem><MudSelectItem T="string" Value="@("Control de Calidad")">Control de Calidad</MudSelectItem><MudSelectItem T="string" Value="@("Acueductos")">Acueductos</MudSelectItem><MudSelectItem T="string" Value="@("Alcantarillado")">Alcantarillado</MudSelectItem></MudSelect></MudItem>
+        <MudItem xs="12"><MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Origen, clasificación y expediente mock preparados para continuar con el flujo.</MudAlert></MudItem>
+    </MudGrid>;
+
+    private RenderFragment Step2() => @<MudGrid Spacing="2">
+        <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="draft.Applicant.Identification" Label="Identificación del solicitante" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="draft.Applicant.Name" Label="Nombre del solicitante" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Applicant.PersonType" Label="Tipo de persona" Variant="Variant.Outlined" Margin="Margin.Dense"><MudSelectItem T="string" Value="@("Jurídica")">Jurídica</MudSelectItem><MudSelectItem T="string" Value="@("Física")">Física</MudSelectItem></MudSelect></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Applicant.Email" Label="Correo" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Applicant.Phone" Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="8"><MudTextField T="string" @bind-Value="draft.Applicant.Address" Label="Dirección" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Applicant.RucStatus" Label="Estado RUC" Variant="Variant.Outlined" Margin="Margin.Dense"><MudSelectItem T="string" Value="@("Validado")">Validado</MudSelectItem><MudSelectItem T="string" Value="@("Pendiente validar")">Pendiente validar</MudSelectItem></MudSelect></MudItem>
+        <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Owner.Identification" Label="Propietario desde RUC mock" Variant="Variant.Outlined" Margin="Margin.Dense"><MudSelectItem T="string" Value="@("2-1111-1111")">2-1111-1111</MudSelectItem><MudSelectItem T="string" Value="@("2-2222-2222")">2-2222-2222</MudSelectItem><MudSelectItem T="string" Value="@("2-3333-3333")">2-3333-3333</MudSelectItem><MudSelectItem T="string" Value="@("2-4444-4444")">2-4444-4444</MudSelectItem></MudSelect></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Owner.Name" Label="Nombre del propietario" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Owner.Relationship" Label="Relación solicitante/propietario" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.Owner.OwnershipPercentage" Label="Porcentaje de derecho" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="12"><MudTextField T="string" @bind-Value="draft.Owner.AuthorizationMock" Label="Autorización mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+    </MudGrid>;
+
+    private RenderFragment Step3() => @<MudGrid Spacing="2">
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Property.IdPredial" Label="ID Predial" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Property.PropertyNumber" Label="Número de finca" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Property.PlanNumber" Label="Número de plano catastro" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="3"><MudTextField T="string" @bind-Value="draft.Property.District" Label="Distrito" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="3"><MudTextField T="string" @bind-Value="draft.Property.Sector" Label="Sector" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="3"><MudTextField T="string" @bind-Value="draft.Property.Block" Label="Manzana" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="3"><MudTextField T="string" @bind-Value="draft.Property.CurrentUse" Label="Uso actual" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="draft.Property.ExactAddress" Label="Dirección exacta" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="3"><MudTextField T="decimal" @bind-Value="draft.Property.LandArea" Label="Área de terreno" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="3"><MudTextField T="decimal" @bind-Value="draft.Property.FiscalValue" Label="Valor fiscal mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Property.GisStatus" Label="Estado GIS" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Property.TributaryAccountStatus" Label="Estado cuenta tributaria" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Property.ServicesAccount" Label="Cuenta de servicios asociada" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+    </MudGrid>;
+
+    private RenderFragment Step4() => @<MudGrid Spacing="2">
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Professional.Name" Label="Nombre profesional" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Professional.Identification" Label="Identificación" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Professional.LicenseNumber" Label="Número de carné" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Professional.College" Label="Colegio profesional" Variant="Variant.Outlined" Margin="Margin.Dense"><MudSelectItem T="string" Value="@("CFIA")">CFIA</MudSelectItem></MudSelect></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Professional.Email" Label="Correo" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Professional.Phone" Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Professional.Specialty" Label="Especialidad" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Professional.CfiaStatus" Label="Estado CFIA mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+    </MudGrid>;
+
+    private RenderFragment Step5() => @<MudGrid Spacing="2">
+        <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.TechnicalWork.WorkType" Label="Tipo de obra" Variant="Variant.Outlined" Margin="Margin.Dense"><MudSelectItem T="string" Value="@("Obra mayor")">Obra mayor</MudSelectItem><MudSelectItem T="string" Value="@("Obra menor")">Obra menor</MudSelectItem></MudSelect></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.TechnicalWork.ProjectType" Label="Tipo de proyecto" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.TechnicalWork.ProjectName" Label="Nombre del proyecto" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="draft.TechnicalWork.Description" Label="Descripción" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="draft.TechnicalWork.Destination" Label="Destino de la obra" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.TechnicalWork.RelatedEconomicActivity" Label="Actividad económica relacionada" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.TechnicalWork.FundingSource" Label="Fuente de financiamiento" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.TechnicalWork.WorkAmount" Label="Monto total de obra" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.TechnicalWork.EstimatedTaxAmount" Label="Monto estimado de impuesto" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.TechnicalWork.InitialProgress" Label="Porcentaje de avance inicial" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.TechnicalWork.ConstructionSystem" Label="Sistema constructivo" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.TechnicalWork.RoadMaterial" Label="Material de calle" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudDatePicker @bind-Date="draft.TechnicalWork.StartDate" Label="Fecha estimada de inicio" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudDatePicker @bind-Date="draft.TechnicalWork.EndDate" Label="Fecha estimada de finalización" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudSwitch @bind-Value="draft.TechnicalWork.RequiresWater" Color="Color.Primary">Requiere agua potable</MudSwitch></MudItem>
+        <MudItem xs="12" md="4"><MudSwitch @bind-Value="draft.TechnicalWork.RequiresSewer" Color="Color.Primary">Requiere alcantarillado sanitario</MudSwitch></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.TechnicalWork.GeneratedServicesAccount" Label="Cuenta de servicios generada" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+    </MudGrid>;
+
+    private RenderFragment Step6() => @<MudStack Spacing="2">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.CfiaApcCode" Label="Código CFIA/APC" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudDatePicker @bind-Date="draft.Apc.SealedAt" Label="Fecha de sellado CFIA" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Apc.ApcStatus" Label="Estado APC" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Apc.ApcRStatus" Label="Estado APC-R" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        </MudGrid>
+        <MudTable T="PcRequirementDto" Items="@draft.Requirements" Dense="true" Hover="true" Elevation="0">
+            <HeaderContent>
+                <MudTh>Requisito</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh>Documento</MudTh>
+                <MudTh>Observación</MudTh>
+                <MudTh>Origen</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Name</MudTd>
+                <MudTd>
+                    <MudSelect T="string" @bind-Value="context.State" Variant="Variant.Outlined" Margin="Margin.Dense">
+                        <MudSelectItem T="string" Value="@("Presentado")">Presentado</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Pendiente")">Pendiente</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Observado")">Observado</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("No aplica")">No aplica</MudSelectItem>
+                    </MudSelect>
+                </MudTd>
+                <MudTd>@context.DocumentPlaceholder</MudTd>
+                <MudTd>@context.Observation</MudTd>
+                <MudTd>@context.Origin</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudStack>;
+
+    private RenderFragment Step7() => @<MudGrid Spacing="2">
+        <MudItem xs="12" md="4"><MudSwitch @bind-Value="draft.RoadAlignment.Required" Color="Color.Primary">Alineamiento requerido</MudSwitch></MudItem>
+        <MudItem xs="12" md="4"><MudDatePicker @bind-Date="draft.RoadAlignment.RequestDate" Label="Fecha solicitud alineamiento" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudDatePicker @bind-Date="draft.RoadAlignment.SignalDate" Label="Fecha señalamiento" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.RoadAlignment.Responsible" Label="Responsable" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.RoadAlignment.Status" Label="Estado alineamiento" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.RoadAlignment.ImagePlaceholder" Label="Imagen placeholder" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.LandUse.CertificateNumber" Label="Número certificado uso de suelo" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.LandUse.Status" Label="Estado uso de suelo" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.LandUse.AllowedActivity" Label="Actividad permitida" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudSwitch @bind-Value="draft.TechnicalWork.RequiresWater" Color="Color.Primary">Agua potable requerida</MudSwitch></MudItem>
+        <MudItem xs="12" md="4"><MudSwitch @bind-Value="draft.TechnicalWork.RequiresSewer" Color="Color.Primary">Alcantarillado requerido</MudSwitch></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.PublicServices[0].Administrator" Label="Administrador de acueducto" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+    </MudGrid>;
+
+    private RenderFragment Step8() => @<MudGrid Spacing="2">
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.MunicipalReview.Technician" Label="Técnico municipal" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.MunicipalReview.UrbanismAnalyst" Label="Analista de Urbanismo" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.MunicipalReview.Status" Label="Estado revisión" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="12"><MudTextField T="string" @bind-Value="draft.MunicipalReview.TechnicalCriterion" Label="Criterio técnico" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="12"><MudTextField T="string" @bind-Value="draft.MunicipalReview.Observations" Label="Observaciones" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.QualityControl.Status" Label="Estado control de calidad" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.QualityControl.Responsible" Label="Responsable control" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.QualityControl.Inconsistencies" Label="Inconsistencias" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudSwitch @bind-Value="draft.QualityControl.RequiresInspection" Color="Color.Primary">Requiere inspección inicial</MudSwitch></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.QualityControl.Inspector" Label="Inspector asignado" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.QualityControl.InspectionStatus" Label="Estado inspección" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.QualityControl.InspectionResult" Label="Resultado inspección" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+    </MudGrid>;
+
+    private RenderFragment Step9() => @<MudStack Spacing="2">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Assessment.CaseNumber" Label="Consecutivo de tasación" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.Assessment.ConstructionTaxPercent" Label="Porcentaje impuesto construcción" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.Assessment.TotalWorkValue" Label="Valor total obra" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.Assessment.ConstructionTax" Label="Impuesto construcción" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.Assessment.Fine" Label="Multa mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.Assessment.Interest" Label="Intereses mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.Assessment.UrbanServices" Label="Servicios urbanos mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.Assessment.TotalToPay" Label="Total a pagar" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Assessment.Status" Label="Estado tasación" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Payment.Status" Label="Estado póliza INS" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Payment.PaymentMethod" Label="Medio de pago" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Payment.ReceiptMock" Label="Comprobante mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+            <MudItem xs="12" md="4"><MudSwitch T="bool" @bind-Value="draft.Payment.Verified" Color="Color.Primary">Simular pago verificado</MudSwitch></MudItem>
+            <MudItem xs="12" md="4"><MudSwitch T="bool" @bind-Value="draft.Payment.Infructuous" Color="Color.Warning">Simular pago infructuoso</MudSwitch></MudItem>
+            <MudItem xs="12" md="4"><MudSwitch T="bool" @bind-Value="draft.Payment.ReversalGenerated" Color="Color.Error">Generar reversión mock</MudSwitch></MudItem>
+        </MudGrid>
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Tasación, cobro, póliza INS y pago mock listos para demo.</MudAlert>
+    </MudStack>;
+
+    private RenderFragment Step10() => @<MudGrid Spacing="2">
+        <MudItem xs="12" md="4">
+            <MudSelect T="string" @bind-Value="draft.Resolution.Result" Label="Resultado" Variant="Variant.Outlined" Margin="Margin.Dense">
+                <MudSelectItem T="string" Value="@("Aprobado")">Aprobado</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Rechazado")">Rechazado</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Prevenido")">Prevenido</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Anulado")">Anulado</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Pendiente pago")">Pendiente pago</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Pendiente información")">Pendiente información</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Resolution.PermitNumber" Label="Número permiso mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudDatePicker @bind-Date="draft.Resolution.ApprovalDate" Label="Fecha aprobación" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Resolution.ApprovedBy" Label="Usuario que aprueba" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4">
+            <MudSelect T="string" @bind-Value="draft.Resolution.ResolutionTerm" Label="Plazo resolución mock" Variant="Variant.Outlined" Margin="Margin.Dense">
+                <MudSelectItem T="string" Value="@("10 días ordinario")">10 días ordinario</MudSelectItem>
+                <MudSelectItem T="string" Value="@("30 días excepcional")">30 días excepcional</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Resolution.NotificationSimulated" Label="Notificación simulada" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Resolution.DigitalSignatureRef" Label="Firma digital referencial" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Resolution.LicenseMock" Label="Certificado/licencia mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Resolution.ApcSyncStatus" Label="Estado APC sincronización mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12"><MudAlert Severity="Severity.Success" Variant="Variant.Outlined">Resolución, emisión de licencia y cierre mock preparados para la finalización.</MudAlert></MudItem>
+    </MudGrid>;
+
+    private RenderFragment Step11() => @<MudStack Spacing="3">
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudText Typo="Typo.h6">Resumen integral</MudText>
+                <MudStack Spacing="1" Class="mt-3">
+                    <MudText Typo="Typo.body2">Expediente: @draft.CaseNumber</MudText>
+                    <MudText Typo="Typo.body2">Trámite: @draft.TypeName</MudText>
+                    <MudText Typo="Typo.body2">Solicitante: @draft.Applicant.Name</MudText>
+                    <MudText Typo="Typo.body2">Propietario: @draft.Owner.Name</MudText>
+                    <MudText Typo="Typo.body2">Finca: @draft.Property.PropertyNumber</MudText>
+                    <MudText Typo="Typo.body2">Profesional: @draft.Professional.Name</MudText>
+                    <MudText Typo="Typo.body2">Obra: @draft.TechnicalWork.ProjectName</MudText>
+                    <MudText Typo="Typo.body2">APC: @draft.Apc.ApcStatus</MudText>
+                    <MudText Typo="Typo.body2">Cobro: @draft.Payment.Status</MudText>
+                    <MudText Typo="Typo.body2">Resolución: @draft.Resolution.Result</MudText>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Revise el resumen y use Finalizar para registrar el permiso en modo demo.</MudAlert>
+    </MudStack>;
+
+}

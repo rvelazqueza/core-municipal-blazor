@@ -56,7 +56,7 @@
                     <MudItem xs="12"><MudTextField T="string" @bind-Value="Model.DireccionExacta" Label="Dirección exacta" Variant="Variant.Outlined" MaxLines="4" AutoGrow="true" /></MudItem>
                     <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="Model.AreaTerreno" Label="Área terreno m²" Variant="Variant.Outlined" /></MudItem>
                     <MudItem xs="12" md="4">
-                        <MudSelect T="int" Value="@Model.PropietarioPrincipalId" ValueChanged="OnPropietarioChanged" Label="Propietario principal" Variant="Variant.Outlined">
+                        <MudSelect T="int" Value="Model.PropietarioPrincipalId" ValueChanged="OnPropietarioChanged" Label="Propietario principal" Variant="Variant.Outlined">
                             @foreach (var item in propietariosRuc)
                             {
                                 <MudSelectItem T="int" Value="@item.Id">@item.NombreCompleto</MudSelectItem>

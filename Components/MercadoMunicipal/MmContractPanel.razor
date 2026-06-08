@@ -1,0 +1,102 @@
+@using System
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Contract is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">El local no tiene contrato asociado en el mock actual.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Contrato</MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6"><MudText>Número contrato: @Contract.ContractNumber</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Tipo contrato: @Contract.ContractType</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Fecha inicio: @Contract.StartDate.ToString("dd/MM/yyyy")</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Fecha fin: @Contract.EndDate.ToString("dd/MM/yyyy")</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Vigencia quinquenal: @(Contract.IsFiveYearTerm ? "Sí" : "No")</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Estado: @Contract.Status</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Responsable: @Contract.ResponsibleUser</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Firma digital referencial: @(Contract.HasDigitalSignature ? "Disponible" : "No registrada")</MudText></MudItem>
+                    <MudItem xs="12"><MudText>Obligaciones: @Contract.Obligations</MudText></MudItem>
+                    <MudItem xs="12"><MudText>Condiciones: @Contract.Conditions</MudText></MudItem>
+                    <MudItem xs="12"><MudText>Notas: @Contract.Notes</MudText></MudItem>
+                    <MudItem xs="12"><MudText>Documento placeholder: @Contract.DocumentPlaceholder</MudText></MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        @if (IsNearExpiry)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">El contrato está próximo a vencer.</MudAlert>
+        }
+        @if (IsExpired)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">El contrato se encuentra vencido.</MudAlert>
+        }
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RenewAsync">Renovar contrato mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SuspendAsync">Suspender contrato mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="CancelAsync">Cancelar contrato mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Dark" OnClick="RescindAsync">Rescindir contrato mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ViewDocumentAsync">Ver documento mock</MudButton>
+            </div>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmContractDto? Contract { get; set; }
+
+    private bool IsNearExpiry => Contract is not null && Contract.EndDate.Date >= DateTime.Today && Contract.EndDate.Date <= DateTime.Today.AddDays(60);
+    private bool IsExpired => Contract is not null && Contract.EndDate.Date < DateTime.Today;
+
+    private Task RenewAsync()
+    {
+        if (Contract is not null)
+        {
+            Contract.EndDate = DateTime.Today.AddYears(5);
+            Contract.Status = "Activo";
+        }
+
+        Snackbar.Add("Renovación mock aplicada al contrato.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task SuspendAsync()
+    {
+        if (Contract is not null)
+            Contract.Status = "Suspendido";
+        Snackbar.Add("Contrato suspendido de forma mock.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private Task CancelAsync()
+    {
+        if (Contract is not null)
+            Contract.Status = "Cancelado";
+        Snackbar.Add("Contrato cancelado en modo demo.", Severity.Error);
+        return Task.CompletedTask;
+    }
+
+    private Task RescindAsync()
+    {
+        if (Contract is not null)
+            Contract.Status = "Rescindido";
+        Snackbar.Add("Contrato rescindido visualmente.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private Task ViewDocumentAsync()
+    {
+        Snackbar.Add($"Documento mock disponible: {Contract?.DocumentPlaceholder ?? "Sin documento"}.", Severity.Info);
+        return Task.CompletedTask;
+    }
+}

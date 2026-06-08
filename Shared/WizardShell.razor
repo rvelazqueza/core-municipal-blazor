@@ -1,0 +1,223 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using System.Threading.Tasks
+@using BlazorApp.Models
+@using MudBlazor
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudCard Outlined="true">
+    <MudCardContent>
+        <MudStack Spacing="3">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.h5">@Title</MudText>
+                    @if (!string.IsNullOrWhiteSpace(Subtitle))
+                    {
+                        <MudText Typo="Typo.body2">@Subtitle</MudText>
+                    }
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                        @if (!string.IsNullOrWhiteSpace(ModuleName))
+                        {
+                            <MudChip T="string" Text="@ModuleName" Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small" />
+                        }
+                        @if (!string.IsNullOrWhiteSpace(ProcessCode))
+                        {
+                            <MudChip T="string" Text="@ProcessCode" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small" />
+                        }
+                        @if (IsReadOnly)
+                        {
+                            <MudChip T="string" Text="Solo lectura" Color="Color.Warning" Variant="Variant.Outlined" Size="Size.Small" />
+                        }
+                    </MudStack>
+                </MudStack>
+                <DraftStatusBadge Status="@resolvedDraftStatus" LastSavedAt="@resolvedState.LastSavedAt" User="@DraftSavedBy" Message="@DraftMessage" />
+            </MudStack>
+
+            @if (resolvedState.Status == "Cancelado")
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">El flujo fue cancelado. Puede iniciarlo nuevamente cuando lo requiera.</MudAlert>
+            }
+            else if (resolvedState.Status == "Completado")
+            {
+                <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">El proceso se encuentra completado y listo para continuar con la siguiente operación.</MudAlert>
+            }
+
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="8">
+                    <MudStack Spacing="3">
+                        <MudPaper Outlined="true" Class="pa-4">
+                            <MudStack Spacing="3">
+                                <WizardStepHeader StepNumber="@displayStep"
+                                                  TotalSteps="@resolvedTotalSteps"
+                                                  Title="@CurrentStepTitle"
+                                                  Description="@CurrentStepSubtitle"
+                                                  Status="@ResolveCurrentStepStatus()"
+                                                  Icon="@ResolveCurrentStepIcon()" />
+
+                                @if (resolvedState.PendingValidations.Any())
+                                {
+                                    <ValidationSummaryPanel Errors="resolvedState.PendingValidations" />
+                                }
+
+                                @ChildContent
+                            </MudStack>
+                        </MudPaper>
+
+                        <WizardActionBar CanGoBack="@CanGoBack"
+                                         CanGoNext="@CanGoNext"
+                                         CanFinish="@CanFinish"
+                                         IsReadOnly="@IsReadOnly"
+                                         IsBusy="@IsBusy"
+                                         IsNavigating="@IsNavigating"
+                                         IsSavingDraft="@IsSavingDraft"
+                                         IsCancelling="@IsCancelling"
+                                         IsFinishing="@IsFinishing"
+                                         BackText="@BackText"
+                                         NextText="@NextText"
+                                         SaveDraftText="@SaveDraftText"
+                                         CancelText="@CancelText"
+                                         FinishText="@FinishText"
+                                         OnCancel="HandleCancelAsync"
+                                         OnSaveDraft="HandleSaveDraftAsync"
+                                         OnBack="OnBack"
+                                         OnNext="OnNext"
+                                         OnFinish="OnFinish" />
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudStack Spacing="3">
+                        <WizardProgressPanel Steps="resolvedState.Steps"
+                                             CurrentStepIndex="resolvedState.CurrentStepIndex"
+                                             TotalSteps="resolvedTotalSteps"
+                                             ProgressPercent="resolvedProgress"
+                                             Status="resolvedState.Status"
+                                             LastSavedAt="resolvedState.LastSavedAt" />
+
+                        @if (ProcessSummaryItems.Any())
+                        {
+                            <ProcessSummaryPanel ProcessName="@(string.IsNullOrWhiteSpace(resolvedState.ProcessName) ? resolvedState.ProcessTitle : resolvedState.ProcessName)"
+                                                 ModuleName="@ModuleName"
+                                                 Status="@resolvedState.Status"
+                                                 SummaryItems="@ProcessSummaryItems"
+                                                 PendingValidations="@resolvedState.PendingValidations"
+                                                 LastAuditEvent="@LastAuditEvent"
+                                                 NextSuggestedStep="@NextSuggestedStep" />
+                        }
+                        else
+                        {
+                            <WizardStepSummary Title="@SummaryTitle"
+                                               SummaryItems="resolvedState.SummaryItems"
+                                               PendingValidations="resolvedState.PendingValidations"
+                                               ValidationResults="resolvedState.ValidationResults" />
+                        }
+
+                        @if (ShowValidationSummary)
+                        {
+                            <ValidationStepSummary ValidationResults="resolvedState.ValidationResults" />
+                        }
+
+                        @if (SummaryContent is not null)
+                        {
+                            @SummaryContent
+                        }
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Subtitle { get; set; } = string.Empty;
+    [Parameter] public string ModuleName { get; set; } = string.Empty;
+    [Parameter] public string ProcessCode { get; set; } = string.Empty;
+    [Parameter] public string SummaryTitle { get; set; } = "Resumen del proceso";
+    [Parameter] public WizardStateDto State { get; set; } = new();
+    [Parameter] public List<ProcessSummaryItemDto> ProcessSummaryItems { get; set; } = new();
+    [Parameter] public string CurrentStepTitle { get; set; } = string.Empty;
+    [Parameter] public string CurrentStepSubtitle { get; set; } = string.Empty;
+    [Parameter] public string LastAuditEvent { get; set; } = string.Empty;
+    [Parameter] public string NextSuggestedStep { get; set; } = string.Empty;
+    [Parameter] public string DraftSavedBy { get; set; } = string.Empty;
+    [Parameter] public string DraftMessage { get; set; } = string.Empty;
+    [Parameter] public bool CanGoBack { get; set; }
+    [Parameter] public bool CanGoNext { get; set; } = true;
+    [Parameter] public bool CanFinish { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; }
+    [Parameter] public bool ShowValidationSummary { get; set; }
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public bool IsNavigating { get; set; }
+    [Parameter] public bool IsSavingDraft { get; set; }
+    [Parameter] public bool IsCancelling { get; set; }
+    [Parameter] public bool IsFinishing { get; set; }
+    [Parameter] public string BackText { get; set; } = "Anterior";
+    [Parameter] public string NextText { get; set; } = "Siguiente";
+    [Parameter] public string SaveDraftText { get; set; } = "Guardar borrador";
+    [Parameter] public string CancelText { get; set; } = "Cancelar";
+    [Parameter] public string FinishText { get; set; } = "Finalizar";
+    [Parameter] public string SaveDraftMessage { get; set; } = "Borrador guardado correctamente.";
+    [Parameter] public string CancelDialogTitle { get; set; } = "Cancelar proceso";
+    [Parameter] public string CancelDialogMessage { get; set; } = "¿Desea cancelar este proceso? Los datos no guardados se perderán.";
+    [Parameter] public string CancelWarningMessage { get; set; } = "Puede guardar un borrador antes de salir si desea conservar el avance.";
+    [Parameter] public string CancelledMessage { get; set; } = "Proceso cancelado.";
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnSaveDraft { get; set; }
+    [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public EventCallback OnNext { get; set; }
+    [Parameter] public EventCallback OnFinish { get; set; }
+    [Parameter] public EventCallback<int> OnStepChanged { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? SummaryContent { get; set; }
+
+    private WizardStateDto resolvedState => State ?? new WizardStateDto();
+    private WizardStepDto? currentStep => resolvedState.Steps.FirstOrDefault(step => step.Index == resolvedState.CurrentStepIndex);
+    private string resolvedDraftStatus => !string.IsNullOrWhiteSpace(resolvedState.DraftState?.Status)
+        ? resolvedState.DraftState.Status
+        : resolvedState.Status;
+    private int resolvedTotalSteps => resolvedState.TotalSteps > 0 ? resolvedState.TotalSteps : resolvedState.Steps.Count;
+    private int displayStep => resolvedTotalSteps == 0 ? 0 : Math.Min(resolvedState.CurrentStepIndex + 1, resolvedTotalSteps);
+    private double resolvedProgress => resolvedState.ProgressPercent < 0 ? 0 : resolvedState.ProgressPercent;
+
+    private async Task HandleSaveDraftAsync()
+    {
+        await OnSaveDraft.InvokeAsync();
+        Snackbar.Add(SaveDraftMessage, Severity.Success);
+    }
+
+    private async Task HandleCancelAsync()
+    {
+        var dialog = await DialogService.ShowAsync<ConfirmCancelDialog>("Confirmar cancelación", new DialogParameters<ConfirmCancelDialog>
+        {
+            { x => x.Title, CancelDialogTitle },
+            { x => x.Message, CancelDialogMessage },
+            { x => x.WarningMessage, CancelWarningMessage }
+        });
+        var result = await dialog.Result;
+        if (result.Canceled)
+            return;
+
+        await OnCancel.InvokeAsync();
+        Snackbar.Add(CancelledMessage, Severity.Warning);
+    }
+
+    private string ResolveCurrentStepStatus()
+    {
+        if (currentStep is null)
+            return resolvedState.Status;
+        if (!string.IsNullOrWhiteSpace(currentStep.Status))
+            return currentStep.Status;
+        if (currentStep.HasErrors)
+            return "Con errores";
+        if (currentStep.HasWarnings)
+            return "Con alertas";
+        if (currentStep.IsCompleted)
+            return "Completado";
+        return "En progreso";
+    }
+
+    private string ResolveCurrentStepIcon()
+        => string.IsNullOrWhiteSpace(currentStep?.Icon) ? Icons.Material.Filled.Description : currentStep.Icon;
+}

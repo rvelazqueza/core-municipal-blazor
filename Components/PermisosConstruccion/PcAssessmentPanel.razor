@@ -1,0 +1,30 @@
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Consecutivo tasación</MudText><MudText>@($"TAS-{Permit.Assessment.CaseNumber}")</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Valor total obra</MudText><MudText>@Permit.Assessment.TotalWorkValue.ToString("C0")</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Porcentaje impuesto</MudText><MudText>@($"{Permit.Assessment.ConstructionTaxPercent:N1}%")</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Impuesto</MudText><MudText>@Permit.Assessment.ConstructionTax.ToString("C0")</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Multa</MudText><MudText>@Permit.Assessment.Fine.ToString("C0")</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Intereses</MudText><MudText>@Permit.Assessment.Interest.ToString("C0")</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Servicios urbanos</MudText><MudText>@Permit.Assessment.UrbanServices.ToString("C0")</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText Typo="Typo.caption">Total a pagar</MudText><MudText Typo="Typo.h6">@Permit.Assessment.TotalToPay.ToString("C0")</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText Typo="Typo.caption">Estado</MudText><MudText>@Permit.Assessment.Status</MudText></MudItem>
+    </MudGrid>
+    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mt-4">
+        <MudButton Variant="Variant.Outlined" OnClick="SimulateAsync">Simular tasación</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ApproveAsync">Aprobar tasación</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="SendToCollectionAsync">Enviar al cobro mock</MudButton>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private Task SimulateAsync() { Permit.Assessment.ConstructionTax = Permit.Assessment.TotalWorkValue * (Permit.Assessment.ConstructionTaxPercent / 100); Permit.Assessment.TotalToPay = Permit.Assessment.ConstructionTax + Permit.Assessment.Fine + Permit.Assessment.Interest + Permit.Assessment.UrbanServices; Permit.Assessment.Status = "Simulada"; Snackbar.Add("Tasación mock recalculada.", Severity.Info); return Task.CompletedTask; }
+    private Task ApproveAsync() { Permit.Assessment.Status = "Aprobada"; Snackbar.Add("Tasación aprobada en modo demo.", Severity.Success); return Task.CompletedTask; }
+    private Task SendToCollectionAsync() { Permit.Assessment.Status = "Al cobro"; Permit.PaymentStatus = "Al cobro"; Snackbar.Add("Expediente enviado al cobro mock.", Severity.Success); return Task.CompletedTask; }
+}

@@ -1,0 +1,80 @@
+@using System.Collections.Generic
+@using System.Linq
+@using BlazorApp.Models
+@using MudBlazor
+
+<MudCard Outlined="true">
+    <MudCardContent>
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.subtitle1">@Title</MudText>
+
+            @if (SummaryItems.Any())
+            {
+                <MudStack Spacing="1">
+                    @foreach (var item in SummaryItems)
+                    {
+                        <MudText Typo="Typo.body2">• @item</MudText>
+                    }
+                </MudStack>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Aún no hay datos clave cargados para este proceso.</MudAlert>
+            }
+
+            @if (pendingMessages.Any())
+            {
+                <ValidationSummaryPanel Errors="pendingMessages" />
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">No hay validaciones pendientes registradas.</MudAlert>
+            }
+
+            @if (ValidationResults.Any())
+            {
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle2">Estado por paso</MudText>
+                    @foreach (var result in ValidationResults.OrderBy(x => x.StepIndex))
+                    {
+                        <MudPaper Outlined="true" Class="pa-3">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.body2">@result.StepTitle</MudText>
+                                <MudChip T="string" Text="@ResolveResultLabel(result)" Color="@ResolveResultColor(result)" Variant="Variant.Outlined" Size="Size.Small" />
+                            </MudStack>
+                        </MudPaper>
+                    }
+                </MudStack>
+            }
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Resumen del proceso";
+    [Parameter] public List<string> SummaryItems { get; set; } = new();
+    [Parameter] public List<string> PendingValidations { get; set; } = new();
+    [Parameter] public List<StepValidationResultDto> ValidationResults { get; set; } = new();
+
+    private List<string> pendingMessages => PendingValidations.Any()
+        ? PendingValidations
+        : ValidationResults.Where(x => !x.IsValid || x.HasWarnings).SelectMany(x => x.Messages).Distinct().ToList();
+
+    private static string ResolveResultLabel(StepValidationResultDto result)
+    {
+        if (!result.IsValid)
+            return "Pendiente";
+        if (result.HasWarnings)
+            return "Con alertas";
+        return "Validado";
+    }
+
+    private static Color ResolveResultColor(StepValidationResultDto result)
+    {
+        if (!result.IsValid)
+            return Color.Warning;
+        if (result.HasWarnings)
+            return Color.Info;
+        return Color.Success;
+    }
+}

@@ -1,0 +1,180 @@
+@page "/permisos-construccion/expediente/{Id}"
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using BlazorApp.Components.PermisosConstruccion
+@using BlazorApp.Models.PermisosConstruccion
+@using BlazorApp.Services.PermisosConstruccion
+@using BlazorApp.Shared
+@inject NavigationManager Navigation
+
+<PageTitleBar Title="Expediente de Permisos de Construcción" Subtitle="Vista 360°, edición controlada y trazabilidad mock del permiso." />
+
+@if (permit is null)
+{
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+            No se encontró un permiso con el identificador indicado. Puede volver a la bandeja y abrir otro expediente.
+        </MudAlert>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mt-3" OnClick="GoBack">Volver a la bandeja</MudButton>
+    </MudPaper>
+}
+else
+{
+    <MudStack Spacing="3">
+        <MudPaper Outlined="true" Class="pa-4">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                <div>
+                    <MudText Typo="Typo.h5">@permit.CaseNumber</MudText>
+                    <MudText Typo="Typo.body2">@permit.TypeName · @permit.Applicant.Name · @permit.Property.PropertyNumber</MudText>
+                </div>
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudChip T="string" Text="@permit.PermitStatus" Color="@ResolveStatusColor(permit.PermitStatus)" Variant="Variant.Filled" />
+                    <MudChip T="string" Text="@($"APC {permit.Apc.ApcStatus}")" Color="@ResolveStatusColor(permit.Apc.ApcStatus)" Variant="Variant.Outlined" />
+                    <MudChip T="string" Text="@($"Pago {permit.PaymentStatus}")" Color="@ResolveStatusColor(permit.PaymentStatus)" Variant="Variant.Outlined" />
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="GoBack">Volver a la bandeja</MudButton>
+                </MudStack>
+            </MudStack>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+                Expediente funcional completo en modo demo para consulta y edición controlada. Las integraciones siguen siendo simuladas o referenciales.
+            </MudAlert>
+        </MudPaper>
+
+        <MudTabs Elevation="0" Outlined="true" Rounded="true" KeepPanelsAlive="true" PanelClass="pa-4" @bind-ActivePanelIndex="activeTabIndex">
+            <MudTabPanel Text="Resumen 360°" BadgeData="@GetPendingCount()" BadgeColor="Color.Warning">
+                <PcPermitSummary360Panel Permit="@permit" OnViewAudit="JumpToAuditAsync" />
+            </MudTabPanel>
+            <MudTabPanel Text="Datos generales">
+                <PcGeneralDataForm Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Solicitante / propietario">
+                <PcApplicantOwnerPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Finca / inmueble">
+                <PcPropertyPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Profesional responsable">
+                <PcProfessionalPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Datos técnicos de obra">
+                <PcTechnicalWorkPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="APC / APC-R">
+                <PcApcStatusPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Requisitos y documentos" BadgeData="@(permit.Requirements.Count(x => x.State != "Presentado" && x.State != "No aplica"))" BadgeColor="Color.Error">
+                <PcRequirementsPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Alineamiento vial">
+                <PcRoadAlignmentPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Uso de suelo">
+                <PcLandUsePanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Servicios públicos">
+                <PcPublicServicesPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Revisión técnica">
+                <PcMunicipalReviewPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Control de calidad">
+                <PcQualityControlPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Tasación y cobros">
+                <PcAssessmentPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Pago / póliza INS mock">
+                <PcPaymentMockPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Resolución / licencia">
+                <PcResolutionPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Modificaciones / prórrogas / anulación">
+                <PcModificationExtensionCancellationPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Notificaciones">
+                <PcNotificationsPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Historial">
+                <PcHistoryPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Auditoría">
+                <PcAuditPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Integraciones completas">
+                <PcIntegrationStatusPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Inspecciones" BadgeData="@permit.Inspections.Count" BadgeColor="Color.Info">
+                <PcInspectionsPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Fiscalización / avance de obra">
+                <PcWorkProgressPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Actualización Bienes Inmuebles">
+                <PcBiUpdatePanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="GIS">
+                <PcGisPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Correspondencia">
+                <PcCorrespondencePanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Reportería" BadgeData="@permit.Reports.Count" BadgeColor="Color.Info">
+                <PcReportsPanel Permit="@permit" />
+            </MudTabPanel>
+            <MudTabPanel Text="Configuración" BadgeData="@catalogItems.Count" BadgeColor="Color.Success">
+                <PcConfigurationPanel Catalogs="@catalogItems" />
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = string.Empty;
+
+    private readonly PermisosConstruccionMockService service = new();
+    private PcPermitDto? permit;
+    private List<PcCatalogItemDto> catalogItems = [];
+    private int activeTabIndex;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        permit = await service.GetPermitAsync(Id);
+        catalogItems = await service.GetCatalogItemsAsync();
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/permisos-construccion");
+    private Task JumpToAuditAsync()
+    {
+        activeTabIndex = 19;
+        return Task.CompletedTask;
+    }
+
+    private int GetPendingCount()
+    {
+        if (permit is null)
+            return 0;
+
+        var count = 0;
+        if (permit.Requirements.Any(x => x.State != "Presentado" && x.State != "No aplica")) count++;
+        if (!permit.LandUse.Status.Contains("Aprob", StringComparison.OrdinalIgnoreCase)) count++;
+        if (!permit.RoadAlignment.Status.Contains("Aprob", StringComparison.OrdinalIgnoreCase)) count++;
+        if (!permit.PaymentStatus.Contains("Pagad", StringComparison.OrdinalIgnoreCase) && !permit.Payment.Status.Contains("Verific", StringComparison.OrdinalIgnoreCase)) count++;
+        if (permit.QualityControl.RequiresInspection && !permit.QualityControl.InspectionStatus.Contains("Aprob", StringComparison.OrdinalIgnoreCase)) count++;
+        if (permit.Inspections.Any(x => !x.Status.Contains("Final", StringComparison.OrdinalIgnoreCase))) count++;
+        if (permit.WorkProgressEntries.Any(x => x.ProgressPercent < 100)) count++;
+        if (permit.BiUpdates.Any(x => !x.Status.Contains("Actualizada", StringComparison.OrdinalIgnoreCase))) count++;
+        if (permit.GisTasks.Any(x => !x.Status.Contains("Georreferenciado", StringComparison.OrdinalIgnoreCase))) count++;
+        if (permit.Correspondences.Any(x => !x.Status.Contains("Resuelta", StringComparison.OrdinalIgnoreCase) && !x.Status.Contains("Notificada", StringComparison.OrdinalIgnoreCase))) count++;
+        return count;
+    }
+
+    private static Color ResolveStatusColor(string status) => status.ToLowerInvariant() switch
+    {
+        var value when value.Contains("aprob") || value.Contains("pagad") || value.Contains("verific") => Color.Success,
+        var value when value.Contains("pend") || value.Contains("agend") => Color.Warning,
+        var value when value.Contains("prev") || value.Contains("observ") || value.Contains("rech") => Color.Error,
+        var value when value.Contains("anul") => Color.Dark,
+        _ => Color.Info
+    };
+}

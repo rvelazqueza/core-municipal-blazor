@@ -1,0 +1,72 @@
+@page "/mercado-municipal"
+@using BlazorApp.Components.MercadoMunicipal
+@using BlazorApp.Services
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Mercado Municipal</PageTitle>
+
+<MudStack Spacing="4">
+    <MudPaper Outlined="true" Class="pa-4 pa-md-5">
+        <MudStack Spacing="2">
+            <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+                <div>
+                    <MudText Typo="Typo.h4">Mercado Municipal</MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary">
+                        Administración de locales fijos, puestos ocasionales, derechos de piso, inquilinos, emisiones, modificaciones e integraciones tributarias.
+                    </MudText>
+                </div>
+
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Storefront">
+                    Módulo operativo
+                </MudChip>
+            </div>
+
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mb-0">
+                Bandeja y tablero inicial del Mercado Municipal en modo demo.
+            </MudAlert>
+
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddBusiness" OnClick="GoToNewWizardAsync">
+                    Nuevo local / contrato
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ShowLocalesDisponiblesAsync">Locales disponibles</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ShowLocalesEnRemateAsync">Locales en remate</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ShowPuestosOcasionalesAsync">Puestos ocasionales</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ShowModificacionesAsync">Modificaciones</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ShowEmisionAsync">Emisión mensual/anual</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ShowAmonestacionesAsync">Amonestaciones y sanciones</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ShowCorrespondenciaAsync">Correspondencia</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ShowReportesAsync">Reportes</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ShowIntegracionesAsync">Integraciones</MudButton>
+            </div>
+        </MudStack>
+    </MudPaper>
+
+    <MmDashboardPanel />
+    <MmLocalTable />
+</MudStack>
+
+@code {
+    private Task GoToNewWizardAsync()
+    {
+        Navigation.NavigateTo("/mercado-municipal/nuevo");
+        return Task.CompletedTask;
+    }
+
+    private Task ShowLocalesDisponiblesAsync() => ShowPendingFeatureAsync("Locales disponibles");
+    private Task ShowLocalesEnRemateAsync() => ShowPendingFeatureAsync("Locales en remate");
+    private Task ShowPuestosOcasionalesAsync() => ShowPendingFeatureAsync("Puestos ocasionales");
+    private Task ShowModificacionesAsync() => ShowPendingFeatureAsync("Modificaciones");
+    private Task ShowEmisionAsync() => ShowPendingFeatureAsync("Emisión mensual/anual");
+    private Task ShowAmonestacionesAsync() => ShowPendingFeatureAsync("Amonestaciones y sanciones");
+    private Task ShowCorrespondenciaAsync() => ShowPendingFeatureAsync("Correspondencia");
+    private Task ShowReportesAsync() => ShowPendingFeatureAsync("Reportes");
+    private Task ShowIntegracionesAsync() => ShowPendingFeatureAsync("Integraciones");
+
+    private Task ShowPendingFeatureAsync(string featureName)
+    {
+        Snackbar.Add($"{featureName} está disponible en el expediente mock del local seleccionado.", Severity.Info);
+        return Task.CompletedTask;
+    }
+}

@@ -1,0 +1,52 @@
+@using BlazorApp.Models.Auditoria
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="2">
+        <div class="d-flex flex-wrap justify-space-between align-center gap-2">
+            <div>
+                <MudText Typo="Typo.h6">Trazabilidad por expediente</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Expediente: @ExpedientNumber</MudText>
+            </div>
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{Items.Count()} eventos")</MudChip>
+        </div>
+
+        @if (string.IsNullOrWhiteSpace(ExpedientNumber))
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Seleccione un evento con expediente relacionado.</MudAlert>
+        }
+        else if (Items is null || !Items.Any())
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No hay trazabilidad disponible para este expediente mock.</MudAlert>
+        }
+        else
+        {
+            @foreach (var item in Items)
+            {
+                <MudPaper Outlined="true" Class="pa-3 mb-2 border-l-4 border-primary">
+                    <div class="d-flex flex-wrap justify-space-between align-center gap-2">
+                        <div>
+                            <MudText Typo="Typo.subtitle2">@item.Action</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">@item.EventDate.ToString("dd/MM/yyyy HH:mm") - @item.UserName</MudText>
+                        </div>
+                        <MudStack Row="true" Spacing="1" Class="flex-wrap">
+                            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">@item.Module</MudChip>
+                            <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined" Size="Size.Small">@item.Severity</MudChip>
+                            <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small">@item.Status</MudChip>
+                        </MudStack>
+                    </div>
+                    <MudDivider Class="my-2" />
+                    <MudGrid Spacing="1">
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Estado anterior</MudText><MudText>@item.PreviousState</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Estado nuevo</MudText><MudText>@item.NewState</MudText></MudItem>
+                        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Comentario</MudText><MudText>@item.Comment</MudText></MudItem>
+                    </MudGrid>
+                </MudPaper>
+            }
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public string ExpedientNumber { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public IEnumerable<AuditTraceItemDto> Items { get; set; } = Array.Empty<AuditTraceItemDto>();
+}

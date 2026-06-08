@@ -1,0 +1,58 @@
+@using BlazorApp.Models.Auditoria
+
+<MudPaper Outlined="true" Class="pa-4">
+    @if (Event is null)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Seleccione un evento para ver su detalle.</MudAlert>
+    }
+    else
+    {
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <div class="d-flex flex-wrap justify-space-between align-center gap-2 mb-3">
+                    <div>
+                        <MudText Typo="Typo.h6">Detalle del evento</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">@Event.Id</MudText>
+                    </div>
+                    <MudStack Row="true" Spacing="1" Class="flex-wrap">
+                        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@Event.Severity</MudChip>
+                        <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined">@Event.Status</MudChip>
+                    </MudStack>
+                </div>
+
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Fecha/hora</MudText><MudText>@Event.EventDate.ToString("dd/MM/yyyy HH:mm")</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Usuario</MudText><MudText>@Event.UserName</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Rol mock</MudText><MudText>@Event.UserRole</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Módulo</MudText><MudText>@Event.Module</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Acción</MudText><MudText>@Event.Action</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Tipo de evento</MudText><MudText>@Event.EventType</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Entidad</MudText><MudText>@Event.EntityName</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">ID entidad</MudText><MudText>@Event.EntityId</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Expediente</MudText><MudText>@Event.ExpedientNumber</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Identificación contribuyente</MudText><MudText>@Event.TaxpayerIdentification</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Nombre contribuyente</MudText><MudText>@Event.TaxpayerName</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Campo modificado</MudText><MudText>@Event.FieldChanged</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Valor anterior</MudText><MudText>@Event.PreviousValue</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Valor nuevo</MudText><MudText>@Event.NewValue</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Canal</MudText><MudText>@Event.Channel</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Origen</MudText><MudText>@Event.Source</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">IP mock</MudText><MudText>@Event.IpAddress</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Dispositivo</MudText><MudText>@Event.Device</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Navegador</MudText><MudText>@Event.Browser</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Sesión</MudText><MudText>@Event.SessionId</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">CorrelationId</MudText><MudText>@Event.CorrelationId</MudText></MudItem>
+                    <MudItem xs="12" md="4"><MudText Typo="Typo.caption">RequestId</MudText><MudText>@Event.RequestId</MudText></MudItem>
+                    <MudItem xs="12"><MudText Typo="Typo.caption">Resultado</MudText><MudText>@Event.ResultMessage</MudText></MudItem>
+                    <MudItem xs="12"><MudText Typo="Typo.caption">Observación</MudText><MudText>@Event.Observation</MudText></MudItem>
+                    <MudItem xs="12"><MudText Typo="Typo.caption">Mensaje técnico mock</MudText><MudText>@Event.TechnicalMessage</MudText></MudItem>
+                    <MudItem xs="12"><MudText Typo="Typo.caption">Integración relacionada</MudText><MudText>@Event.IntegrationRelated</MudText></MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public AuditEventDetailDto? Event { get; set; }
+}

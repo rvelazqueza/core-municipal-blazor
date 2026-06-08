@@ -1,0 +1,172 @@
+@using System
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+            <MudChip T="string" Text="@($"Inspecciones {Permit.Inspections.Count}")" Color="Color.Info" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Solicitadas {CountBy(StatusRequested)}")" Color="Color.Warning" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Registradas {CountBy(StatusRegistered)}")" Color="Color.Success" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Finalizadas {CountBy(StatusFinished)}")" Color="Color.Dark" Variant="Variant.Outlined" />
+        </MudStack>
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+            Inspecciones mock sin movilidad real ni carga de evidencias; los botones solo actualizan estado visual.
+        </MudAlert>
+    </MudPaper>
+
+    <MudTable T="PcInspectionDto" Items="@Permit.Inspections.OrderByDescending(x => x.InspectionDate)" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Número</MudTh><MudTh>Estado</MudTh><MudTh>Resultado</MudTh><MudTh>Fecha</MudTh><MudTh>Inspector</MudTh><MudTh>Avance</MudTh><MudTh>Acciones</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Number</MudTd>
+            <MudTd><MudChip T="string" Text="@context.Status" Color="@ResolveColor(context.Status)" Variant="Variant.Outlined" Size="Size.Small" /></MudTd>
+            <MudTd>@context.Result</MudTd>
+            <MudTd>@FormatDate(context.InspectionDate)</MudTd>
+            <MudTd>@context.Inspector</MudTd>
+            <MudTd>@($"{context.ProgressPercent:0}%")</MudTd>
+            <MudTd>
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => CreateInspection(context))">Crear inspección</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => AssignInspector(context))">Asignar inspector</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => RegisterResult(context))">Registrar resultado</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => LoadEvidence(context))">Cargar evidencia mock</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => FinalizeInspection(context))">Finalizar inspección</MudButton>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    private const string StatusRequested = "Solicitada";
+    private const string StatusAssigned = "Asignada";
+    private const string StatusField = "En campo";
+    private const string StatusRegistered = "Registrada";
+    private const string StatusFinished = "Finalizada";
+
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+
+    private int CountBy(string status) => Permit.Inspections.Count(x => string.Equals(x.Status, status, StringComparison.OrdinalIgnoreCase));
+
+    private void CreateInspection(PcInspectionDto item)
+    {
+        item.Status = StatusRequested;
+        item.InspectionDate = DateTime.Today;
+        item.Result = "Pendiente";
+        item.Notes = "Inspección creada mock";
+        Permit.InspectionStatus = StatusRequested;
+        Permit.QualityControl.InspectionStatus = StatusRequested;
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "inspecciones.demo",
+            Action = "Crear inspección",
+            PreviousStatus = string.Empty,
+            NewStatus = StatusRequested,
+            Department = "Inspecciones",
+            Comment = item.Notes,
+            Origin = "Inspecciones"
+        });
+        Snackbar.Add($"Inspección {item.Number} creada en modo demo.", Severity.Info);
+    }
+
+    private void AssignInspector(PcInspectionDto item)
+    {
+        item.Status = StatusAssigned;
+        item.AssignedDate = DateTime.Today;
+        item.Inspector = string.IsNullOrWhiteSpace(item.Inspector) ? "Inspector demo" : item.Inspector;
+        Permit.InspectionStatus = StatusAssigned;
+        Permit.QualityControl.InspectionStatus = StatusAssigned;
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "inspecciones.demo",
+            Action = "Asignar inspector",
+            PreviousStatus = StatusRequested,
+            NewStatus = StatusAssigned,
+            Department = "Inspecciones",
+            Comment = $"Asignado {item.Inspector}",
+            Origin = "Inspecciones"
+        });
+        Snackbar.Add($"Inspector asignado a {item.Number}.", Severity.Success);
+    }
+
+    private void RegisterResult(PcInspectionDto item)
+    {
+        item.Status = StatusRegistered;
+        item.Result = item.Result == "Observada" ? "Requiere corrección" : "Conforme";
+        item.ProgressPercent = Math.Max(item.ProgressPercent, 50);
+        Permit.InspectionStatus = StatusRegistered;
+        Permit.QualityControl.InspectionStatus = StatusRegistered;
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "inspecciones.demo",
+            Action = "Registrar resultado",
+            PreviousStatus = StatusField,
+            NewStatus = StatusRegistered,
+            Department = "Inspecciones",
+            Comment = item.Result,
+            Origin = "Inspecciones"
+        });
+        Snackbar.Add($"Resultado registrado para {item.Number}.", Severity.Success);
+    }
+
+    private void LoadEvidence(PcInspectionDto item)
+    {
+        item.EvidencePlaceholder = $"{item.Number}-EVID";
+        item.DocumentsPlaceholder = $"{item.Number}-DOC";
+        item.Status = StatusField;
+        Permit.InspectionStatus = StatusField;
+        Permit.QualityControl.InspectionStatus = StatusField;
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "inspecciones.demo",
+            Action = "Cargar evidencia mock",
+            PreviousStatus = StatusAssigned,
+            NewStatus = StatusField,
+            Department = "Inspecciones",
+            Comment = item.EvidencePlaceholder,
+            Origin = "Inspecciones"
+        });
+        Snackbar.Add($"Evidencia mock cargada para {item.Number}.", Severity.Info);
+    }
+
+    private void FinalizeInspection(PcInspectionDto item)
+    {
+        item.Status = StatusFinished;
+        item.Result = item.Result == "Requiere corrección" ? "Observada" : "Conforme";
+        item.ProgressPercent = 100;
+        Permit.InspectionStatus = StatusFinished;
+        Permit.QualityControl.InspectionStatus = StatusFinished;
+        Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "inspecciones.demo",
+            Action = "Finalizar inspección",
+            PreviousStatus = StatusRegistered,
+            NewStatus = StatusFinished,
+            Department = "Inspecciones",
+            Comment = item.Result,
+            Origin = "Inspecciones"
+        });
+        Snackbar.Add($"Inspección {item.Number} finalizada en modo demo.", Severity.Success);
+    }
+
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
+    private static Color ResolveColor(string status) => status switch
+    {
+        StatusRequested => Color.Warning,
+        StatusAssigned => Color.Info,
+        StatusField => Color.Secondary,
+        StatusRegistered => Color.Success,
+        StatusFinished => Color.Dark,
+        _ => Color.Default
+    };
+}

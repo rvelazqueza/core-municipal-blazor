@@ -1,0 +1,60 @@
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudGrid Spacing="2">
+    <MudItem xs="12" md="6">
+        <MudCard Outlined="true" Class="h-100">
+            <MudCardContent>
+                <MudText Typo="Typo.h6">Solicitante</MudText>
+                <MudText>@Permit.Applicant.Name</MudText>
+                <MudText Typo="Typo.caption">@Permit.Applicant.Identification · @Permit.Applicant.PersonType</MudText>
+                <MudDivider Class="my-2" />
+                <MudText>Correo: @Permit.Applicant.Email</MudText>
+                <MudText>Teléfono: @Permit.Applicant.Phone</MudText>
+                <MudText>Dirección: @Permit.Applicant.Address</MudText>
+                <MudText>Estado RUC: @Permit.Applicant.RucStatus</MudText>
+                <MudText>Medio de notificación: @Permit.Applicant.PreferredNotification</MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Outlined" OnClick="ViewRucAsync">Ver RUC</MudButton>
+                <MudButton Variant="Variant.Outlined" OnClick="ValidateRucAsync">Validar RUC mock</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudCard Outlined="true" Class="h-100">
+            <MudCardContent>
+                <MudText Typo="Typo.h6">Propietario</MudText>
+                <MudText>@Permit.Owner.Name</MudText>
+                <MudText Typo="Typo.caption">@Permit.Owner.Identification · @Permit.Owner.PersonType</MudText>
+                <MudDivider Class="my-2" />
+                <MudText>Relación: @Permit.Owner.Relationship</MudText>
+                <MudText>Porcentaje de derecho: @Permit.Owner.OwnershipPercentage%</MudText>
+                <MudText>Autorización mock: @Permit.Owner.AuthorizationMock</MudText>
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-2">
+                    @((Permit.Applicant.Identification == Permit.Owner.Identification) ? "Solicitante y propietario coinciden." : "Solicitante y propietario son distintos; existe autorización mock referencial.")
+                </MudAlert>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+
+    private Task ViewRucAsync()
+    {
+        Snackbar.Add("Vista RUC referencial; no se abre un módulo externo en este MVP.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task ValidateRucAsync()
+    {
+        Permit.Applicant.RucStatus = "Validado";
+        Permit.Applicant.ExistsInRuc = true;
+        Snackbar.Add("Validación RUC mock completada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+}

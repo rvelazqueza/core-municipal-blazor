@@ -1,0 +1,70 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<div class="d-flex flex-column gap-3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <div class="d-flex flex-wrap gap-2">
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Total @Items.Count()</MudChip>
+            <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Simuladas @CountByStatus("Simulado")</MudChip>
+            <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Referenciales @CountByStatus("Referencial")</MudChip>
+            <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Preparadas @CountByStatus("Preparado")</MudChip>
+            <MudChip T="string" Color="Color.Dark" Variant="Variant.Outlined">No MVP @CountByStatus("No incluido en MVP")</MudChip>
+        </div>
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+            Integraciones completas de referencia para Plataforma de Servicios, RUC, Comercial, Patentes, Cobro, Tesorería, Cajas, Reportes, Cuenta Tributaria, GIS, Notificaciones y demás módulos relacionados; la acción visual solo rota el estado mostrado.
+        </MudAlert>
+    </MudPaper>
+
+    <MudGrid Spacing="2">
+        @foreach (var item in Items.OrderBy(x => x.Name))
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle2">@item.Name</MudText>
+                        <MudChip T="string" Text="@item.Status" Color="@ResolveColor(item.Status)" Variant="Variant.Outlined" Size="Size.Small" Class="mt-2 mb-2" />
+                        <MudText Typo="Typo.body2">@item.Description</MudText>
+                        <MudText Typo="Typo.caption">Último evento mock: @item.LastEvent</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => CycleStatus(item))">Acción visual</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+</div>
+
+@code {
+    [Parameter] public IEnumerable<MmIntegrationStatusDto> Items { get; set; } = Enumerable.Empty<MmIntegrationStatusDto>();
+
+    private int CountByStatus(string status) => Items.Count(item => item.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+
+    private void CycleStatus(MmIntegrationStatusDto item)
+    {
+        item.Status = item.Status switch
+        {
+            "Simulado" => "Preparado",
+            "Preparado" => "Referencial",
+            "Referencial" => "No incluido en MVP",
+            _ => "Simulado"
+        };
+
+        item.LastEvent = $"Evento visual {DateTime.Now:dd/MM HH:mm}";
+        Snackbar.Add($"{item.Name} cambió a {item.Status}.", Severity.Info);
+    }
+
+    private static Color ResolveColor(string status) => status switch
+    {
+        "Simulado" => Color.Info,
+        "Referencial" => Color.Warning,
+        "Preparado" => Color.Success,
+        "No incluido en MVP" => Color.Dark,
+        _ => Color.Default
+    };
+}

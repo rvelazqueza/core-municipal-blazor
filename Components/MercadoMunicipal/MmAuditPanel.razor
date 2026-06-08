@@ -1,0 +1,61 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+
+<div class="d-flex flex-column gap-3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <div class="d-flex flex-wrap gap-2">
+            <MudChip T="string" Text="@($"Eventos {Items.Count()}")" Color="Color.Info" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Altos {CountBySeverity("Alta")}")" Color="Color.Error" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Medios {CountBySeverity("Media")}")" Color="Color.Warning" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Bajos {CountBySeverity("Baja")}")" Color="Color.Success" Variant="Variant.Outlined" />
+        </div>
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+            Auditoría mock de creación de local, modificación, asignación de inquilino, contrato, renovación, modificación de alquiler y consultas del expediente.
+        </MudAlert>
+    </MudPaper>
+
+    <MudTable T="MmAuditEventDto" Items="@Items.OrderByDescending(item => item.Date)" Hover="true">
+        <HeaderContent>
+            <MudTh>Fecha</MudTh>
+            <MudTh>Usuario</MudTh>
+            <MudTh>Acción</MudTh>
+            <MudTh>Dato anterior</MudTh>
+            <MudTh>Dato actual</MudTh>
+            <MudTh>Proceso</MudTh>
+            <MudTh>Documento fuente</MudTh>
+            <MudTh>Salida / reporte asociado</MudTh>
+            <MudTh>Severidad</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Date.ToString("dd/MM/yyyy HH:mm")</MudTd>
+            <MudTd>@context.User</MudTd>
+            <MudTd>@context.Action</MudTd>
+            <MudTd>@context.PreviousValue</MudTd>
+            <MudTd>@context.CurrentValue</MudTd>
+            <MudTd>@context.Process</MudTd>
+            <MudTd>@context.SourceDocument</MudTd>
+            <MudTd>@context.OutputReference</MudTd>
+            <MudTd>
+                <MudChip T="string" Text="@context.Severity" Color="@ResolveSeverityColor(context.Severity)" Variant="Variant.Outlined" Size="Size.Small" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</div>
+
+@code {
+    [Parameter] public IEnumerable<MmAuditEventDto> Items { get; set; } = Enumerable.Empty<MmAuditEventDto>();
+
+    private int CountBySeverity(string severity) => Items.Count(item => item.Severity.Equals(severity, StringComparison.OrdinalIgnoreCase));
+
+    private static Color ResolveSeverityColor(string severity) => severity switch
+    {
+        "Alta" => Color.Error,
+        "Media" => Color.Warning,
+        "Baja" => Color.Success,
+        _ => Color.Info
+    };
+}

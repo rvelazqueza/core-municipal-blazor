@@ -1,0 +1,34 @@
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudCard Outlined="true">
+    <MudCardContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Estado</MudText><MudText>@Permit.QualityControl.Status</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Responsable</MudText><MudText>@Permit.QualityControl.Responsible</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Inspector</MudText><MudText>@Permit.QualityControl.Inspector</MudText></MudItem>
+        </MudGrid>
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="my-3">
+            <MudChip T="string" Text="RUC" Color="@(Permit.QualityControl.RucChecked ? Color.Success : Color.Warning)" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="Bienes Inmuebles" Color="@(Permit.QualityControl.PropertyChecked ? Color.Success : Color.Warning)" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="Cuenta tributaria" Color="@(Permit.QualityControl.TributaryAccountChecked ? Color.Success : Color.Warning)" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="Documentos" Color="@(Permit.QualityControl.DocumentsChecked ? Color.Success : Color.Warning)" Variant="Variant.Outlined" />
+        </MudStack>
+        <MudTextField T="string" @bind-Value="Permit.QualityControl.Inconsistencies" Label="Inconsistencias" Variant="Variant.Outlined" Margin="Margin.Dense" AutoGrow="true" />
+        <MudTextField T="string" @bind-Value="Permit.QualityControl.ReturnReason" Label="Motivo devolución" Variant="Variant.Outlined" Margin="Margin.Dense" AutoGrow="true" Class="mt-2" />
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton Variant="Variant.Outlined" OnClick="ApproveAsync">Aprobar</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ReturnAsync">Devolver</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ReassignAsync">Reasignar</MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private Task ApproveAsync() { Permit.QualityControl.Status = "Aprobado"; Permit.QualityControl.ReturnReason = string.Empty; Snackbar.Add("Control de calidad aprobado en modo demo.", Severity.Success); return Task.CompletedTask; }
+    private Task ReturnAsync() { Permit.QualityControl.Status = "Devuelto"; Permit.QualityControl.ReturnReason = string.IsNullOrWhiteSpace(Permit.QualityControl.ReturnReason) ? "Revisión documental adicional." : Permit.QualityControl.ReturnReason; Snackbar.Add("Expediente devuelto por control de calidad.", Severity.Warning); return Task.CompletedTask; }
+    private Task ReassignAsync() { Permit.QualityControl.Responsible = "Reasignado mock"; Snackbar.Add("Control de calidad reasignado en modo demo.", Severity.Info); return Task.CompletedTask; }
+}

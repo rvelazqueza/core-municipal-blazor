@@ -1,0 +1,102 @@
+@using System.Collections.Generic
+@using System.Linq
+@using BlazorApp.Models
+@using MudBlazor
+
+<MudCard Outlined="true">
+    <MudCardContent>
+        <MudStack Spacing="3">
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.subtitle1">@(string.IsNullOrWhiteSpace(ProcessName) ? "Resumen del proceso" : ProcessName)</MudText>
+                @if (!string.IsNullOrWhiteSpace(ModuleName))
+                {
+                    <MudText Typo="Typo.body2">@ModuleName</MudText>
+                }
+            </MudStack>
+
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                <MudChip T="string" Text="@Status" Color="@ResolveStatusColor(Status)" Variant="Variant.Outlined" Size="Size.Small" />
+                @if (!string.IsNullOrWhiteSpace(NextSuggestedStep))
+                {
+                    <MudChip T="string" Text="@($"Siguiente: {NextSuggestedStep}")" Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small" />
+                }
+            </MudStack>
+
+            @if (groupedItems.Any())
+            {
+                @foreach (var group in groupedItems)
+                {
+                    <MudStack Spacing="1">
+                        @if (!string.IsNullOrWhiteSpace(group.Key))
+                        {
+                            <MudText Typo="Typo.subtitle2">@group.Key</MudText>
+                        }
+                        @foreach (var item in group)
+                        {
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        @if (!string.IsNullOrWhiteSpace(item.Icon))
+                                        {
+                                            <MudIcon Icon="@item.Icon" Color="Color.Primary" Size="Size.Small" />
+                                        }
+                                        <MudText Typo="Typo.body2">@item.Label</MudText>
+                                    </MudStack>
+                                    <MudChip T="string" Text="@item.Value" Color="@ResolveItemColor(item.Severity)" Variant="Variant.Outlined" Size="Size.Small" />
+                                </MudStack>
+                            </MudPaper>
+                        }
+                    </MudStack>
+                }
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Aún no hay datos clave disponibles para este proceso.</MudAlert>
+            }
+
+            @if (PendingValidations.Any())
+            {
+                <ValidationSummaryPanel Errors="PendingValidations" />
+            }
+
+            @if (!string.IsNullOrWhiteSpace(LastAuditEvent))
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">@LastAuditEvent</MudAlert>
+            }
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public string ProcessName { get; set; } = string.Empty;
+    [Parameter] public string ModuleName { get; set; } = string.Empty;
+    [Parameter] public string Status { get; set; } = "Borrador";
+    [Parameter] public List<ProcessSummaryItemDto> SummaryItems { get; set; } = new();
+    [Parameter] public List<string> PendingValidations { get; set; } = new();
+    [Parameter] public string LastAuditEvent { get; set; } = string.Empty;
+    [Parameter] public string NextSuggestedStep { get; set; } = string.Empty;
+
+    private IEnumerable<IGrouping<string, ProcessSummaryItemDto>> groupedItems => SummaryItems.GroupBy(item => item.Group ?? string.Empty);
+
+    private static Color ResolveItemColor(string severity)
+    {
+        if (severity.Equals("Error", System.StringComparison.OrdinalIgnoreCase))
+            return Color.Error;
+        if (severity.Equals("Warning", System.StringComparison.OrdinalIgnoreCase))
+            return Color.Warning;
+        if (severity.Equals("Success", System.StringComparison.OrdinalIgnoreCase))
+            return Color.Success;
+        return Color.Info;
+    }
+
+    private static Color ResolveStatusColor(string status)
+    {
+        if (status.Equals("Completado", System.StringComparison.OrdinalIgnoreCase) || status.Equals("Aprobado", System.StringComparison.OrdinalIgnoreCase))
+            return Color.Success;
+        if (status.Equals("Pendiente validación", System.StringComparison.OrdinalIgnoreCase) || status.Equals("Observado", System.StringComparison.OrdinalIgnoreCase) || status.Equals("Prevenido", System.StringComparison.OrdinalIgnoreCase))
+            return Color.Warning;
+        if (status.Equals("Cancelado", System.StringComparison.OrdinalIgnoreCase) || status.Equals("Rechazado", System.StringComparison.OrdinalIgnoreCase))
+            return Color.Error;
+        return Color.Info;
+    }
+}

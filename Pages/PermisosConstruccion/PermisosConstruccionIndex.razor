@@ -1,0 +1,116 @@
+@page "/permisos-construccion"
+@using System.Linq
+@using BlazorApp.Models.PermisosConstruccion
+@using BlazorApp.Services.PermisosConstruccion
+@using BlazorApp.Shared
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitleBar Title="Permisos de Construcción" Subtitle="Gestión integral de expedientes de urbanismo, licencias constructivas, revisión técnica, cobros, inspecciones e integraciones municipales." />
+
+<MudStack Spacing="4">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <div>
+                <MudText Typo="Typo.h4">Permisos de Construcción</MudText>
+                <MudText Typo="Typo.body1" Class="text-muted">Gestión integral de expedientes de urbanismo, licencias constructivas, revisión técnica, cobros, inspecciones e integraciones municipales.</MudText>
+            </div>
+            <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="GoToNewPermit">Nuevo permiso de construcción</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ShowApcSimulatedAsync">Expedientes APC simulados</MudButton>
+            </MudStack>
+        </MudStack>
+
+        <MudStack Row="true" Spacing="2" Class="mt-3 flex-wrap">
+            <MudButton Variant="Variant.Outlined" OnClick="ShowObraMenorAsync">Obra menor</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="ShowPendingReviewAsync">Pendientes de revisión</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="ShowPendingInspectionAsync">Pendientes de inspección</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="ShowPendingPaymentAsync">Pendientes de pago</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="ShowAnnulmentAsync">Anulaciones</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="ShowCorrespondenceAsync">Correspondencia</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="ShowReportsAsync">Reportes</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="ShowIntegrationsAsync">Integraciones</MudButton>
+        </MudStack>
+    </MudPaper>
+
+    <PcDashboardPanel Permits="@permits" />
+
+    <PcPermitTable Permits="@permits"
+                   OnOpenExpediente="OpenExpedienteAsync"
+                   OnEdit="EditPermitAsync"
+                   OnReview="ReviewPermitAsync"
+                   OnPrevention="PreventPermitAsync"
+                   OnAssess="AssessPermitAsync"
+                   OnSimulatePayment="SimulatePaymentAsync"
+                   OnApprove="ApprovePermitAsync"
+                   OnAnnul="AnnulPermitAsync"
+                   OnRequestInspection="RequestInspectionAsync"
+                   OnAudit="AuditPermitAsync" />
+
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Integraciones simuladas iniciales</MudText>
+            <MudGrid Spacing="2">
+                @foreach (var integration in integrations.Take(6))
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle2">@integration.Name</MudText>
+                                <MudChip T="string" Text="@integration.Status" Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small" />
+                                <MudText Typo="Typo.body2" Class="mt-2">@integration.Description</MudText>
+                                <MudText Typo="Typo.caption">Último evento mock: @integration.LastEvent</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudStack>
+    </MudPaper>
+</MudStack>
+
+@code {
+    private readonly PermisosConstruccionMockService service = new();
+    private List<PcPermitDto> permits = [];
+    private List<PcIntegrationStatusDto> integrations = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        permits = await service.GetPermitsAsync();
+        integrations = await service.GetIntegrationsAsync();
+    }
+
+    private void GoToNewPermit() => Navigation.NavigateTo("/permisos-construccion/nuevo");
+
+    private Task ShowSnackAsync(string message)
+    {
+        Snackbar.Add(message, Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task OpenExpedienteAsync(PcPermitDto permit)
+    {
+        Navigation.NavigateTo($"/permisos-construccion/expediente/{permit.Id}");
+        return Task.CompletedTask;
+    }
+
+    private Task EditPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Editar {permit.CaseNumber} estará disponible en la siguiente parte.");
+    private Task ReviewPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Revisión mock para {permit.CaseNumber}.");
+    private Task PreventPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Prevención mock para {permit.CaseNumber}.");
+    private Task AssessPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Tasación mock para {permit.CaseNumber}.");
+    private Task SimulatePaymentAsync(PcPermitDto permit) => ShowSnackAsync($"Pago mock para {permit.CaseNumber}.");
+    private Task ApprovePermitAsync(PcPermitDto permit) => ShowSnackAsync($"Aprobación mock para {permit.CaseNumber}.");
+    private Task AnnulPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Anulación mock para {permit.CaseNumber}.");
+    private Task RequestInspectionAsync(PcPermitDto permit) => ShowSnackAsync($"Inspección mock solicitada para {permit.CaseNumber}.");
+    private Task AuditPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Auditoría mock para {permit.CaseNumber}.");
+
+    private Task ShowApcSimulatedAsync() => ShowSnackAsync("Expedientes APC simulados disponibles en esta bandeja.");
+    private Task ShowObraMenorAsync() => ShowSnackAsync("Vista de obra menor referencial.");
+    private Task ShowPendingReviewAsync() => ShowSnackAsync("Pendientes de revisión cargados en la bandeja.");
+    private Task ShowPendingInspectionAsync() => ShowSnackAsync("Pendientes de inspección inicial cargados en la bandeja.");
+    private Task ShowPendingPaymentAsync() => ShowSnackAsync("Pendientes de pago y cobro mock.");
+    private Task ShowAnnulmentAsync() => ShowSnackAsync("Anulaciones mock y trazabilidad referencial.");
+    private Task ShowCorrespondenceAsync() => ShowSnackAsync("Correspondencia referencial preparada para Parte 2.");
+    private Task ShowReportsAsync() => ShowSnackAsync("Reportes operativos disponibles en modo demo.");
+    private Task ShowIntegrationsAsync() => ShowSnackAsync("Integraciones simuladas y referenciales preparadas.");
+}

@@ -1,0 +1,326 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No hay información del local para construir la vista 360°.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="8">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-3">Resumen 360° del expediente</MudText>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="6"><MudText>Número de local: @Local.LocalNumber</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Número de cuenta: @Local.AccountNumber</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Tipo de local: @Local.LocalType</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Estado: @resolvedLocalStatus</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Piso: @Local.Floor</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Zona: @Local.Zone</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Pasillo: @Local.Aisle</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Área: @Local.AreaM2 m²</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Factor ponderación: @Local.WeightingFactor</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Precio propuesto: @FormatCurrency(Local.ProposedPrice)</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Monto alquiler: @FormatCurrency(resolvedRentAmount)</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Localización: @Local.Location</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Bien inmueble: @Local.RelatedProperty</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Número de patente: @(string.IsNullOrWhiteSpace(Local.PatentNumber) ? "Pendiente" : Local.PatentNumber)</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Cuenta de servicios: @Local.ServiceAccount</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Medidor eléctrico: @Local.ElectricMeterNumber</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Inquilino: @(Tenant?.Name ?? "Sin asignar")</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Identificación: @(Tenant?.Identification ?? "Pendiente")</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Nombre comercial: @(Tenant?.BusinessName ?? Local.BusinessName)</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Actividad comercial: @(Tenant?.EconomicActivity ?? Local.BusinessActivity)</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Número de contrato: @(Contract?.ContractNumber ?? "Sin contrato")</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Estado contrato: @resolvedContractStatus</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Fecha inicio: @FormatDate(Contract?.StartDate)</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Fecha vencimiento: @FormatDate(Contract?.EndDate)</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Estado de cuenta: @resolvedTaxStatus</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Saldo: @FormatCurrency(resolvedBalance)</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Último pago: @FormatDate(TaxAccount?.LastPaymentDate)</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Meses en mora: @pendingMonths</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Amonestaciones activas: @activeWarnings</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Sanciones activas: @activeSanctions</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Carnés próximos a vencer: @nearExpiryCards</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Inspecciones pendientes: @pendingInspections</MudText></MudItem>
+                            <MudItem xs="12" sm="6"><MudText>Correspondencia pendiente: @pendingCorrespondence</MudText></MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Outlined="true">
+                    <MudCardMedia Image="@ResolveImage()" Height="220" />
+                    <MudCardContent>
+                        <MudChip T="string" Text="@resolvedLocalStatus" Color="@ResolveStatusColor(resolvedLocalStatus)" Variant="Variant.Outlined" Size="Size.Small" />
+                        <MudChip T="string" Text="@resolvedTaxStatus" Color="@ResolveStatusColor(resolvedTaxStatus)" Variant="Variant.Outlined" Size="Size.Small" Class="ms-2" />
+                        <MudText Typo="Typo.subtitle1" Class="mt-3">Resumen operativo</MudText>
+                        <MudText Typo="Typo.body2">Pendientes documentales: @pendingRequirements</MudText>
+                        <MudText Typo="Typo.body2">Pendiente notificación: @(hasPendingNotification ? "Sí" : "No")</MudText>
+                        <MudText Typo="Typo.body2">Última actualización: @Local.LastUpdated.ToString("dd/MM/yyyy")</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <div class="d-flex flex-column gap-2">
+            @if (isContractNearExpiry)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Contrato próximo a vencer.</MudAlert>
+            }
+            @if (isContractExpired)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Contrato vencido.</MudAlert>
+            }
+            @if (hasPendingEmission)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Existe emisión pendiente en el flujo mock del expediente.</MudAlert>
+            }
+            @if (hasMorosity)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Se detecta morosidad o saldo pendiente en la cuenta mock.</MudAlert>
+            }
+            @if (resolvedLocalStatus.Equals("En remate", StringComparison.OrdinalIgnoreCase))
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">El local se encuentra en remate.</MudAlert>
+            }
+            @if (resolvedLocalStatus.Equals("En mantenimiento", StringComparison.OrdinalIgnoreCase))
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">El local se encuentra en mantenimiento.</MudAlert>
+            }
+            @if (pendingRequirements > 0)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Hay requisitos pendientes u observados.</MudAlert>
+            }
+            @if (activeWarnings >= 2)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">El expediente acumula amonestaciones mock.</MudAlert>
+            }
+            @if (activeSanctions > 0)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Existe una sanción activa mock.</MudAlert>
+            }
+            @if (nearExpiryCards > 0)
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Hay carnés próximos a vencer o vencidos en el escenario mock.</MudAlert>
+            }
+            @if (hasPendingNotification)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">El expediente mantiene una notificación pendiente.</MudAlert>
+            }
+        </div>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-3">Acciones rápidas mock</MudText>
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EditAsync">Editar</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RenewContractAsync">Renovar contrato</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ModifyRentAsync">Modificar alquiler</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="RegisterTransferAsync">Registrar traspaso</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="MergeLocalsAsync">Fusionar locales</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="GenerateEmissionAsync">Generar emisión</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="SimulatePaymentAsync">Simular pago</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SendToCollectionAsync">Enviar a cobro</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="RegisterWarningAsync">Registrar amonestación</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="RegisterSanctionAsync">Registrar sanción</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Dark" OnClick="RegisterInspectionAsync">Registrar inspección</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ViewAuditAsync">Ver auditoría</MudButton>
+            </div>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public MmTenantDto? Tenant { get; set; }
+    [Parameter] public MmContractDto? Contract { get; set; }
+    [Parameter] public MmRentDto? Rent { get; set; }
+    [Parameter] public MmTaxAccountMockDto? TaxAccount { get; set; }
+    [Parameter] public MmCollectionDto? Collection { get; set; }
+    [Parameter] public IEnumerable<MmRequirementDto> Requirements { get; set; } = Enumerable.Empty<MmRequirementDto>();
+
+    private string resolvedLocalStatus = string.Empty;
+    private string resolvedContractStatus = string.Empty;
+    private string resolvedTaxStatus = string.Empty;
+    private decimal resolvedBalance;
+    private decimal resolvedRentAmount;
+    private bool hasPendingEmission;
+    private int activeWarnings;
+    private int activeSanctions;
+    private int nearExpiryCards;
+    private int pendingInspections;
+    private int pendingCorrespondence;
+    private bool hasPendingNotification;
+    private string currentLocalId = string.Empty;
+
+    private int pendingRequirements => Requirements.Count(item => item.Status.Equals("Pendiente", StringComparison.OrdinalIgnoreCase) || item.Status.Equals("Observado", StringComparison.OrdinalIgnoreCase));
+    private bool isContractNearExpiry => Contract is not null && Contract.EndDate.Date >= DateTime.Today && Contract.EndDate.Date <= DateTime.Today.AddDays(60);
+    private bool isContractExpired => Contract is not null && Contract.EndDate.Date < DateTime.Today;
+    private bool hasMorosity => Local?.HasMorosity == true || resolvedTaxStatus.Equals("Moroso", StringComparison.OrdinalIgnoreCase) || pendingMonths > 0;
+    private int pendingMonths => Collection?.PendingMonths ?? (Local?.HasMorosity == true ? 2 : 0);
+
+    protected override void OnParametersSet()
+    {
+        if (Local is null)
+            return;
+
+        var index = ResolveIndex(Local.Id);
+        if (!string.Equals(currentLocalId, Local.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            currentLocalId = Local.Id;
+            resolvedLocalStatus = Local.Status;
+            resolvedContractStatus = Contract?.Status ?? "Sin contrato";
+            resolvedTaxStatus = TaxAccount?.Status ?? (Local.HasMorosity ? "Moroso" : "Al día");
+            resolvedBalance = TaxAccount?.Balance ?? Collection?.OverdueBalance ?? 0m;
+            resolvedRentAmount = Rent?.MonthlyAmount ?? Local.RentAmount;
+            hasPendingEmission = resolvedTaxStatus.Equals("Pendiente", StringComparison.OrdinalIgnoreCase) || Local.HasMorosity;
+            activeWarnings = Local.HasMorosity ? 2 : index % 3 == 0 ? 1 : 0;
+            activeSanctions = resolvedLocalStatus.Equals("En remate", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+            nearExpiryCards = index % 5 == 0 ? 1 : 0;
+            pendingInspections = index % 4 == 0 ? 2 : index % 3 == 0 ? 1 : 0;
+            pendingCorrespondence = index % 2 == 0 ? 1 : 0;
+            hasPendingNotification = index % 2 == 0;
+        }
+    }
+
+    private Task EditAsync()
+    {
+        Snackbar.Add("Edición controlada mock habilitada para el expediente.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task RenewContractAsync()
+    {
+        if (Contract is not null)
+        {
+            Contract.EndDate = DateTime.Today.AddYears(5);
+            Contract.Status = "Activo";
+            resolvedContractStatus = Contract.Status;
+        }
+
+        Snackbar.Add("Contrato renovado en modo mock.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task ModifyRentAsync()
+    {
+        resolvedRentAmount += 15m;
+        if (Rent is not null)
+            Rent.MonthlyAmount = resolvedRentAmount;
+        Snackbar.Add("Monto de alquiler actualizado visualmente.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task RegisterTransferAsync()
+    {
+        Snackbar.Add("Traspaso mock registrado como pendiente de Parte 8.2B.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private Task MergeLocalsAsync()
+    {
+        Snackbar.Add("Fusión mock marcada para la siguiente iteración del módulo.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private Task GenerateEmissionAsync()
+    {
+        hasPendingEmission = false;
+        Snackbar.Add("Emisión mock generada correctamente.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task SimulatePaymentAsync()
+    {
+        resolvedBalance = Math.Max(0m, resolvedBalance - 250m);
+        resolvedTaxStatus = resolvedBalance == 0 ? "Al día" : "Pendiente";
+        if (TaxAccount is not null)
+        {
+            TaxAccount.Balance = resolvedBalance;
+            TaxAccount.Status = resolvedTaxStatus;
+            TaxAccount.LastPaymentDate = DateTime.Today;
+        }
+
+        Snackbar.Add("Pago mock aplicado sobre la cuenta tributaria referencial.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task SendToCollectionAsync()
+    {
+        resolvedTaxStatus = "Moroso";
+        activeWarnings += 1;
+        if (TaxAccount is not null)
+            TaxAccount.Status = resolvedTaxStatus;
+        if (Collection is not null)
+            Collection.Status = "En cobro administrativo";
+        Snackbar.Add("Expediente enviado a cobro mock.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private Task RegisterWarningAsync()
+    {
+        activeWarnings += 1;
+        Snackbar.Add("Amonestación mock registrada.", Severity.Warning);
+        return Task.CompletedTask;
+    }
+
+    private Task RegisterSanctionAsync()
+    {
+        activeSanctions += 1;
+        Snackbar.Add("Sanción mock registrada.", Severity.Error);
+        return Task.CompletedTask;
+    }
+
+    private Task RegisterInspectionAsync()
+    {
+        pendingInspections += 1;
+        Snackbar.Add("Inspección mock agregada al expediente.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task ViewAuditAsync()
+    {
+        Snackbar.Add("Use el tab Auditoría para consultar la bitácora mock.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private string ResolveImage()
+    {
+        if (!string.IsNullOrWhiteSpace(Local?.PhotoPlaceholder))
+            return Local.PhotoPlaceholder;
+        if (!string.IsNullOrWhiteSpace(Tenant?.PhotoPlaceholder))
+            return Tenant.PhotoPlaceholder;
+        return "https://placehold.co/800x420?text=Mercado+Municipal";
+    }
+
+    private static int ResolveIndex(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return 0;
+
+        var parts = id.Split('-');
+        return parts.Length == 2 && int.TryParse(parts[1], out var index) ? index : 0;
+    }
+
+    private static Color ResolveStatusColor(string status)
+    {
+        if (status.Equals("Activo", StringComparison.OrdinalIgnoreCase) || status.Equals("Al día", StringComparison.OrdinalIgnoreCase) || status.Equals("Alquilado", StringComparison.OrdinalIgnoreCase))
+            return Color.Success;
+        if (status.Equals("Pendiente", StringComparison.OrdinalIgnoreCase) || status.Equals("Próximo a vencer", StringComparison.OrdinalIgnoreCase) || status.Equals("En remate", StringComparison.OrdinalIgnoreCase))
+            return Color.Warning;
+        if (status.Equals("Moroso", StringComparison.OrdinalIgnoreCase) || status.Equals("Vencido", StringComparison.OrdinalIgnoreCase))
+            return Color.Error;
+        return Color.Info;
+    }
+
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "N/D";
+    private static string FormatCurrency(decimal value) => $"CRC {value:N2}";
+}

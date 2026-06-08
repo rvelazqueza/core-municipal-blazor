@@ -1,0 +1,37 @@
+@page "/patentes/nueva"
+@using BlazorApp.Shared
+@using Microsoft.AspNetCore.Components
+@using System.Collections.Generic
+@using MudBlazor
+@inject NavigationManager NavigationManager
+
+<PageTitleBar Title="Nueva solicitud de patente"
+              Subtitle="Wizard base reutilizable para registrar solicitudes de patente en modo demo, sin tabs ni backend real."
+              Breadcrumbs="breadcrumbs">
+    <Actions>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/patentes">Volver a consulta</MudButton>
+    </Actions>
+</PageTitleBar>
+
+<MudStack Spacing="3">
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">
+        Esta pantalla implementa la base del proceso guiado y deja preparada la estructura para integrar reglas, expediente y pasos operativos posteriores.
+    </MudAlert>
+
+    <PatenteCreateWizard OnCancelled="HandleCancelledAsync" />
+</MudStack>
+
+@code {
+    private readonly List<BreadcrumbItem> breadcrumbs = new()
+    {
+        new("Inicio", href: "/"),
+        new("Patentes", href: "/patentes"),
+        new("Nueva solicitud", href: null, disabled: true)
+    };
+
+    private Task HandleCancelledAsync()
+    {
+        NavigationManager.NavigateTo("/patentes");
+        return Task.CompletedTask;
+    }
+}

@@ -1,0 +1,29 @@
+@using System.Linq
+@using BlazorApp.Models.PermisosConstruccion
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-4">
+    Panel demo con indicadores rápidos de expedientes, cobro, inspección y resolución.
+</MudAlert>
+
+<MudGrid>
+    <MudItem xs="12" sm="6" lg="3">
+        <KpiCard Title="Total expedientes" Value="@Permits.Count.ToString()" Subtitle="Bandeja de permisos" Icon="@Icons.Material.Filled.Description" Color="Color.Primary" />
+    </MudItem>
+    <MudItem xs="12" sm="6" lg="3">
+        <KpiCard Title="En revisión" Value="@InReviewCount.ToString()" Subtitle="Trámite técnico" Icon="@Icons.Material.Filled.Rule" Color="Color.Warning" />
+    </MudItem>
+    <MudItem xs="12" sm="6" lg="3">
+        <KpiCard Title="Pendiente pago" Value="@PendingPaymentCount.ToString()" Subtitle="Cobro y caja" Icon="@Icons.Material.Filled.Payments" Color="Color.Info" />
+    </MudItem>
+    <MudItem xs="12" sm="6" lg="3">
+        <KpiCard Title="Aprobados" Value="@ApprovedCount.ToString()" Subtitle="Resolución final" Icon="@Icons.Material.Filled.Verified" Color="Color.Success" />
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public List<PcPermitDto> Permits { get; set; } = new();
+
+    private int InReviewCount => Permits.Count(x => x.PermitStatus.Contains("revisión", StringComparison.OrdinalIgnoreCase) || x.PermitStatus.Contains("análisis", StringComparison.OrdinalIgnoreCase));
+    private int PendingPaymentCount => Permits.Count(x => x.Payment.Status.Contains("Pendiente", StringComparison.OrdinalIgnoreCase) || x.PermitStatus.Contains("pago", StringComparison.OrdinalIgnoreCase));
+    private int ApprovedCount => Permits.Count(x => x.Resolution.Result == "Aprobado" || x.PermitStatus == "Aprobado");
+}

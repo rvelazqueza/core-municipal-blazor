@@ -1,0 +1,70 @@
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No hay datos básicos del local para mostrar.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Datos del local</MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6"><MudText>Número de local: @Local.LocalNumber</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Número de cuenta: @Local.AccountNumber</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Tipo de local: @Local.LocalType</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Tipo de alquiler: @Local.RentalType</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Estado: @Local.Status</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Piso: @Local.Floor</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Zona: @Local.Zone</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Pasillo: @Local.Aisle</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Sector: @Local.Sector</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Localización: @Local.Location</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Bien inmueble: @Local.RelatedProperty</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Número de patente: @(string.IsNullOrWhiteSpace(Local.PatentNumber) ? "Pendiente" : Local.PatentNumber)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Cuenta de servicios: @Local.ServiceAccount</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Medidor eléctrico: @Local.ElectricMeterNumber</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Área m²: @Local.AreaM2</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Factor ponderación: @Local.WeightingFactor</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Precio propuesto: @FormatCurrency(Local.ProposedPrice)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Monto de alquiler: @FormatCurrency(Local.RentAmount)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Actividad comercial: @Local.BusinessActivity</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Nombre comercial: @Local.BusinessName</MudText></MudItem>
+                    <MudItem xs="12"><MudText>Observaciones: @Local.Observations</MudText></MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="6">
+                <MudCard Outlined="true">
+                    <MudCardMedia Image="@ResolveLocalImage()" Height="260" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle2">Fotografía placeholder del local</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudCard Outlined="true">
+                    <MudCardMedia Image="https://placehold.co/800x420?text=Documento+referencial+del+local" Height="260" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle2">Documento placeholder asociado</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+
+    private string ResolveLocalImage() => string.IsNullOrWhiteSpace(Local?.PhotoPlaceholder)
+        ? "https://placehold.co/800x420?text=Local+Mercado"
+        : Local.PhotoPlaceholder;
+
+    private static string FormatCurrency(decimal value) => $"CRC {value:N2}";
+}

@@ -1,0 +1,177 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información del local para correspondencia y trámites.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Trámites @Items.Count</MudChip>
+                <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Resueltos @Items.Count(x => x.Status.Contains("Resuelto", StringComparison.OrdinalIgnoreCase))</MudChip>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterProcedureAsync">Registrar trámite mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="AssignResponsibleAsync">Asignar responsable</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ResolveAsync">Resolver mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="NotifyAsync">Notificar mock</MudButton>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+            <MudTable T="MmCorrespondenceDto" Items="@Items.OrderByDescending(x => x.EntryDate)" Hover="true" Bordered="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Número trámite</MudTh>
+                    <MudTh>Número expediente</MudTh>
+                    <MudTh>Canal</MudTh>
+                    <MudTh>Tipo</MudTh>
+                    <MudTh>Solicitante</MudTh>
+                    <MudTh>Local relacionado</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh>Plazo</MudTh>
+                    <MudTh>Fecha ingreso</MudTh>
+                    <MudTh>Fecha respuesta</MudTh>
+                    <MudTh>Resolución mock</MudTh>
+                    <MudTh>Adjuntos</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Número trámite">@context.ProcedureNumber</MudTd>
+                    <MudTd DataLabel="Número expediente">@context.FileNumber</MudTd>
+                    <MudTd DataLabel="Canal">@context.Channel</MudTd>
+                    <MudTd DataLabel="Tipo">@context.Type</MudTd>
+                    <MudTd DataLabel="Solicitante">@context.Applicant</MudTd>
+                    <MudTd DataLabel="Local relacionado">@context.RelatedLocal</MudTd>
+                    <MudTd DataLabel="Estado">@context.Status</MudTd>
+                    <MudTd DataLabel="Plazo">@context.DueDate.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Fecha ingreso">@context.EntryDate.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Fecha respuesta">@(context.ResponseDate?.ToString("dd/MM/yyyy") ?? "Pendiente")</MudTd>
+                    <MudTd DataLabel="Resolución mock">@context.ResolutionMock</MudTd>
+                    <MudTd DataLabel="Adjuntos">@context.AttachmentPlaceholder</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public List<MmCorrespondenceDto> Items { get; set; } = new();
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private Task RegisterProcedureAsync()
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        var item = new MmCorrespondenceDto
+        {
+            Id = $"COR-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            ProcedureNumber = $"TRM-MOCK-{DateTime.Now:HHmmss}",
+            FileNumber = $"EXP-{Local.LocalNumber}-MOCK",
+            Channel = "Presencial",
+            Type = "Consulta",
+            Applicant = Local.BusinessName,
+            RelatedLocal = Local.LocalNumber,
+            Status = "Ingresado",
+            DueDate = DateTime.Today.AddDays(7),
+            EntryDate = DateTime.Today,
+            ResolutionMock = "Pendiente",
+            AttachmentPlaceholder = "Adjunto pendiente",
+            Responsible = "Pendiente"
+        };
+
+        Items.Insert(0, item);
+        RegisterMockEvent("Registrar trámite", string.Empty, item.ProcedureNumber, "Correspondencia", "Media");
+        Snackbar.Add("Trámite mock registrado.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task AssignResponsibleAsync()
+    {
+        var item = Items.OrderByDescending(x => x.EntryDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.Responsible = "Gestión Documental Mercado";
+        item.Status = "En trámite";
+        RegisterMockEvent("Asignar responsable", "Pendiente", item.Responsible, "Correspondencia", "Baja");
+        Snackbar.Add("Responsable asignado de forma mock.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task ResolveAsync()
+    {
+        var item = Items.OrderByDescending(x => x.EntryDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.Status = "Resuelto";
+        item.ResponseDate = DateTime.Today;
+        item.ResolutionMock = $"Resolución {item.ProcedureNumber}";
+        RegisterMockEvent("Resolver trámite", "En trámite", item.Status, "Correspondencia", "Media");
+        Snackbar.Add("Trámite mock resuelto.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task NotifyAsync()
+    {
+        var item = Items.OrderByDescending(x => x.EntryDate).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.AttachmentPlaceholder = "Notificación generada mock";
+        RegisterMockEvent("Notificar trámite", "Pendiente", item.AttachmentPlaceholder, "Correspondencia", "Media");
+        Snackbar.Add("Notificación mock del trámite preparada.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousStatus = "Registrado",
+            NewStatus = "Actualizado",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Panel correspondencia",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde correspondencia."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel correspondencia",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Bitácora visual mock"
+        });
+    }
+}

@@ -1,0 +1,53 @@
+@using BlazorApp.Models.Auditoria
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="2">
+        <div class="d-flex flex-wrap justify-space-between align-center gap-2">
+            <div>
+                <MudText Typo="Typo.h6">Auditoría de seguridad</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Eventos mock de autenticación, acceso y protección institucional.</MudText>
+            </div>
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{Events.Count()} eventos")</MudChip>
+        </div>
+
+        <MudTable T="AuditSecurityEventDto" Items="@Events" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Usuario</MudTh>
+                <MudTh>Fecha</MudTh>
+                <MudTh>IP mock</MudTh>
+                <MudTh>Dispositivo</MudTh>
+                <MudTh>Navegador</MudTh>
+                <MudTh>Acción</MudTh>
+                <MudTh>Resultado</MudTh>
+                <MudTh>Acción tomada</MudTh>
+                <MudTh>Severidad</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Usuario">@context.UserName</MudTd>
+                <MudTd DataLabel="Fecha">@context.EventDate.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                <MudTd DataLabel="IP mock">@context.IpAddress</MudTd>
+                <MudTd DataLabel="Dispositivo">@context.Device</MudTd>
+                <MudTd DataLabel="Navegador">@context.Browser</MudTd>
+                <MudTd DataLabel="Acción">@context.Action</MudTd>
+                <MudTd DataLabel="Resultado">@context.ResultMessage</MudTd>
+                <MudTd DataLabel="Acción tomada">@context.SecurityActionTaken</MudTd>
+                <MudTd DataLabel="Severidad">
+                    <MudChip T="string" Color="@GetSeverityColor(context.Severity)" Variant="Variant.Outlined" Size="Size.Small">@context.Severity</MudChip>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<AuditSecurityEventDto> Events { get; set; } = Array.Empty<AuditSecurityEventDto>();
+
+    private static Color GetSeverityColor(string severity) => severity switch
+    {
+        "Crítico" => Color.Error,
+        "Error" => Color.Error,
+        "Advertencia" => Color.Warning,
+        "Éxito" => Color.Success,
+        _ => Color.Info
+    };
+}

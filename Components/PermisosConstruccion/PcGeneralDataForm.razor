@@ -1,0 +1,45 @@
+@using System
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudGrid Spacing="2">
+    <MudItem xs="12" md="8">
+        <MudPaper Outlined="true" Class="pa-4 h-100">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Número expediente</MudText><MudText>@Permit.CaseNumber</MudText></MudItem>
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Código sistema</MudText><MudText>@Permit.SystemCode</MudText></MudItem>
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Código CFIA/APC</MudText><MudText>@Permit.CfiaApcCode</MudText></MudItem>
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Código APC-R</MudText><MudText>@Permit.ApcRCode</MudText></MudItem>
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Tipo trámite</MudText><MudText>@Permit.TypeName</MudText></MudItem>
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Canal ingreso</MudText><MudText>@Permit.Channel</MudText></MudItem>
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Unidad propietaria</MudText><MudText>@Permit.UnitOwner</MudText></MudItem>
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Estado trámite</MudText><MudText>@Permit.PermitStatus</MudText></MudItem>
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Fecha ingreso / creación</MudText><MudText>@Permit.CreatedAt.ToString("dd/MM/yyyy")</MudText></MudItem>
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Fecha vencimiento</MudText><MudText>@FormatDate(Permit.DueDate)</MudText></MudItem>
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Fecha finalización</MudText><MudText>@FormatDate(Permit.FinishedAt)</MudText></MudItem>
+                <MudItem xs="12" sm="6"><MudText Typo="Typo.caption">Fecha sellado CFIA</MudText><MudText>@FormatDate(Permit.Apc.SealedAt)</MudText></MudItem>
+                <MudItem xs="12" sm="4"><MudText Typo="Typo.caption">Usuario responsable</MudText><MudText>@Permit.UserResponsible</MudText></MudItem>
+                <MudItem xs="12" sm="4"><MudText Typo="Typo.caption">Departamento asignado</MudText><MudText>@Permit.AssignedDepartment</MudText></MudItem>
+                <MudItem xs="12" sm="4"><MudText Typo="Typo.caption">Equipo asignado</MudText><MudText>@Permit.AssignedTeam</MudText></MudItem>
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="4">
+        <MudPaper Outlined="true" Class="pa-4 h-100">
+            <MudTextField T="string" @bind-Value="Permit.Observations" Label="Observaciones" Variant="Variant.Outlined" Margin="Margin.Dense" AutoGrow="true" />
+            <MudButton Variant="Variant.Outlined" Class="mt-3" OnClick="SaveObservationAsync">Guardar observación mock</MudButton>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private Task SaveObservationAsync()
+    {
+        Snackbar.Add("Observaciones generales actualizadas en modo demo.", Severity.Success);
+        return Task.CompletedTask;
+    }
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
+}

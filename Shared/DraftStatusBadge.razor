@@ -1,0 +1,69 @@
+@using System
+@using MudBlazor
+
+<MudStack Spacing="1">
+    <MudChip T="string" Text="@Status" Icon="@resolvedIcon" Color="@resolvedColor" Variant="Variant.Outlined" Size="Size.Small" />
+
+    @if (LastSavedAt.HasValue || !string.IsNullOrWhiteSpace(User) || !string.IsNullOrWhiteSpace(Message))
+    {
+        <MudText Typo="Typo.caption">
+            @if (LastSavedAt.HasValue)
+            {
+                <span>@($"Último guardado: {LastSavedAt.Value:dd/MM/yyyy HH:mm}")</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(User))
+            {
+                <span>@($" · {User}")</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Message))
+            {
+                <span>@($" · {Message}")</span>
+            }
+        </MudText>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public string Status { get; set; } = "Borrador";
+    [Parameter] public DateTime? LastSavedAt { get; set; }
+    [Parameter] public string User { get; set; } = string.Empty;
+    [Parameter] public string Message { get; set; } = string.Empty;
+
+    private Color resolvedColor => normalizedStatus switch
+    {
+        "guardado" => Color.Success,
+        "completado" => Color.Success,
+        "aprobado" => Color.Success,
+        "guardando" => Color.Info,
+        "en progreso" => Color.Info,
+        "pendiente validación" => Color.Warning,
+        "prevenido" => Color.Warning,
+        "observado" => Color.Warning,
+        "devuelto" => Color.Warning,
+        "sin guardar" => Color.Warning,
+        "borrador" => Color.Secondary,
+        "cancelado" => Color.Error,
+        "error" => Color.Error,
+        _ => Color.Default
+    };
+
+    private string resolvedIcon => normalizedStatus switch
+    {
+        "guardado" => Icons.Material.Filled.TaskAlt,
+        "completado" => Icons.Material.Filled.TaskAlt,
+        "aprobado" => Icons.Material.Filled.Verified,
+        "guardando" => Icons.Material.Filled.Sync,
+        "en progreso" => Icons.Material.Filled.Autorenew,
+        "pendiente validación" => Icons.Material.Filled.PendingActions,
+        "prevenido" => Icons.Material.Filled.WarningAmber,
+        "observado" => Icons.Material.Filled.Visibility,
+        "devuelto" => Icons.Material.Filled.Reply,
+        "sin guardar" => Icons.Material.Filled.EditNote,
+        "borrador" => Icons.Material.Filled.SaveAs,
+        "cancelado" => Icons.Material.Filled.Cancel,
+        "error" => Icons.Material.Filled.ErrorOutline,
+        _ => Icons.Material.Filled.Info
+    };
+
+    private string normalizedStatus => (Status ?? string.Empty).Trim().ToLowerInvariant();
+}

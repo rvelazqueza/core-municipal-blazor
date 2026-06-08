@@ -1,0 +1,41 @@
+@using System
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+            <MudButton Variant="Variant.Outlined" OnClick="RegisterModificationAsync">Registrar modificación</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="RegisterExtensionAsync">Registrar prórroga</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="RegisterCancellationAsync">Registrar anulación</MudButton>
+        </MudStack>
+    </MudPaper>
+    <MudTable T="ChangeItem" Items="entries" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Tipo</MudTh><MudTh>Motivo</MudTh><MudTh>Fecha</MudTh><MudTh>Usuario</MudTh><MudTh>Estado</MudTh><MudTh>Resolución</MudTh><MudTh>Notificación</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Type</MudTd><MudTd>@context.Reason</MudTd><MudTd>@context.Date.ToString("dd/MM/yyyy")</MudTd><MudTd>@context.User</MudTd><MudTd>@context.Status</MudTd><MudTd>@context.Resolution</MudTd><MudTd>@context.Notification</MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private readonly List<ChangeItem> entries = new();
+
+    protected override void OnParametersSet()
+    {
+        if (entries.Count == 0)
+            entries.Add(new ChangeItem { Type = "Prórroga", Reason = "Referencia inicial del expediente", Date = DateTime.Today.AddDays(-5), User = "demo.user", Status = "Generada", Resolution = "PRR-MOCK-01", Notification = "Pendiente" });
+    }
+
+    private Task RegisterModificationAsync() { entries.Insert(0, BuildItem("Modificación", "Ajuste técnico de planos")); Snackbar.Add("Modificación mock registrada.", Severity.Info); return Task.CompletedTask; }
+    private Task RegisterExtensionAsync() { entries.Insert(0, BuildItem("Prórroga", "Extensión de plazo referencial")); Snackbar.Add("Prórroga mock registrada.", Severity.Info); return Task.CompletedTask; }
+    private Task RegisterCancellationAsync() { entries.Insert(0, BuildItem("Anulación", "Solicitud de cierre administrativo")); Permit.PermitStatus = "Anulado"; Snackbar.Add("Anulación mock registrada.", Severity.Warning); return Task.CompletedTask; }
+    private static ChangeItem BuildItem(string type, string reason) => new() { Type = type, Reason = reason, Date = DateTime.Today, User = "demo.user", Status = "Generada", Resolution = $"{type[..3].ToUpperInvariant()}-MOCK-{DateTime.Now:HHmmss}", Notification = "Pendiente" };
+    private sealed class ChangeItem { public string Type { get; set; } = string.Empty; public string Reason { get; set; } = string.Empty; public DateTime Date { get; set; } = DateTime.Today; public string User { get; set; } = string.Empty; public string Status { get; set; } = string.Empty; public string Resolution { get; set; } = string.Empty; public string Notification { get; set; } = string.Empty; }
+}

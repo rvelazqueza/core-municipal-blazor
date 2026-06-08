@@ -1,0 +1,50 @@
+@using System.Threading.Tasks
+@using MudBlazor
+
+<MudPaper Outlined="true" Class="pa-3 mt-3">
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2">
+        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+            <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Filled.Close" Disabled="@cancelDisabled" OnClick="OnCancelClicked">@(IsCancelling ? "Cancelando..." : CancelText)</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Save" Disabled="@saveDisabled" OnClick="OnSaveDraftClicked">@(IsSavingDraft ? "Guardando..." : SaveDraftText)</MudButton>
+        </MudStack>
+        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+            <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.ArrowBack" Disabled="@backDisabled" OnClick="OnBackClicked">@(IsNavigating ? "Procesando..." : BackText)</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ArrowForward" Disabled="@nextDisabled" OnClick="OnNextClicked">@(IsNavigating ? "Procesando..." : NextText)</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" EndIcon="@Icons.Material.Filled.CheckCircle" Disabled="@finishDisabled" OnClick="OnFinishClicked">@(IsFinishing ? "Finalizando..." : FinishText)</MudButton>
+        </MudStack>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public bool CanGoBack { get; set; }
+    [Parameter] public bool CanGoNext { get; set; } = true;
+    [Parameter] public bool CanFinish { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; }
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public bool IsNavigating { get; set; }
+    [Parameter] public bool IsSavingDraft { get; set; }
+    [Parameter] public bool IsCancelling { get; set; }
+    [Parameter] public bool IsFinishing { get; set; }
+    [Parameter] public string BackText { get; set; } = "Anterior";
+    [Parameter] public string NextText { get; set; } = "Siguiente";
+    [Parameter] public string SaveDraftText { get; set; } = "Guardar borrador";
+    [Parameter] public string CancelText { get; set; } = "Cancelar";
+    [Parameter] public string FinishText { get; set; } = "Finalizar";
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnSaveDraft { get; set; }
+    [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public EventCallback OnNext { get; set; }
+    [Parameter] public EventCallback OnFinish { get; set; }
+
+    private bool backDisabled => !CanGoBack || IsReadOnly || IsBusy || IsNavigating || IsSavingDraft || IsFinishing || IsCancelling;
+    private bool nextDisabled => !CanGoNext || IsReadOnly || IsBusy || IsNavigating || IsSavingDraft || IsFinishing || IsCancelling;
+    private bool saveDisabled => IsReadOnly || IsBusy || IsNavigating || IsSavingDraft || IsFinishing || IsCancelling;
+    private bool cancelDisabled => IsBusy || IsNavigating || IsSavingDraft || IsFinishing || IsCancelling;
+    private bool finishDisabled => !CanFinish || IsReadOnly || IsBusy || IsNavigating || IsSavingDraft || IsFinishing || IsCancelling;
+
+    private Task OnCancelClicked() => OnCancel.InvokeAsync();
+    private Task OnSaveDraftClicked() => OnSaveDraft.InvokeAsync();
+    private Task OnBackClicked() => OnBack.InvokeAsync();
+    private Task OnNextClicked() => OnNext.InvokeAsync();
+    private Task OnFinishClicked() => OnFinish.InvokeAsync();
+}

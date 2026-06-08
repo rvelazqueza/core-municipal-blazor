@@ -4,6 +4,8 @@ public class LicenciaComercialDto
 {
     public int Id { get; set; }
     public string NumeroLicencia { get; set; } = string.Empty;
+    public string Expediente { get; set; } = string.Empty;
+    public string CanalIngreso { get; set; } = string.Empty;
     public int ContribuyenteId { get; set; }
     public string ContribuyenteRuc { get; set; } = string.Empty;
     public string Identificacion { get; set; } = string.Empty;

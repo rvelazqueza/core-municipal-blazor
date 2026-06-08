@@ -1,0 +1,45 @@
+@using System
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Requiere agua potable</MudText><MudText>@(Permit.TechnicalWork.RequiresWater ? "Sí" : "No")</MudText></MudItem>
+            <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Requiere alcantarillado</MudText><MudText>@(Permit.TechnicalWork.RequiresSewer ? "Sí" : "No")</MudText></MudItem>
+            <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Cuenta de servicios</MudText><MudText>@Permit.TechnicalWork.GeneratedServicesAccount</MudText></MudItem>
+            <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Administrador acueducto</MudText><MudText>@Permit.PublicServices.FirstOrDefault(x => x.ServiceType.Contains("Agua", StringComparison.OrdinalIgnoreCase))?.Administrator</MudText></MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTable T="PcPublicServiceDto" Items="@Permit.PublicServices" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Servicio</MudTh><MudTh>Estado</MudTh><MudTh>Administrador</MudTh><MudTh>Diámetro</MudTh><MudTh>Categoría</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.ServiceType</MudTd>
+            <MudTd><MudChip T="string" Text="@context.Status" Color="@ResolveColor(context.Status)" Variant="Variant.Outlined" Size="Size.Small" /></MudTd>
+            <MudTd>@context.Administrator</MudTd>
+            <MudTd>@context.Diameter</MudTd>
+            <MudTd>@context.Category</MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+        <MudButton Variant="Variant.Outlined" OnClick="CreateWaterTaskAsync">Crear tarea Acueductos mock</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="CreateSewerTaskAsync">Crear tarea Alcantarillado mock</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ApproveAllAsync">Marcar aprobado mock</MudButton>
+    </MudStack>
+</MudStack>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private Task CreateWaterTaskAsync() { UpdateService("Agua", "En trámite"); Snackbar.Add("Tarea mock enviada a Acueductos.", Severity.Info); return Task.CompletedTask; }
+    private Task CreateSewerTaskAsync() { UpdateService("Alcantarillado", "En trámite"); Snackbar.Add("Tarea mock enviada a Alcantarillado.", Severity.Info); return Task.CompletedTask; }
+    private Task ApproveAllAsync() { foreach (var item in Permit.PublicServices) item.Status = "Aprobado"; Snackbar.Add("Servicios públicos aprobados en modo demo.", Severity.Success); return Task.CompletedTask; }
+    private void UpdateService(string key, string status) { var item = Permit.PublicServices.FirstOrDefault(x => x.ServiceType.Contains(key, StringComparison.OrdinalIgnoreCase)); if (item is not null) item.Status = status; }
+    private static Color ResolveColor(string status) => status.Contains("Aprob", StringComparison.OrdinalIgnoreCase) ? Color.Success : status.Contains("trámite", StringComparison.OrdinalIgnoreCase) ? Color.Info : Color.Warning;
+}

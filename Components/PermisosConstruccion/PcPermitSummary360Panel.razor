@@ -1,0 +1,222 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="8">
+            <MudPaper Outlined="true" Class="pa-4 h-100">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                        <div>
+                            <MudText Typo="Typo.h5">@Permit.CaseNumber</MudText>
+                            <MudText Typo="Typo.body2">@Permit.TypeName · @Permit.Channel</MudText>
+                        </div>
+                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                            <MudChip T="string" Text="@Permit.PermitStatus" Color="@ResolveStatusColor(Permit.PermitStatus)" Variant="Variant.Filled" />
+                            <MudChip T="string" Text="@($"APC {Permit.Apc.ApcStatus}")" Color="@ResolveStatusColor(Permit.Apc.ApcStatus)" Variant="Variant.Outlined" />
+                            <MudChip T="string" Text="@($"Pago {Permit.PaymentStatus}")" Color="@ResolveStatusColor(Permit.PaymentStatus)" Variant="Variant.Outlined" />
+                        </MudStack>
+                    </MudStack>
+
+                    @foreach (var alert in Alerts)
+                    {
+                        <MudAlert Severity="@ResolveAlertSeverity(alert)" Variant="Variant.Outlined" Dense="true">@alert</MudAlert>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Outlined="true" Class="pa-4 h-100">
+                <MudText Typo="Typo.subtitle2">Avance de obra</MudText>
+                <MudText Typo="Typo.h4">@($"{Permit.ProgressPercent:0}%")</MudText>
+                <MudProgressLinear Value="@((double)Permit.ProgressPercent)" Color="Color.Info" Class="mt-2" />
+                <MudText Typo="Typo.caption" Class="d-block mt-2">Plazo mock: @GetTermLabel()</MudText>
+                <MudText Typo="Typo.caption" Class="d-block">Límite: @FormatDate(Permit.DueDate)</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Spacing="2">
+        @foreach (var item in SummaryItems)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Outlined="true" Class="h-100">
+                    <MudCardContent>
+                        <MudText Typo="Typo.caption">@item.Label</MudText>
+                        <MudText Typo="Typo.subtitle1">@item.Value</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+            <MudButton Variant="Variant.Outlined" OnClick="EditAsync">Editar</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="ReviewAsync">Revisar</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="PreventAsync">Prevenir</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="AssessAsync">Tasar</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="SimulatePaymentAsync">Simular pago</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="ApproveAsync">Aprobar</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="AnnulAsync">Anular</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="RequestInspectionAsync">Solicitar inspección</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="RegisterProgressAsync">Registrar avance</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="UpdateBiAsync">Actualizar BI mock</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="ViewAuditAsync">Ver auditoría</MudButton>
+        </MudStack>
+    </MudPaper>
+</MudStack>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    [Parameter] public EventCallback OnViewAudit { get; set; }
+
+    private IReadOnlyList<(string Label, string Value)> SummaryItems =>
+    [
+        ("Código CFIA/APC", Permit.CfiaApcCode),
+        ("Código APC-R", Permit.ApcRCode),
+        ("Número de permiso", string.IsNullOrWhiteSpace(Permit.Resolution.PermitNumber) ? "Pendiente" : Permit.Resolution.PermitNumber),
+        ("Solicitante", Permit.Applicant.Name),
+        ("Propietario", Permit.Owner.Name),
+        ("Finca / ID Predial", $"{Permit.Property.PropertyNumber} / {Permit.Property.IdPredial}"),
+        ("Profesional", Permit.Professional.Name),
+        ("Tipo de obra", Permit.TechnicalWork.ProjectType),
+        ("Obra mayor / menor", Permit.TechnicalWork.WorkType),
+        ("Monto total obra", Permit.WorkAmount.ToString("C0")),
+        ("Impuesto construcción", Permit.Assessment.ConstructionTax.ToString("C0")),
+        ("Revisión técnica", Permit.MunicipalReview.Status),
+        ("Control calidad", Permit.QualityControl.Status),
+        ("Inspección inicial", Permit.QualityControl.InspectionStatus),
+        ("Estado GIS", Permit.Property.GisStatus),
+        ("Actualización BI", Permit.Property.BiUpdateStatus),
+        ("Estado cobro", Permit.Assessment.Status),
+        ("Estado pago", Permit.Payment.Status),
+        ("Ingreso", Permit.CreatedAt.ToString("dd/MM/yyyy")),
+        ("Fecha límite", FormatDate(Permit.DueDate))
+    ];
+
+    private List<string> Alerts
+    {
+        get
+        {
+            var items = new List<string>();
+            if (Permit.Requirements.Any(x => !string.Equals(x.State, "Presentado", StringComparison.OrdinalIgnoreCase) && !string.Equals(x.State, "No aplica", StringComparison.OrdinalIgnoreCase)))
+                items.Add("Existen requisitos pendientes u observados en el expediente.");
+            if (Permit.PermitStatus.Contains("prevención", StringComparison.OrdinalIgnoreCase))
+                items.Add("Existe una prevención pendiente de atención.");
+            if (!string.Equals(Permit.PaymentStatus, "Pagado", StringComparison.OrdinalIgnoreCase) && !string.Equals(Permit.Payment.Status, "Verificado", StringComparison.OrdinalIgnoreCase))
+                items.Add("El expediente mantiene pago pendiente.");
+            if (Permit.Payment.Infructuous || Permit.Payment.ReversalGenerated)
+                items.Add("Pago infructuoso o reversión requerida en modo mock.");
+            if (Permit.QualityControl.RequiresInspection && !Permit.QualityControl.InspectionStatus.Contains("Aprob", StringComparison.OrdinalIgnoreCase))
+                items.Add("La inspección inicial aún está pendiente o agendada.");
+            if (!Permit.LandUse.Status.Contains("Aprob", StringComparison.OrdinalIgnoreCase))
+                items.Add("El uso de suelo se encuentra pendiente de validación.");
+            if (!Permit.RoadAlignment.Status.Contains("Aprob", StringComparison.OrdinalIgnoreCase))
+                items.Add("El alineamiento vial está pendiente.");
+            if (Permit.PublicServices.Any(x => x.ServiceType.Contains("Agua", StringComparison.OrdinalIgnoreCase) && !x.Status.Contains("Aprob", StringComparison.OrdinalIgnoreCase)))
+                items.Add("La disponibilidad de agua potable está pendiente.");
+            if (Permit.PublicServices.Any(x => x.ServiceType.Contains("Alcantarillado", StringComparison.OrdinalIgnoreCase) && !x.Status.Contains("Aprob", StringComparison.OrdinalIgnoreCase)))
+                items.Add("La disponibilidad de alcantarillado sanitario está pendiente.");
+            if (Permit.ProgressPercent >= 80 && !Permit.Property.BiUpdateStatus.Contains("Actualiz", StringComparison.OrdinalIgnoreCase))
+                items.Add("Avance mayor al 80%; corresponde actualización mock en Bienes Inmuebles.");
+            if (!Permit.Property.GisStatus.Contains("vig", StringComparison.OrdinalIgnoreCase) && !Permit.Property.GisStatus.Contains("actualiz", StringComparison.OrdinalIgnoreCase))
+                items.Add("Existe gestión GIS pendiente.");
+            if (!Permit.Apc.MockSyncStatus.Contains("Sincronizado", StringComparison.OrdinalIgnoreCase))
+                items.Add("APC pendiente de sincronización mock.");
+            return items;
+        }
+    }
+
+    private Task EditAsync() => NotifyAsync("Edición controlada habilitada en modo demo.");
+    private Task ReviewAsync()
+    {
+        Permit.PermitStatus = "En revisión técnica";
+        Permit.MunicipalReview.Status = "En revisión";
+        return NotifyAsync("Expediente enviado a revisión técnica mock.");
+    }
+    private Task PreventAsync()
+    {
+        Permit.PermitStatus = "En prevención";
+        Permit.MunicipalReview.Status = "Prevenido";
+        return NotifyAsync("Prevención mock registrada.");
+    }
+    private Task AssessAsync()
+    {
+        Permit.Assessment.Status = "Tasada";
+        Permit.PaymentStatus = "Al cobro";
+        return NotifyAsync("Tasación mock aplicada al expediente.");
+    }
+    private Task SimulatePaymentAsync()
+    {
+        Permit.Payment.Status = "Verificado";
+        Permit.Payment.Verified = true;
+        Permit.Payment.Infructuous = false;
+        Permit.PaymentStatus = "Pagado";
+        return NotifyAsync("Pago mock verificado.");
+    }
+    private Task ApproveAsync()
+    {
+        Permit.PermitStatus = "Aprobado";
+        Permit.ResolutionStatus = "Generada";
+        Permit.ResolutionResult = "Aprobado";
+        Permit.Resolution.Result = "Aprobado";
+        Permit.Resolution.ApprovalDate = DateTime.Now;
+        Permit.Resolution.ApprovedBy = "demo.user";
+        Permit.Resolution.NotificationSimulated = "Pendiente";
+        return NotifyAsync("Permiso aprobado en modo demo.");
+    }
+    private Task AnnulAsync()
+    {
+        Permit.PermitStatus = "Anulado";
+        Permit.ResolutionResult = "Anulado";
+        Permit.Resolution.Result = "Anulado";
+        return NotifyAsync("Permiso anulado en modo demo.");
+    }
+    private Task RequestInspectionAsync()
+    {
+        Permit.InspectionStatus = "Agendada";
+        Permit.QualityControl.InspectionStatus = "Agendada";
+        return NotifyAsync("Inspección inicial solicitada en modo demo.");
+    }
+    private Task RegisterProgressAsync()
+    {
+        Permit.ProgressPercent = Math.Min(100, Permit.ProgressPercent + 10);
+        return NotifyAsync($"Avance actualizado a {Permit.ProgressPercent:0}%.");
+    }
+    private Task UpdateBiAsync()
+    {
+        Permit.Property.BiUpdateStatus = "Actualizado mock";
+        return NotifyAsync("Actualización BI mock registrada.");
+    }
+    private async Task ViewAuditAsync()
+    {
+        if (OnViewAudit.HasDelegate)
+            await OnViewAudit.InvokeAsync();
+        else
+            await NotifyAsync("Vista de auditoría disponible en pestaña correspondiente.");
+    }
+
+    private Task NotifyAsync(string message)
+    {
+        Snackbar.Add(message, Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
+    private string GetTermLabel() => Permit.DueDate.HasValue ? $"{Math.Max(0, (Permit.DueDate.Value.Date - Permit.CreatedAt.Date).Days)} días" : "Referencial";
+    private static Severity ResolveAlertSeverity(string text) => text.Contains("infructuoso", StringComparison.OrdinalIgnoreCase) || text.Contains("reversión", StringComparison.OrdinalIgnoreCase) ? Severity.Error : Severity.Warning;
+    private static Color ResolveStatusColor(string status) => status.ToLowerInvariant() switch
+    {
+        var value when value.Contains("aprob") || value.Contains("pagad") || value.Contains("verific") => Color.Success,
+        var value when value.Contains("pend") || value.Contains("agend") => Color.Warning,
+        var value when value.Contains("prev") || value.Contains("observ") || value.Contains("rech") => Color.Error,
+        var value when value.Contains("anul") => Color.Dark,
+        _ => Color.Info
+    };
+}

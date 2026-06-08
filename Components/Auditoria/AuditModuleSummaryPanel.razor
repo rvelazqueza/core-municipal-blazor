@@ -1,0 +1,41 @@
+@using BlazorApp.Models.Auditoria
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="2">
+        <div class="d-flex flex-wrap justify-space-between align-center gap-2">
+            <div>
+                <MudText Typo="Typo.h6">Eventos por módulo</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Resumen ejecutivo por módulo institucional.</MudText>
+            </div>
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{Summaries.Count()} módulos")</MudChip>
+        </div>
+
+        <MudGrid>
+            @foreach (var item in Summaries)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle2">@item.Module</MudText>
+                            <MudText Typo="Typo.h5">@item.TotalEvents</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">Críticos: @item.CriticalEvents</MudText>
+                            <MudDivider Class="my-2" />
+                            <MudText Typo="Typo.caption">Último evento</MudText>
+                            <MudText Typo="Typo.body2">@item.LastAction</MudText>
+                            <MudText Typo="Typo.caption">Fecha del último evento</MudText>
+                            <MudText Typo="Typo.body2">@item.LatestEventDate.ToString("dd/MM/yyyy HH:mm")</MudText>
+                            <MudText Typo="Typo.caption">Usuario</MudText>
+                            <MudText Typo="Typo.body2">@item.LatestUserName</MudText>
+                            <MudText Typo="Typo.caption">Estado</MudText>
+                            <MudText Typo="Typo.body2">@item.Status</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<AuditModuleSummaryDto> Summaries { get; set; } = Array.Empty<AuditModuleSummaryDto>();
+}

@@ -5,11 +5,11 @@
 <MudPaper Class="pa-4 mb-4">
     <MudText Typo="Typo.h6" Class="mb-3">Filtros de licencias</MudText>
     <MudGrid>
-        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="@Model.NumeroLicencia" ValueChanged="OnNumeroChanged" Label="Número de licencia" Variant="Variant.Outlined" /></MudItem>
-        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="@Model.Contribuyente" ValueChanged="OnContribuyenteChanged" Label="Contribuyente / RUC" Variant="Variant.Outlined" /></MudItem>
-        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="@Model.ActividadEconomica" ValueChanged="OnActividadChanged" Label="Actividad CAECR" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="Model.NumeroLicencia" ValueChanged="OnNumeroChanged" Label="Número de licencia" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="Model.Contribuyente" ValueChanged="OnContribuyenteChanged" Label="Contribuyente / RUC" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="Model.ActividadEconomica" ValueChanged="OnActividadChanged" Label="Actividad CAECR" Variant="Variant.Outlined" /></MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudSelect T="string" Value="@Model.Distrito" ValueChanged="OnDistritoChanged" Label="Distrito" Variant="Variant.Outlined" Clearable="true">
+            <MudSelect T="string" Value="Model.Distrito" ValueChanged="OnDistritoChanged" Label="Distrito" Variant="Variant.Outlined" Clearable="true">
                 @foreach (var item in distritos)
                 {
                     <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
@@ -17,16 +17,16 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudSelect T="string" Value="@Model.Estado" ValueChanged="OnEstadoChanged" Label="Estado" Variant="Variant.Outlined" Clearable="true">
+            <MudSelect T="string" Value="Model.Estado" ValueChanged="OnEstadoChanged" Label="Estado" Variant="Variant.Outlined" Clearable="true">
                 @foreach (var item in estados)
                 {
                     <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
                 }
             </MudSelect>
         </MudItem>
-        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="@Model.FechaVencimientoHasta" ValueChanged="OnFechaChanged" Label="Vence antes de (AAAA-MM-DD)" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12" md="6" lg="2"><MudTextField T="string" Value="Model.FechaVencimientoHasta" ValueChanged="OnFechaChanged" Label="Vence antes de (AAAA-MM-DD)" Variant="Variant.Outlined" /></MudItem>
         <MudItem xs="12" md="6" lg="3">
-            <MudSelect T="string" Value="@Model.Tipo" ValueChanged="OnTipoChanged" Label="Tipo de patente" Variant="Variant.Outlined" Clearable="true">
+            <MudSelect T="string" Value="Model.Tipo" ValueChanged="OnTipoChanged" Label="Tipo de patente" Variant="Variant.Outlined" Clearable="true">
                 @foreach (var item in tipos)
                 {
                     <MudSelectItem T="string" Value="@item">@item</MudSelectItem>

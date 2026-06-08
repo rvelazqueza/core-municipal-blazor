@@ -1,0 +1,41 @@
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Tipo de obra</MudText><MudText>@Permit.TechnicalWork.ProjectType</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Obra mayor / menor</MudText><MudText>@Permit.TechnicalWork.WorkType</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Tipo de proyecto</MudText><MudText>@Permit.TechnicalWork.ProjectType</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Nombre proyecto</MudText><MudText>@Permit.TechnicalWork.ProjectName</MudText></MudItem>
+        <MudItem xs="12"><MudText Typo="Typo.caption">Descripción</MudText><MudText>@Permit.TechnicalWork.Description</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Destino</MudText><MudText>@Permit.TechnicalWork.Destination</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Actividad económica</MudText><MudText>@Permit.TechnicalWork.RelatedEconomicActivity</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Financiamiento</MudText><MudText>@Permit.TechnicalWork.FundingSource</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Área existente</MudText><MudText>@($"{Permit.TechnicalWork.ExistingArea:N0} m²")</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Área nueva</MudText><MudText>@($"{Permit.TechnicalWork.NewArea:N0} m²")</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Área total</MudText><MudText>@($"{Permit.TechnicalWork.TotalArea:N0} m²")</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Valor total obra</MudText><MudText>@Permit.TechnicalWork.WorkAmount.ToString("C0")</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Sistema constructivo</MudText><MudText>@Permit.TechnicalWork.ConstructionSystem</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Material de calle</MudText><MudText>@Permit.TechnicalWork.RoadMaterial</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Inicio estimado</MudText><MudText>@FormatDate(Permit.TechnicalWork.StartDate)</MudText></MudItem>
+        <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Fin estimado</MudText><MudText>@FormatDate(Permit.TechnicalWork.EndDate)</MudText></MudItem>
+        <MudItem xs="12"><MudProgressLinear Value="@((double)Permit.ProgressPercent)" Color="Color.Primary" /><MudText Typo="Typo.caption">@($"Avance actual {Permit.ProgressPercent:0}%")</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Regularización</MudText><MudText>@(Permit.TechnicalWork.Regularization ? "Sí" : "No")</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Origen</MudText><MudText>@Permit.TechnicalWork.RegularizationOrigin</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Acto final</MudText><MudText>@Permit.TechnicalWork.RegularizationFinalAct</MudText></MudItem>
+        <MudItem xs="12"><MudTextField T="string" @bind-Value="Permit.TechnicalWork.Observations" Label="Observaciones" Variant="Variant.Outlined" Margin="Margin.Dense" AutoGrow="true" /></MudItem>
+    </MudGrid>
+    <MudButton Variant="Variant.Outlined" Class="mt-3" OnClick="SaveAsync">Guardar observaciones mock</MudButton>
+</MudPaper>
+
+@code {
+    [Parameter] public PcPermitDto Permit { get; set; } = new();
+    private Task SaveAsync()
+    {
+        Snackbar.Add("Datos técnicos actualizados en modo demo.", Severity.Success);
+        return Task.CompletedTask;
+    }
+    private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
+}

@@ -1,0 +1,298 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using BlazorApp.Models.PermisosConstruccion
+@using MudBlazor
+
+<MudPaper Outlined="true" Class="pa-4">
+    <MudStack Spacing="3">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <div>
+                <MudText Typo="Typo.h6">Bandeja de permisos</MudText>
+                <MudText Typo="Typo.body2">Consulta, clasificación y acciones operativas sobre permisos mock.</MudText>
+            </div>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FilterAltOff" OnClick="ClearFilters">Limpiar filtros</MudButton>
+        </MudStack>
+
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="caseNumberFilter" Label="Número de expediente" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="cfiaFilter" Label="Código CFIA/APC" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="apcrFilter" Label="Código APC-R" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="applicantFilter" Label="Solicitante" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="ownerFilter" Label="Propietario" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="propertyFilter" Label="Finca / ID Predial" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="planFilter" Label="Plano catastro" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="professionalFilter" Label="Profesional responsable" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="licenseFilter" Label="Carné profesional" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="string" @bind-Value="typeFilter" Label="Tipo de trámite" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var option in PermitTypes)
+                    {
+                        <MudSelectItem T="string" Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="string" @bind-Value="statusFilter" Label="Estado del trámite" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var option in StatusOptions)
+                    {
+                        <MudSelectItem T="string" Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="string" @bind-Value="paymentFilter" Label="Estado de cobro" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var option in PaymentOptions)
+                    {
+                        <MudSelectItem T="string" Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="string" @bind-Value="inspectionFilter" Label="Estado de inspección" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var option in InspectionOptions)
+                    {
+                        <MudSelectItem T="string" Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="string" @bind-Value="districtFilter" Label="Distrito" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var option in DistrictOptions)
+                    {
+                        <MudSelectItem T="string" Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="string" @bind-Value="priorityFilter" Label="Prioridad" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem T="string" Value="@string.Empty">Todas</MudSelectItem>
+                    @foreach (var option in PriorityOptions)
+                    {
+                        <MudSelectItem T="string" Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="workTypeFilter" Label="Tipo de obra" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Label="Fecha de creación desde" @bind-Date="createdFrom" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Label="Fecha de creación hasta" @bind-Date="createdTo" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Label="Fecha de vencimiento desde" @bind-Date="dueFrom" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Label="Fecha de vencimiento hasta" @bind-Date="dueTo" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Label="Fecha de finalización desde" @bind-Date="finishedFrom" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Label="Fecha de finalización hasta" @bind-Date="finishedTo" PickerVariant="PickerVariant.Dialog" Margin="Margin.Dense" />
+            </MudItem>
+        </MudGrid>
+
+        <MudTable T="PcPermitDto" Items="@FilteredPermits" Hover="true" Dense="true" FixedHeader="true" Height="560px" Elevation="0">
+            <HeaderContent>
+                <MudTh>Expediente</MudTh>
+                <MudTh>Código CFIA/APC</MudTh>
+                <MudTh>Tipo de trámite</MudTh>
+                <MudTh>Solicitante</MudTh>
+                <MudTh>Propietario</MudTh>
+                <MudTh>Finca / ID Predial</MudTh>
+                <MudTh>Profesional</MudTh>
+                <MudTh>Tipo de obra</MudTh>
+                <MudTh>Obra mayor/menor</MudTh>
+                <MudTh>Monto de obra</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh>Estado de cobro</MudTh>
+                <MudTh>Avance</MudTh>
+                <MudTh>Ingreso</MudTh>
+                <MudTh>Actualización</MudTh>
+                <MudTh>Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Expediente">@context.CaseNumber</MudTd>
+                <MudTd DataLabel="Código CFIA/APC">@context.CfiaApcCode</MudTd>
+                <MudTd DataLabel="Tipo de trámite">@context.TypeName</MudTd>
+                <MudTd DataLabel="Solicitante">@context.Applicant.Name</MudTd>
+                <MudTd DataLabel="Propietario">@context.Owner.Name</MudTd>
+                <MudTd DataLabel="Finca / ID Predial">@($"{context.Property.PropertyNumber} / {context.Property.IdPredial}")</MudTd>
+                <MudTd DataLabel="Profesional">@context.Professional.Name</MudTd>
+                <MudTd DataLabel="Tipo de obra">@context.TechnicalWork.WorkType</MudTd>
+                <MudTd DataLabel="Obra mayor/menor">@context.TechnicalWork.ProjectType</MudTd>
+                <MudTd DataLabel="Monto de obra">@context.WorkAmount.ToString("C0")</MudTd>
+                <MudTd DataLabel="Estado">
+                    <MudChip T="string" Text="@context.PermitStatus" Color="@ResolveStatusColor(context.PermitStatus)" Variant="Variant.Filled" Size="Size.Small" />
+                </MudTd>
+                <MudTd DataLabel="Estado de cobro">
+                    <MudChip T="string" Text="@context.PaymentStatus" Color="@ResolveStatusColor(context.PaymentStatus)" Variant="Variant.Outlined" Size="Size.Small" />
+                </MudTd>
+                <MudTd DataLabel="Avance">
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.body2">@($"{context.ProgressPercent:0}%")</MudText>
+                        <MudProgressLinear Value="@((double)context.ProgressPercent)" Color="Color.Info" />
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Ingreso">@context.CreatedAt.ToString("dd/MM/yyyy")</MudTd>
+                <MudTd DataLabel="Actualización">@context.UpdatedAt?.ToString("dd/MM/yyyy")</MudTd>
+                <MudTd DataLabel="Acciones">
+                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Primary" Dense="true" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopRight">
+                        <MudMenuItem Disabled="@(!OnOpenExpediente.HasDelegate)" OnClick="@(_ => OnOpenExpediente.InvokeAsync(context))">Ver expediente</MudMenuItem>
+                        <MudMenuItem Disabled="@(!OnEdit.HasDelegate)" OnClick="@(_ => OnEdit.InvokeAsync(context))">Editar</MudMenuItem>
+                        <MudMenuItem Disabled="@(!OnReview.HasDelegate)" OnClick="@(_ => OnReview.InvokeAsync(context))">Revisar</MudMenuItem>
+                        <MudMenuItem Disabled="@(!OnPrevention.HasDelegate)" OnClick="@(_ => OnPrevention.InvokeAsync(context))">Prevenir</MudMenuItem>
+                        <MudMenuItem Disabled="@(!OnAssess.HasDelegate)" OnClick="@(_ => OnAssess.InvokeAsync(context))">Tasar</MudMenuItem>
+                        <MudMenuItem Disabled="@(!OnSimulatePayment.HasDelegate)" OnClick="@(_ => OnSimulatePayment.InvokeAsync(context))">Simular pago</MudMenuItem>
+                        <MudMenuItem Disabled="@(!OnApprove.HasDelegate)" OnClick="@(_ => OnApprove.InvokeAsync(context))">Aprobar</MudMenuItem>
+                        <MudMenuItem Disabled="@(!OnAnnul.HasDelegate)" OnClick="@(_ => OnAnnul.InvokeAsync(context))">Anular</MudMenuItem>
+                        <MudMenuItem Disabled="@(!OnRequestInspection.HasDelegate)" OnClick="@(_ => OnRequestInspection.InvokeAsync(context))">Solicitar inspección</MudMenuItem>
+                        <MudMenuItem Disabled="@(!OnAudit.HasDelegate)" OnClick="@(_ => OnAudit.InvokeAsync(context))">Ver auditoría</MudMenuItem>
+                    </MudMenu>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public IEnumerable<PcPermitDto> Permits { get; set; } = [];
+    [Parameter] public EventCallback<PcPermitDto> OnOpenExpediente { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnEdit { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnReview { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnPrevention { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnAssess { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnSimulatePayment { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnApprove { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnAnnul { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnRequestInspection { get; set; }
+    [Parameter] public EventCallback<PcPermitDto> OnAudit { get; set; }
+
+    private string caseNumberFilter = string.Empty;
+    private string cfiaFilter = string.Empty;
+    private string apcrFilter = string.Empty;
+    private string applicantFilter = string.Empty;
+    private string ownerFilter = string.Empty;
+    private string propertyFilter = string.Empty;
+    private string planFilter = string.Empty;
+    private string professionalFilter = string.Empty;
+    private string licenseFilter = string.Empty;
+    private string typeFilter = string.Empty;
+    private string workTypeFilter = string.Empty;
+    private string statusFilter = string.Empty;
+    private string paymentFilter = string.Empty;
+    private string inspectionFilter = string.Empty;
+    private string districtFilter = string.Empty;
+    private string priorityFilter = string.Empty;
+    private DateTime? createdFrom;
+    private DateTime? createdTo;
+    private DateTime? dueFrom;
+    private DateTime? dueTo;
+    private DateTime? finishedFrom;
+    private DateTime? finishedTo;
+
+    private IEnumerable<PcPermitDto> FilteredPermits => Permits.Where(MatchesFilter).OrderByDescending(x => x.CreatedAt);
+
+    private List<string> PermitTypes => Permits.Select(x => x.TypeName).Distinct().OrderBy(x => x).ToList();
+    private List<string> StatusOptions => Permits.Select(x => x.PermitStatus).Distinct().OrderBy(x => x).ToList();
+    private List<string> PaymentOptions => Permits.Select(x => x.PaymentStatus).Distinct().OrderBy(x => x).ToList();
+    private List<string> InspectionOptions => Permits.Select(x => x.InspectionStatus).Distinct().OrderBy(x => x).ToList();
+    private List<string> DistrictOptions => Permits.Select(x => x.District).Distinct().OrderBy(x => x).ToList();
+    private List<string> PriorityOptions => Permits.Select(x => x.Priority).Distinct().OrderBy(x => x).ToList();
+
+    private void ClearFilters()
+    {
+        caseNumberFilter = string.Empty;
+        cfiaFilter = string.Empty;
+        apcrFilter = string.Empty;
+        applicantFilter = string.Empty;
+        ownerFilter = string.Empty;
+        propertyFilter = string.Empty;
+        planFilter = string.Empty;
+        professionalFilter = string.Empty;
+        licenseFilter = string.Empty;
+        typeFilter = string.Empty;
+        workTypeFilter = string.Empty;
+        statusFilter = string.Empty;
+        paymentFilter = string.Empty;
+        inspectionFilter = string.Empty;
+        districtFilter = string.Empty;
+        priorityFilter = string.Empty;
+        createdFrom = null;
+        createdTo = null;
+        dueFrom = null;
+        dueTo = null;
+        finishedFrom = null;
+        finishedTo = null;
+    }
+
+    private bool MatchesFilter(PcPermitDto item)
+    {
+        bool Contains(string source, string filter) => string.IsNullOrWhiteSpace(filter) || source.Contains(filter, StringComparison.OrdinalIgnoreCase);
+
+        return Contains(item.CaseNumber, caseNumberFilter)
+            && Contains(item.CfiaApcCode, cfiaFilter)
+            && Contains(item.ApcRCode, apcrFilter)
+            && Contains(item.Applicant.Identification, applicantFilter)
+            && Contains(item.Applicant.Name, applicantFilter)
+            && Contains(item.Owner.Identification, ownerFilter)
+            && Contains(item.Owner.Name, ownerFilter)
+            && Contains(item.Property.PropertyNumber, propertyFilter)
+            && Contains(item.Property.IdPredial, propertyFilter)
+            && Contains(item.Property.PlanNumber, planFilter)
+            && Contains(item.Professional.Name, professionalFilter)
+            && Contains(item.Professional.LicenseNumber, professionalFilter)
+            && Contains(item.TechnicalWork.WorkType, workTypeFilter)
+            && Contains(item.Professional.LicenseNumber, licenseFilter)
+            && (string.IsNullOrWhiteSpace(typeFilter) || string.Equals(item.TypeName, typeFilter, StringComparison.OrdinalIgnoreCase))
+            && (string.IsNullOrWhiteSpace(statusFilter) || string.Equals(item.PermitStatus, statusFilter, StringComparison.OrdinalIgnoreCase))
+            && (string.IsNullOrWhiteSpace(paymentFilter) || string.Equals(item.PaymentStatus, paymentFilter, StringComparison.OrdinalIgnoreCase))
+            && (string.IsNullOrWhiteSpace(inspectionFilter) || string.Equals(item.InspectionStatus, inspectionFilter, StringComparison.OrdinalIgnoreCase))
+            && (string.IsNullOrWhiteSpace(districtFilter) || string.Equals(item.District, districtFilter, StringComparison.OrdinalIgnoreCase))
+            && (string.IsNullOrWhiteSpace(priorityFilter) || string.Equals(item.Priority, priorityFilter, StringComparison.OrdinalIgnoreCase))
+            && (!createdFrom.HasValue || item.CreatedAt.Date >= createdFrom.Value.Date)
+            && (!createdTo.HasValue || item.CreatedAt.Date <= createdTo.Value.Date)
+            && (!dueFrom.HasValue || !item.DueDate.HasValue || item.DueDate.Value.Date >= dueFrom.Value.Date)
+            && (!dueTo.HasValue || !item.DueDate.HasValue || item.DueDate.Value.Date <= dueTo.Value.Date)
+            && (!finishedFrom.HasValue || !item.FinishedAt.HasValue || item.FinishedAt.Value.Date >= finishedFrom.Value.Date)
+            && (!finishedTo.HasValue || !item.FinishedAt.HasValue || item.FinishedAt.Value.Date <= finishedTo.Value.Date);
+    }
+
+    private static Color ResolveStatusColor(string status) => status.ToLowerInvariant() switch
+    {
+        var value when value.Contains("aprob") => Color.Success,
+        var value when value.Contains("pend") => Color.Warning,
+        var value when value.Contains("prev") => Color.Error,
+        var value when value.Contains("rech") => Color.Error,
+        var value when value.Contains("anul") => Color.Dark,
+        var value when value.Contains("cob") => Color.Info,
+        _ => Color.Primary
+    };
+}

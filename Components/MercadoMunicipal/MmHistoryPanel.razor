@@ -1,0 +1,62 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+
+<div class="d-flex flex-column gap-3">
+    <MudPaper Outlined="true" Class="pa-4">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="3"><MudDatePicker Label="Fecha desde" @bind-Date="fromDate" PickerVariant="PickerVariant.Dialog" /></MudItem>
+            <MudItem xs="12" md="3"><MudTextField T="string" @bind-Value="userFilter" Label="Usuario" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="12" md="3"><MudTextField T="string" @bind-Value="actionFilter" Label="Acción" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="12" md="3"><MudTextField T="string" @bind-Value="originFilter" Label="Origen / proceso" Variant="Variant.Outlined" /></MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTable T="MmHistoryEventDto" Items="@FilteredItems" Hover="true">
+        <HeaderContent>
+            <MudTh>Fecha</MudTh>
+            <MudTh>Usuario</MudTh>
+            <MudTh>Acción</MudTh>
+            <MudTh>Estado anterior</MudTh>
+            <MudTh>Estado nuevo</MudTh>
+            <MudTh>Valor anterior</MudTh>
+            <MudTh>Valor nuevo</MudTh>
+            <MudTh>Documento fuente</MudTh>
+            <MudTh>Proceso origen</MudTh>
+            <MudTh>Comentario</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Date.ToString("dd/MM/yyyy HH:mm")</MudTd>
+            <MudTd>@context.User</MudTd>
+            <MudTd>@context.Action</MudTd>
+            <MudTd>@context.PreviousStatus</MudTd>
+            <MudTd>@context.NewStatus</MudTd>
+            <MudTd>@context.PreviousValue</MudTd>
+            <MudTd>@context.NewValue</MudTd>
+            <MudTd>@context.SourceDocument</MudTd>
+            <MudTd>@context.SourceProcess</MudTd>
+            <MudTd>@context.Comment</MudTd>
+        </RowTemplate>
+    </MudTable>
+</div>
+
+@code {
+    [Parameter] public IEnumerable<MmHistoryEventDto> Items { get; set; } = Enumerable.Empty<MmHistoryEventDto>();
+
+    private DateTime? fromDate;
+    private string userFilter = string.Empty;
+    private string actionFilter = string.Empty;
+    private string originFilter = string.Empty;
+
+    private IEnumerable<MmHistoryEventDto> FilteredItems => Items
+        .Where(item => (!fromDate.HasValue || item.Date.Date >= fromDate.Value.Date)
+            && Matches(item.User, userFilter)
+            && Matches(item.Action, actionFilter)
+            && (Matches(item.SourceProcess, originFilter) || Matches(item.SourceDocument, originFilter)))
+        .OrderByDescending(item => item.Date);
+
+    private static bool Matches(string value, string filter) => string.IsNullOrWhiteSpace(filter) || value.Contains(filter, StringComparison.OrdinalIgnoreCase);
+}

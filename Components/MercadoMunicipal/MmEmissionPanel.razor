@@ -1,0 +1,240 @@
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using BlazorApp.Models
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+@if (Local is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No existe información del local para emisiones.</MudAlert>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        @if (HasDuplicateEmission)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Ya existe una emisión mock para el mismo mes/período en este expediente.</MudAlert>
+        }
+
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Emisiones</MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6" md="3"><MudText>Locales incluidos: @Items.Sum(x => x.IncludedLocals)</MudText></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudText>Locales excluidos: @Items.Sum(x => x.ExcludedLocals)</MudText></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudText>Monto total: @FormatCurrency(Items.Sum(x => x.TotalAmount))</MudText></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudText>Emisión automática: @(automaticEnabled ? "Activa" : "Inactiva")</MudText></MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <div class="d-flex flex-wrap gap-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick='@(() => CreateEmissionAsync("Mensual"))'>Crear emisión mensual</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick='@(() => CreateEmissionAsync("Anual"))'>Crear emisión anual</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick='@(() => CreateEmissionAsync("Manual"))'>Crear emisión manual</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="ScheduleLastBusinessDayAsync">Programar último día hábil del mes</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ToggleAutomaticAsync">@(automaticEnabled ? "Desactivar" : "Activar") emisión automática</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ValidateDuplicatesAsync">Validar duplicidad mes/período mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApplyQualityControlAsync">Aplicar control de calidad mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SimulateEmissionAsync">Simular emisión</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Dark" OnClick="ViewQualityReportAsync">Ver reporte de control</MudButton>
+            </div>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4 overflow-x-auto">
+            <MudTable T="MmEmissionDto" Items="@Items.OrderByDescending(x => x.CreatedAt)" Hover="true">
+                <HeaderContent>
+                    <MudTh>Número</MudTh>
+                    <MudTh>Período</MudTh>
+                    <MudTh>Mes</MudTh>
+                    <MudTh>Año</MudTh>
+                    <MudTh>Cuenta local</MudTh>
+                    <MudTh>Tipo local</MudTh>
+                    <MudTh>Monto</MudTh>
+                    <MudTh>Actividad</MudTh>
+                    <MudTh>Estado alquiler</MudTh>
+                    <MudTh>Estado emisión</MudTh>
+                    <MudTh>Localización</MudTh>
+                    <MudTh>Pasillo</MudTh>
+                    <MudTh>Factor</MudTh>
+                    <MudTh>Área</MudTh>
+                    <MudTh>Precio propuesto</MudTh>
+                    <MudTh>Incluidos</MudTh>
+                    <MudTh>Excluidos</MudTh>
+                    <MudTh>Inconsistencias</MudTh>
+                    <MudTh>Control calidad</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.EmissionNumber</MudTd>
+                    <MudTd>@($"{context.FiscalYear}-{context.Month:00}")</MudTd>
+                    <MudTd>@context.Month</MudTd>
+                    <MudTd>@context.FiscalYear</MudTd>
+                    <MudTd>@context.LocalAccount</MudTd>
+                    <MudTd>@context.LocalType</MudTd>
+                    <MudTd>@FormatCurrency(context.TotalAmount)</MudTd>
+                    <MudTd>@context.BusinessActivity</MudTd>
+                    <MudTd>@context.RentStatus</MudTd>
+                    <MudTd>@context.Status</MudTd>
+                    <MudTd>@context.Location</MudTd>
+                    <MudTd>@context.Aisle</MudTd>
+                    <MudTd>@context.WeightingFactor</MudTd>
+                    <MudTd>@context.AreaM2</MudTd>
+                    <MudTd>@FormatCurrency(context.ProposedPrice)</MudTd>
+                    <MudTd>@context.IncludedLocals</MudTd>
+                    <MudTd>@context.ExcludedLocals</MudTd>
+                    <MudTd>@context.Inconsistencies</MudTd>
+                    <MudTd>@context.QualityControlStatus</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    [Parameter] public MmLocalDto? Local { get; set; }
+    [Parameter] public MmRentDto? Rent { get; set; }
+    [Parameter] public List<MmEmissionDto> Items { get; set; } = new();
+    [Parameter] public List<MmHistoryEventDto> HistoryItems { get; set; } = new();
+    [Parameter] public List<MmAuditEventDto> AuditItems { get; set; } = new();
+
+    private bool automaticEnabled;
+
+    private bool HasDuplicateEmission => Items.GroupBy(x => new { x.FiscalYear, x.Month }).Any(group => group.Count() > 1);
+
+    protected override void OnParametersSet()
+    {
+        automaticEnabled = Items.Any(x => x.AutomaticEnabled);
+    }
+
+    private Task CreateEmissionAsync(string emissionType)
+    {
+        if (Local is null)
+            return Task.CompletedTask;
+
+        var item = new MmEmissionDto
+        {
+            Id = $"EMS-MOCK-{Items.Count + 1:000}",
+            LocalId = Local.Id,
+            EmissionNumber = $"EM-MOCK-{DateTime.Now:HHmmss}",
+            FiscalYear = DateTime.Today.Year,
+            Month = DateTime.Today.Month,
+            EmissionType = emissionType,
+            LocalAccount = Local.AccountNumber,
+            LocalType = Local.LocalType,
+            TotalAmount = Math.Max(Local.RentAmount, Rent?.MonthlyAmount ?? 0m),
+            BusinessActivity = Local.BusinessActivity,
+            RentStatus = Rent?.IsSuspended == true ? "Cobro suspendido" : "Alquiler activo",
+            Location = Local.Location,
+            Aisle = Local.Aisle,
+            WeightingFactor = Local.WeightingFactor,
+            AreaM2 = Local.AreaM2,
+            ProposedPrice = Local.ProposedPrice,
+            IncludedLocals = 1,
+            ExcludedLocals = 0,
+            Inconsistencies = HasDuplicateEmission ? "Período duplicado detectado" : "Sin inconsistencias",
+            QualityControlStatus = "Pendiente de control",
+            Status = "Creada",
+            AutomaticEnabled = automaticEnabled,
+            ScheduledRule = emissionType.Equals("Programada", StringComparison.OrdinalIgnoreCase) ? "Último día hábil del mes" : "Generación manual",
+            CreatedAt = DateTime.Now
+        };
+
+        Items.Insert(0, item);
+        RegisterMockEvent($"Crear emisión {emissionType}", string.Empty, item.EmissionNumber, "Emisiones", "Media");
+        Snackbar.Add($"Emisión {emissionType.ToLowerInvariant()} mock creada.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task ScheduleLastBusinessDayAsync() => CreateEmissionAsync("Programada");
+
+    private Task ToggleAutomaticAsync()
+    {
+        automaticEnabled = !automaticEnabled;
+        foreach (var item in Items)
+            item.AutomaticEnabled = automaticEnabled;
+
+        RegisterMockEvent("Cambio de emisión automática", automaticEnabled ? "Desactivada" : "Activada", automaticEnabled ? "Activada" : "Desactivada", "Emisiones", "Baja");
+        Snackbar.Add(automaticEnabled ? "Emisión automática activada en modo mock." : "Emisión automática desactivada en modo mock.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task ValidateDuplicatesAsync()
+    {
+        Snackbar.Add(HasDuplicateEmission ? "Se detectó duplicidad mock de mes/período." : "No se detectó duplicidad mock.", HasDuplicateEmission ? Severity.Warning : Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task ApplyQualityControlAsync()
+    {
+        var item = Items.OrderByDescending(x => x.CreatedAt).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.QualityControlStatus = "Control superado";
+        item.Status = "Aprobada";
+        item.Inconsistencies = "Sin inconsistencias";
+        RegisterMockEvent("Control de calidad de emisión", "Pendiente", "Aprobada", "Emisiones", "Media");
+        Snackbar.Add("Control de calidad mock aplicado.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task SimulateEmissionAsync()
+    {
+        var item = Items.OrderByDescending(x => x.CreatedAt).FirstOrDefault();
+        if (item is null)
+            return Task.CompletedTask;
+
+        item.Status = "Emitida mock";
+        RegisterMockEvent("Simular emisión", "Aprobada", "Emitida mock", "Emisiones", "Alta");
+        Snackbar.Add("Emisión simulada correctamente.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task ViewQualityReportAsync()
+    {
+        Snackbar.Add("Reporte de control visualizado en modo mock.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private void RegisterMockEvent(string action, string previousValue, string currentValue, string process, string severity)
+    {
+        if (Local is null)
+            return;
+
+        HistoryItems.Insert(0, new MmHistoryEventDto
+        {
+            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousStatus = "Registrado",
+            NewStatus = "Actualizado",
+            PreviousValue = previousValue,
+            NewValue = currentValue,
+            SourceDocument = "Panel de emisiones",
+            SourceProcess = process,
+            Comment = "Evento mock generado desde emisiones."
+        });
+
+        AuditItems.Insert(0, new MmAuditEventDto
+        {
+            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            LocalId = Local.Id,
+            Date = DateTime.Now,
+            User = "Usuario Mercado",
+            Action = action,
+            PreviousValue = previousValue,
+            CurrentValue = currentValue,
+            SourceDocument = "Panel de emisiones",
+            Process = process,
+            Severity = severity,
+            OutputReference = "Reporte de control mock"
+        });
+    }
+
+    private static string FormatCurrency(decimal value) => $"CRC {value:N2}";
+}
