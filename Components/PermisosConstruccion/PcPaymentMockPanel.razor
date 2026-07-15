@@ -16,17 +16,17 @@
         </MudAlert>
     </MudCardContent>
     <MudCardActions>
-        <MudButton Variant="Variant.Outlined" OnClick="SimulatePaymentAsync">Simular pago</MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="InfructuousAsync">Simular pago infructuoso</MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="ReversalAsync">Generar reversión mock</MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="VerifyInsuranceAsync">Verificar póliza mock</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="SimulatePaymentAsync">Registrar pago</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="InfructuousAsync">Registrar pago infructuoso</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ReversalAsync">Generar reversión</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="VerifyInsuranceAsync">Verificar póliza</MudButton>
     </MudCardActions>
 </MudCard>
 
 @code {
     [Parameter] public PcPermitDto Permit { get; set; } = new();
-    private Task SimulatePaymentAsync() { Permit.Payment.Status = "Verificado"; Permit.Payment.Verified = true; Permit.Payment.Infructuous = false; Permit.Payment.ReversalGenerated = false; Permit.PaymentStatus = "Pagado"; Snackbar.Add("Pago mock verificado.", Severity.Success); return Task.CompletedTask; }
-    private Task InfructuousAsync() { Permit.Payment.Status = "Infructuoso"; Permit.Payment.Infructuous = true; Permit.Payment.Verified = false; Permit.PaymentStatus = "Pendiente"; Snackbar.Add("Pago mock marcado como infructuoso.", Severity.Warning); return Task.CompletedTask; }
-    private Task ReversalAsync() { Permit.Payment.Status = "Reversión requerida"; Permit.Payment.ReversalGenerated = true; Snackbar.Add("Reversión mock generada.", Severity.Error); return Task.CompletedTask; }
-    private Task VerifyInsuranceAsync() { Permit.Payment.InsurancePolicyStatus = "Verificada"; Snackbar.Add("Póliza INS mock verificada.", Severity.Success); return Task.CompletedTask; }
+    private Task SimulatePaymentAsync() { Permit.Payment.Status = "Verificado"; Permit.Payment.Verified = true; Permit.Payment.Infructuous = false; Permit.Payment.ReversalGenerated = false; Permit.PaymentStatus = "Pagado"; Snackbar.Add("Pago verificado.", Severity.Success); return Task.CompletedTask; }
+    private Task InfructuousAsync() { Permit.Payment.Status = "Infructuoso"; Permit.Payment.Infructuous = true; Permit.Payment.Verified = false; Permit.PaymentStatus = "Pendiente"; Snackbar.Add("Pago marcado como infructuoso.", Severity.Warning); return Task.CompletedTask; }
+    private Task ReversalAsync() { Permit.Payment.Status = "Reversión requerida"; Permit.Payment.ReversalGenerated = true; Snackbar.Add("Reversión generada.", Severity.Error); return Task.CompletedTask; }
+    private Task VerifyInsuranceAsync() { Permit.Payment.InsurancePolicyStatus = "Verificada"; Snackbar.Add("Póliza INS verificada.", Severity.Success); return Task.CompletedTask; }
 }

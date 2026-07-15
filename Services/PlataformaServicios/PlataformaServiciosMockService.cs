@@ -64,7 +64,7 @@ public class PlataformaServiciosMockService
                 PreviousStatus = "Borrador",
                 NewStatus = procedure.Status,
                 Department = procedure.Department,
-                Comment = "El trámite fue registrado en modo demo.",
+                Comment = "El trámite fue registrado correctamente.",
                 Origin = "Plataforma de Servicios"
             });
 
@@ -226,7 +226,7 @@ public class PlataformaServiciosMockService
                     Integrations = BuildIntegrations(),
                     Notifications = new List<PsNotificationDto>
                     {
-                        new() { Type = "Prevención", Channel = notificationChannels[index % notificationChannels.Length], Status = "Enviada mock", Date = DateTime.Now.AddDays(-1), Result = "Recibida", Observation = "Mensaje referencial." },
+                        new() { Type = "Prevención", Channel = notificationChannels[index % notificationChannels.Length], Status = "Enviada", Date = DateTime.Now.AddDays(-1), Result = "Recibida", Observation = "Mensaje registrado." },
                         new() { Type = "Resolución", Channel = notificationChannels[(index + 1) % notificationChannels.Length], Status = "Pendiente", Date = DateTime.Now, Result = "Pendiente", Observation = "Pendiente de envío." }
                     },
                     History = BuildHistory(index, department, channel, status),

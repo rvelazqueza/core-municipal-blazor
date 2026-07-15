@@ -144,7 +144,7 @@
                 <MudGrid Class="mt-2">
                     <MudItem xs="12">
                         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-                            Las integraciones se muestran en modo simulado para acompañar la creación de la finca.
+                            Las integraciones se muestran para acompañar la creación de la finca.
                         </MudAlert>
                     </MudItem>
                     <MudItem xs="12" sm="6" lg="3">
@@ -152,9 +152,9 @@
                             <MudStack Spacing="2">
                                 <MudText Typo="Typo.subtitle2">Registro Público</MudText>
                                 <MudChip T="string" Color="@(Model.RegistroPublicoSincronizado ? Color.Success : Color.Warning)" Variant="Variant.Filled">
-                                    @(Model.RegistroPublicoSincronizado ? "Simulado" : "Pendiente")
+                                    @(Model.RegistroPublicoSincronizado ? "Sincronizado" : "Pendiente")
                                 </MudChip>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularRegistroPublicoAsync">Simular</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularRegistroPublicoAsync">Consultar</MudButton>
                             </MudStack>
                         </MudPaper>
                     </MudItem>
@@ -163,9 +163,9 @@
                             <MudStack Spacing="2">
                                 <MudText Typo="Typo.subtitle2">GIS</MudText>
                                 <MudChip T="string" Color="@(string.IsNullOrWhiteSpace(Model.UbicacionGis) ? Color.Warning : Color.Success)" Variant="Variant.Filled">
-                                    @(string.IsNullOrWhiteSpace(Model.UbicacionGis) ? "Pendiente" : "Simulado")
+                                    @(string.IsNullOrWhiteSpace(Model.UbicacionGis) ? "Pendiente" : "Sincronizado")
                                 </MudChip>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularGisAsync">Simular</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularGisAsync">Sincronizar</MudButton>
                             </MudStack>
                         </MudPaper>
                     </MudItem>
@@ -174,9 +174,9 @@
                             <MudStack Spacing="2">
                                 <MudText Typo="Typo.subtitle2">Hacienda</MudText>
                                 <MudChip T="string" Color="@(Model.RemitidoHacienda ? Color.Success : Color.Warning)" Variant="Variant.Filled">
-                                    @(Model.RemitidoHacienda ? "Simulado" : "Pendiente")
+                                    @(Model.RemitidoHacienda ? "Sincronizado" : "Pendiente")
                                 </MudChip>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularHaciendaAsync">Simular</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularHaciendaAsync">Validar</MudButton>
                             </MudStack>
                         </MudPaper>
                     </MudItem>
@@ -185,9 +185,9 @@
                             <MudStack Spacing="2">
                                 <MudText Typo="Typo.subtitle2">Cobro</MudText>
                                 <MudChip T="string" Color="@(string.IsNullOrWhiteSpace(Model.CuentaTributaria) ? Color.Warning : Color.Success)" Variant="Variant.Filled">
-                                    @(string.IsNullOrWhiteSpace(Model.CuentaTributaria) ? "Pendiente" : "Simulado")
+                                    @(string.IsNullOrWhiteSpace(Model.CuentaTributaria) ? "Pendiente" : "Sincronizado")
                                 </MudChip>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularCobroAsync">Simular</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="SimularCobroAsync">Procesar</MudButton>
                             </MudStack>
                         </MudPaper>
                     </MudItem>

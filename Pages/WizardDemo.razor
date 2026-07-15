@@ -8,12 +8,12 @@
 @using MudBlazor
 @inject ISnackbar Snackbar
 
-<PageTitle>Wizard Demo</PageTitle>
+<PageTitle>Wizard técnico reutilizable</PageTitle>
 
-<WizardShell Title="Demo técnico reusable"
+<WizardShell Title="Flujo guiado reutilizable"
              Subtitle="Base transversal para futuros trámites y registros municipales"
              ModuleName="Core Municipal"
-             ProcessCode="WZ-DEMO-001"
+             ProcessCode="WZ-FLUJO-001"
              State="wizardState"
              ProcessSummaryItems="processSummaryItems"
              CurrentStepTitle="@currentStepTitle"
@@ -80,14 +80,14 @@
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="12">
-                        <MudTextField T="string" Label="Observaciones mock" Variant="Variant.Outlined" @bind-Value="notes" />
+                        <MudTextField T="string" Label="Observaciones" Variant="Variant.Outlined" @bind-Value="notes" />
                     </MudItem>
                 </MudGrid>
                 break;
             default:
                 <MudStack Spacing="2">
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Este paso demuestra el cierre demo del estándar reusable.</MudAlert>
-                    <MudText Typo="Typo.body2">Use Finalizar para simular el cierre, registrar auditoría mock visual y cambiar el estado a completado.</MudText>
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Este paso demuestra el cierre del estándar reusable.</MudAlert>
+                    <MudText Typo="Typo.body2">Use Finalizar para completar el proceso, registrar auditoría y cambiar el estado a completado.</MudText>
                 </MudStack>
                 break;
         }
@@ -101,7 +101,7 @@
     private WizardStateDto wizardState = new();
     private List<ProcessSummaryItemDto> processSummaryItems = new();
     private string lastAuditEvent = "Sin eventos registrados aún.";
-    private string processName = "Nuevo trámite demo";
+    private string processName = "Nuevo trámite municipal";
     private string processType = "Solicitud";
     private string applicantId = string.Empty;
     private string email = string.Empty;
@@ -121,15 +121,15 @@
 
     protected override void OnInitialized()
     {
-        wizardState = wizardStateService.GetInitialState("Core Municipal", "Wizard Demo", new List<WizardStepDto>
+        wizardState = wizardStateService.GetInitialState("Core Municipal", "Wizard Técnico", new List<WizardStepDto>
         {
             new() { Id = "general", Title = "Datos generales", Description = "Identifique el tipo de gestión y nombre del proceso.", Icon = Icons.Material.Filled.Description },
             new() { Id = "solicitante", Title = "Solicitante", Description = "Valide identificación, correo, teléfono y dirección.", Icon = Icons.Material.Filled.Person },
-            new() { Id = "detalle", Title = "Detalle", Description = "Capture actividad, distrito y observaciones mock.", Icon = Icons.Material.Filled.Business },
-            new() { Id = "cierre", Title = "Resumen y finalización", Description = "Revise el resumen y complete el proceso demo.", Icon = Icons.Material.Filled.TaskAlt }
+            new() { Id = "detalle", Title = "Detalle", Description = "Capture actividad, distrito y observaciones.", Icon = Icons.Material.Filled.Business },
+            new() { Id = "cierre", Title = "Resumen y finalización", Description = "Revise el resumen y complete el proceso.", Icon = Icons.Material.Filled.TaskAlt }
         }, "wizard-demo");
-        wizardState.ProcessCode = "WZ-DEMO-001";
-        wizardState.CreatedBy = "demo.user";
+        wizardState.ProcessCode = "WZ-FLUJO-001";
+        wizardState.CreatedBy = "usuario.municipal";
         SyncSummary();
     }
 
@@ -166,8 +166,8 @@
     {
         wizardState = await wizardStateService.SetStatusAsync(wizardState, "Cancelado");
         wizardState.DraftState.Status = "Sin guardar";
-        wizardState.DraftState.Message = "Proceso cancelado en modo demo.";
-        lastAuditEvent = $"{DateTime.Now:dd/MM/yyyy HH:mm} · Cancelación mock registrada por demo.user.";
+        wizardState.DraftState.Message = "Proceso cancelado.";
+        lastAuditEvent = $"{DateTime.Now:dd/MM/yyyy HH:mm} · Cancelación registrada por usuario.municipal.";
         SyncSummary();
     }
 
@@ -183,9 +183,9 @@
 
         wizardState = await wizardStateService.SetStatusAsync(wizardState, "Completado");
         wizardState.DraftState.Status = "Guardado";
-        wizardState.DraftState.Message = "Proceso finalizado correctamente en modo demo.";
-        lastAuditEvent = $"{DateTime.Now:dd/MM/yyyy HH:mm} · Evento mock de auditoría registrado para {processName}.";
-        Snackbar.Add("Proceso finalizado correctamente en modo demo.", Severity.Success);
+        wizardState.DraftState.Message = "Proceso finalizado correctamente.";
+        lastAuditEvent = $"{DateTime.Now:dd/MM/yyyy HH:mm} · Evento de auditoría registrado para {processName}.";
+        Snackbar.Add("Proceso finalizado correctamente.", Severity.Success);
         SyncSummary();
     }
 
@@ -227,11 +227,11 @@
                     StepIndex = currentIndex,
                     StepTitle = currentTitle,
                     Field = "Phone",
-                    Message = "El teléfono es recomendable para el contacto mock.",
+                    Message = "El teléfono es recomendable para el contacto.",
                     Severity = "Warning",
                     IsValid = true,
                     HasWarnings = true,
-                    Messages = new List<string> { "El teléfono es recomendable para el contacto mock." }
+                    Messages = new List<string> { "El teléfono es recomendable para el contacto." }
                 });
             }
         }
@@ -247,10 +247,10 @@
                     StepIndex = currentIndex,
                     StepTitle = currentTitle,
                     Field = "Notes",
-                    Message = "Puede agregar observaciones mock para enriquecer el demo.",
+                    Message = "Puede agregar observaciones para enriquecer el registro.",
                     Severity = "Info",
                     IsValid = true,
-                    Messages = new List<string> { "Puede agregar observaciones mock para enriquecer el demo." }
+                    Messages = new List<string> { "Puede agregar observaciones para enriquecer el registro." }
                 });
             }
         }
@@ -262,10 +262,10 @@
                 StepIndex = currentIndex,
                 StepTitle = currentTitle,
                 Field = "Summary",
-                Message = "Resumen final listo para cierre demo.",
+                Message = "Resumen final listo para cierre.",
                 Severity = "Success",
                 IsValid = true,
-                Messages = new List<string> { "Resumen final listo para cierre demo." }
+                Messages = new List<string> { "Resumen final listo para cierre." }
             });
         }
 

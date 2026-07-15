@@ -199,10 +199,10 @@ public partial class BienInmuebleCreateWizard
             $"Valor terreno: {Model.ValorTerreno:N2}",
             $"Valor construcción: {Model.ValorConstruccion:N2}",
             $"Valor fiscal total: {Model.ValorFiscalTotal:N2}",
-            $"Registro Público: {(Model.RegistroPublicoSincronizado ? "Simulado" : "Pendiente")}",
-            $"GIS: {(string.IsNullOrWhiteSpace(Model.UbicacionGis) ? "Pendiente" : "Simulado")}",
-            $"Hacienda: {(Model.RemitidoHacienda ? "Simulado" : "Pendiente")}",
-            $"Cobro: {(string.IsNullOrWhiteSpace(Model.CuentaTributaria) ? "Pendiente" : "Simulado")}"
+            $"Registro Público: {(Model.RegistroPublicoSincronizado ? "Sincronizado" : "Pendiente")}",
+            $"GIS: {(string.IsNullOrWhiteSpace(Model.UbicacionGis) ? "Pendiente" : "Sincronizado")}",
+            $"Hacienda: {(Model.RemitidoHacienda ? "Sincronizado" : "Pendiente")}",
+            $"Cobro: {(string.IsNullOrWhiteSpace(Model.CuentaTributaria) ? "Pendiente" : "Sincronizado")}"
         ];
     }
 

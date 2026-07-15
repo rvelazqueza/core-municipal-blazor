@@ -28,7 +28,7 @@
 
 @code {
     [Parameter] public PcPermitDto Permit { get; set; } = new();
-    private Task ApproveAsync() { Permit.QualityControl.Status = "Aprobado"; Permit.QualityControl.ReturnReason = string.Empty; Snackbar.Add("Control de calidad aprobado en modo demo.", Severity.Success); return Task.CompletedTask; }
+    private Task ApproveAsync() { Permit.QualityControl.Status = "Aprobado"; Permit.QualityControl.ReturnReason = string.Empty; Snackbar.Add("Control de calidad aprobado.", Severity.Success); return Task.CompletedTask; }
     private Task ReturnAsync() { Permit.QualityControl.Status = "Devuelto"; Permit.QualityControl.ReturnReason = string.IsNullOrWhiteSpace(Permit.QualityControl.ReturnReason) ? "Revisión documental adicional." : Permit.QualityControl.ReturnReason; Snackbar.Add("Expediente devuelto por control de calidad.", Severity.Warning); return Task.CompletedTask; }
-    private Task ReassignAsync() { Permit.QualityControl.Responsible = "Reasignado mock"; Snackbar.Add("Control de calidad reasignado en modo demo.", Severity.Info); return Task.CompletedTask; }
+    private Task ReassignAsync() { Permit.QualityControl.Responsible = "Reasignado"; Snackbar.Add("Control de calidad reasignado.", Severity.Info); return Task.CompletedTask; }
 }

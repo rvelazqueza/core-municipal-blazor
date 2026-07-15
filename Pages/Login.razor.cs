@@ -75,8 +75,8 @@ public partial class Login
         demoUser = GetPreferredText(settings.DemoUser, "admin@municipal.go.cr");
         demoPassword = GetPreferredText(settings.DemoPassword, "Admin123!Demo");
         demoTwoFactorCode = GetPreferredText(settings.DemoTwoFactorCode, "123456");
-        demoHelperText = GetPreferredText(settings.DemoHelperText, "Use estas credenciales únicamente para pruebas del prototipo.");
-        twoFactorHelperText = $"Use el código demo {demoTwoFactorCode} para validar esta pantalla.";
+        demoHelperText = GetPreferredText(settings.DemoHelperText, "Use estas credenciales para acceso de prueba del sistema.");
+        twoFactorHelperText = $"Use el código {demoTwoFactorCode} para validar esta pantalla.";
         demoCredentialsClipboard = $"Usuario: {demoUser}{Environment.NewLine}Contraseña: {demoPassword}{Environment.NewLine}Código 2FA: {demoTwoFactorCode}";
         heroBenefits = BuildHeroBenefits();
         hasHeroImage = !string.IsNullOrWhiteSpace(GetPreferredText(settings.HeroImageUrl, settings.ImagenBienvenidaUrl));
@@ -165,7 +165,7 @@ public partial class Login
         twoFactorRequest.Codigo = settings.HabilitarTwoFactor ? demoTwoFactorCode : string.Empty;
         twoFactorRequest.UsuarioOCorreo = demoUser;
         UpdateInitials(demoUser);
-        SetFeedback("Se cargaron las credenciales demo para pruebas del prototipo.", Severity.Info);
+        SetFeedback("Se cargaron las credenciales para acceso de prueba del sistema.", Severity.Info);
     }
 
     private async Task CopyDemoCredentialsAsync()
@@ -173,11 +173,11 @@ public partial class Login
         try
         {
             await JS.InvokeVoidAsync("navigator.clipboard.writeText", demoCredentialsClipboard);
-            Snackbar.Add("Credenciales demo copiadas al portapapeles.", Severity.Success, _ => { }, "login-demo-copy");
+            Snackbar.Add("Credenciales copiadas al portapapeles.", Severity.Success, _ => { }, "login-demo-copy");
         }
         catch
         {
-            Snackbar.Add("No fue posible copiar automáticamente. Use la tarjeta de credenciales demo visible en pantalla.", Severity.Warning, _ => { }, "login-demo-copy-fallback");
+            Snackbar.Add("No fue posible copiar automáticamente. Use la tarjeta de credenciales visible en pantalla.", Severity.Warning, _ => { }, "login-demo-copy-fallback");
         }
     }
 

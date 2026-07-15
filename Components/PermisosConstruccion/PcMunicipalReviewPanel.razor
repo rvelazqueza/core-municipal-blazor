@@ -23,9 +23,9 @@
 
 @code {
     [Parameter] public PcPermitDto Permit { get; set; } = new();
-    private Task ApproveAsync() { Permit.MunicipalReview.Status = "Aprobada"; Permit.MunicipalReview.ReviewedAt = DateTime.Today; Snackbar.Add("Revisión técnica aprobada en modo demo.", Severity.Success); return Task.CompletedTask; }
+    private Task ApproveAsync() { Permit.MunicipalReview.Status = "Aprobada"; Permit.MunicipalReview.ReviewedAt = DateTime.Today; Snackbar.Add("Revisión técnica aprobada.", Severity.Success); return Task.CompletedTask; }
     private Task PreventAsync() { Permit.MunicipalReview.Status = "Prevenida"; Snackbar.Add("Prevención técnica registrada.", Severity.Warning); return Task.CompletedTask; }
-    private Task RejectAsync() { Permit.MunicipalReview.Status = "Rechazada"; Permit.PermitStatus = "Rechazado"; Snackbar.Add("Revisión técnica rechazada en modo demo.", Severity.Error); return Task.CompletedTask; }
-    private Task CorrectionAsync() { Permit.MunicipalReview.Status = "Subsanación requerida"; Snackbar.Add("Subsanación solicitada en modo demo.", Severity.Info); return Task.CompletedTask; }
+    private Task RejectAsync() { Permit.MunicipalReview.Status = "Rechazada"; Permit.PermitStatus = "Rechazado"; Snackbar.Add("Revisión técnica rechazada.", Severity.Error); return Task.CompletedTask; }
+    private Task CorrectionAsync() { Permit.MunicipalReview.Status = "Subsanación requerida"; Snackbar.Add("Subsanación solicitada.", Severity.Info); return Task.CompletedTask; }
     private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
 }

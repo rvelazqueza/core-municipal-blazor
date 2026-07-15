@@ -9,7 +9,7 @@
         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
             <div>
                 <MudText Typo="Typo.h6">Dashboard operativo ampliado</MudText>
-                <MudText Typo="Typo.body2">Indicadores mock de revisión, cobro, inspección, GIS, BI y productividad.</MudText>
+                <MudText Typo="Typo.body2">Indicadores de revisión, cobro, inspección, GIS, BI y productividad.</MudText>
             </div>
             <MudChip T="string" Text="@($"Avance promedio {AverageProgress:0}%")" Color="Color.Info" Variant="Variant.Filled" />
         </MudStack>
@@ -69,7 +69,7 @@
             </MudItem>
             <MudItem xs="12" md="4">
                 <MudPaper Outlined="true" Class="pa-4 h-100">
-                    <MudText Typo="Typo.subtitle1">Productividad mock</MudText>
+                    <MudText Typo="Typo.subtitle1">Productividad</MudText>
                     <MudTable T="ProductivityRow" Items="@ProductivityRows" Dense="true" Hover="true">
                         <HeaderContent>
                             <MudTh>Rol</MudTh><MudTh>Cerrados</MudTh><MudTh>Abiertos</MudTh><MudTh>Meta</MudTh>
@@ -100,12 +100,12 @@
         ("Pendientes de revisión", CountPermitStatusContains("revisión").ToString(), Icons.Material.Filled.Rule, Color.Warning, "Revisión técnica y control"),
         ("En prevención", CountPermitStatusContains("prevención").ToString(), Icons.Material.Filled.ReportProblem, Color.Error, "Observaciones activas"),
         ("Pendientes de inspección", (CountInspectionsByStatus("Solicitada") + CountInspectionsByStatus("Asignada")).ToString(), Icons.Material.Filled.Quickreply, Color.Warning, "Inspección inicial y seguimiento"),
-        ("Permisos tasados", CountAssessmentStatus("Al cobro"), Icons.Material.Filled.Calculate, Color.Success, "Tasación mock"),
+        ("Permisos tasados", CountAssessmentStatus("Al cobro"), Icons.Material.Filled.Calculate, Color.Success, "Tasación operativa"),
         ("Pendientes de pago", CountPaymentStatus("Pendiente"), Icons.Material.Filled.PendingActions, Color.Warning, "Cobro por verificar"),
         ("Pagos infructuosos", CountPaymentFlags(x => x.Payment.Infructuous).ToString(), Icons.Material.Filled.WarningAmber, Color.Error, "Reversión requerida"),
         ("Obras > 80%", CountByProgress(80).ToString(), Icons.Material.Filled.TrendingUp, Color.Success, "Avance alto de obra"),
         ("GIS pendiente", CountGisStatus("Pendiente").ToString(), Icons.Material.Filled.Map, Color.Info, "Tareas GIS en curso"),
-        ("BI pendiente", CountBiStatus("Pendiente").ToString(), Icons.Material.Filled.HomeWork, Color.Warning, "Actualización referencial"),
+        ("BI pendiente", CountBiStatus("Pendiente").ToString(), Icons.Material.Filled.HomeWork, Color.Warning, "Actualización pendiente"),
         ("Tareas vencidas", CountNearDue().ToString(), Icons.Material.Filled.Schedule, Color.Error, "Fechas próximas o vencidas"),
         ("Origen APC/CFIA", CountChannelContains("APC").ToString(), Icons.Material.Filled.Architecture, Color.Secondary, "Ingresos técnicos"),
         ("Origen APC-R", CountApcROrigin().ToString(), Icons.Material.Filled.MergeType, Color.Secondary, "Radicaciones complementarias"),

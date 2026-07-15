@@ -20,7 +20,7 @@
                 </MudSelect>
             </MudItem>
             <MudItem xs="12" md="4" Class="d-flex align-end">
-                <MudButton Variant="Variant.Outlined" OnClick="GenerateAsync">Generar notificación mock</MudButton>
+                <MudButton Variant="Variant.Outlined" OnClick="GenerateAsync">Generar notificación</MudButton>
             </MudItem>
         </MudGrid>
     </MudPaper>
@@ -50,7 +50,7 @@
     private Task GenerateAsync()
     {
         items.Insert(0, new NotificationItem { Type = selectedType, Medium = selectedMedium, Status = "Generada", Date = DateTime.Now });
-        Snackbar.Add("Notificación mock generada.", Severity.Info);
+        Snackbar.Add("Notificación generada.", Severity.Info);
         return Task.CompletedTask;
     }
 

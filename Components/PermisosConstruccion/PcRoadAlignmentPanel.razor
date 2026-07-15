@@ -12,7 +12,7 @@
         <MudItem xs="12" md="3"><MudText Typo="Typo.caption">Fecha señalamiento</MudText><MudText>@FormatDate(Permit.RoadAlignment.SignalDate)</MudText></MudItem>
         <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Responsable</MudText><MudText>@Permit.RoadAlignment.Responsible</MudText></MudItem>
         <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Estado</MudText><MudText>@Permit.RoadAlignment.Status</MudText></MudItem>
-        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Imagen placeholder</MudText><MudText>@Permit.RoadAlignment.ImagePlaceholder</MudText></MudItem>
+        <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Referencia de imagen</MudText><MudText>@Permit.RoadAlignment.ImagePlaceholder</MudText></MudItem>
         <MudItem xs="12"><MudTextField T="string" @bind-Value="Permit.RoadAlignment.Observations" Label="Observaciones" Variant="Variant.Outlined" Margin="Margin.Dense" AutoGrow="true" /></MudItem>
     </MudGrid>
     <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mt-4">
@@ -24,8 +24,8 @@
 
 @code {
     [Parameter] public PcPermitDto Permit { get; set; } = new();
-    private Task CreateTaskAsync() { Permit.RoadAlignment.Status = "En trámite"; Permit.RoadAlignment.ManagementNumber = string.IsNullOrWhiteSpace(Permit.RoadAlignment.ManagementNumber) ? $"ALI-{DateTime.Now:yyMMddHHmm}" : Permit.RoadAlignment.ManagementNumber; Permit.RoadAlignment.RequestDate ??= DateTime.Today; Snackbar.Add("Tarea de alineamiento mock creada.", Severity.Info); return Task.CompletedTask; }
-    private Task ApproveAsync() { Permit.RoadAlignment.Status = "Aprobado"; Permit.RoadAlignment.SignalDate = DateTime.Today; Snackbar.Add("Alineamiento aprobado en modo demo.", Severity.Success); return Task.CompletedTask; }
-    private Task ObserveAsync() { Permit.RoadAlignment.Status = "Observado"; Snackbar.Add("Alineamiento observado en modo demo.", Severity.Warning); return Task.CompletedTask; }
+    private Task CreateTaskAsync() { Permit.RoadAlignment.Status = "En trámite"; Permit.RoadAlignment.ManagementNumber = string.IsNullOrWhiteSpace(Permit.RoadAlignment.ManagementNumber) ? $"ALI-{DateTime.Now:yyMMddHHmm}" : Permit.RoadAlignment.ManagementNumber; Permit.RoadAlignment.RequestDate ??= DateTime.Today; Snackbar.Add("Tarea de alineamiento creada.", Severity.Info); return Task.CompletedTask; }
+    private Task ApproveAsync() { Permit.RoadAlignment.Status = "Aprobado"; Permit.RoadAlignment.SignalDate = DateTime.Today; Snackbar.Add("Alineamiento aprobado.", Severity.Success); return Task.CompletedTask; }
+    private Task ObserveAsync() { Permit.RoadAlignment.Status = "Observado"; Snackbar.Add("Alineamiento observado.", Severity.Warning); return Task.CompletedTask; }
     private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
 }

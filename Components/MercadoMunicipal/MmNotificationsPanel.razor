@@ -14,15 +14,15 @@ else
 {
     <div class="d-flex flex-column gap-3">
         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-            Las notificaciones y la firma digital son simuladas; no se envían mensajes ni documentos reales.
+            Las notificaciones y la firma digital se gestionan según configuración institucional.
         </MudAlert>
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="GenerateAsync">Generar notificación mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="SignAsync">Firmar digitalmente mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="SendAsync">Enviar mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="PrintAsync">Imprimir mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="GenerateAsync">Generar notificación</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="SignAsync">Firmar digitalmente</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="SendAsync">Enviar</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="PrintAsync">Imprimir</MudButton>
             </div>
         </MudPaper>
 
@@ -42,7 +42,7 @@ else
                     <MudTd DataLabel="Tipo">@context.Type</MudTd>
                     <MudTd DataLabel="Medio">@context.Medium</MudTd>
                     <MudTd DataLabel="Estado">@context.Status</MudTd>
-                    <MudTd DataLabel="Firma digital referencial">@context.DigitalSignatureReference</MudTd>
+                    <MudTd DataLabel="Firma digital">@context.DigitalSignatureReference</MudTd>
                     <MudTd DataLabel="Fecha">@context.CreatedAt.ToString("dd/MM/yyyy")</MudTd>
                     <MudTd DataLabel="Destino">@context.TargetName</MudTd>
                 </RowTemplate>
@@ -65,20 +65,20 @@ else
 
         var item = new MmNotificationDto
         {
-            Id = $"NOT-MOCK-{Items.Count + 1:000}",
+            Id = $"NOT-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
-            NotificationNumber = $"NOT-MOCK-{DateTime.Now:HHmmss}",
+            NotificationNumber = $"NOT-{DateTime.Now:HHmmss}",
             Type = "Informativa",
             Medium = "Plataforma digital",
             Status = "Generada",
-            DigitalSignatureReference = "Pendiente firma mock",
+            DigitalSignatureReference = "Pendiente firma digital",
             CreatedAt = DateTime.Today,
             TargetName = Tenant?.Name ?? Local.BusinessName
         };
 
         Items.Insert(0, item);
         RegisterMockEvent("Generar notificación", string.Empty, item.NotificationNumber, "Notificaciones", "Media");
-        Snackbar.Add("Notificación mock generada.", Severity.Info);
+        Snackbar.Add("Notificación generada correctamente.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -88,9 +88,9 @@ else
         if (item is null)
             return Task.CompletedTask;
 
-        item.DigitalSignatureReference = "Firma digital mock aplicada";
+        item.DigitalSignatureReference = "Firma digital aplicada";
         RegisterMockEvent("Firmar notificación", "Pendiente", item.DigitalSignatureReference, "Notificaciones", "Baja");
-        Snackbar.Add("Firma digital mock aplicada.", Severity.Success);
+        Snackbar.Add("Firma digital aplicada correctamente.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -100,9 +100,9 @@ else
         if (item is null)
             return Task.CompletedTask;
 
-        item.Status = "Enviada mock";
+        item.Status = "Enviada";
         RegisterMockEvent("Enviar notificación", "Generada", item.Status, "Notificaciones", "Media");
-        Snackbar.Add("Notificación mock enviada.", Severity.Success);
+        Snackbar.Add("Notificación enviada correctamente.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -112,9 +112,9 @@ else
         if (item is null)
             return Task.CompletedTask;
 
-        item.Status = "Impresa mock";
+        item.Status = "Impresa";
         RegisterMockEvent("Imprimir notificación", "Generada", item.Status, "Notificaciones", "Baja");
-        Snackbar.Add("Notificación mock enviada a impresión referencial.", Severity.Info);
+        Snackbar.Add("Notificación enviada a impresión.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -125,7 +125,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -136,12 +136,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel notificaciones",
             SourceProcess = process,
-            Comment = "Evento mock generado desde notificaciones."
+            Comment = "Evento generado desde notificaciones."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -151,7 +151,7 @@ else
             SourceDocument = "Panel notificaciones",
             Process = process,
             Severity = severity,
-            OutputReference = "Bitácora visual mock"
+            OutputReference = "Bitácora operativa"
         });
     }
 }

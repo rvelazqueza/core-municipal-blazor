@@ -23,7 +23,7 @@ public class LoginSettingsDto
     public string DemoUser { get; set; } = "admin@municipal.go.cr";
     public string DemoPassword { get; set; } = "Admin123!Demo";
     public string DemoTwoFactorCode { get; set; } = "123456";
-    public string DemoHelperText { get; set; } = "Use estas credenciales únicamente para pruebas del prototipo.";
+    public string DemoHelperText { get; set; } = "Use estas credenciales para acceso de prueba del sistema.";
     public bool HabilitarFirmaDigital { get; set; } = true;
     public bool HabilitarTwoFactor { get; set; } = true;
     public int MaxIntentosFallidos { get; set; } = 5;

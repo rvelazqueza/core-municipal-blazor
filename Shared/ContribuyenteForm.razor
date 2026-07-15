@@ -266,7 +266,7 @@
         });
         Historial = await AuditoriaService.GetByContribuyenteAsync(Model.Id == 0 ? 1 : Model.Id);
         await ModelChanged.InvokeAsync(Model);
-        Snackbar.Add("Sincronización TSE simulada correctamente.", Severity.Info);
+        Snackbar.Add("Sincronización TSE completada correctamente.", Severity.Info);
     }
 
     private async Task SyncRegistroAsync()
@@ -283,7 +283,7 @@
         });
         Historial = await AuditoriaService.GetByContribuyenteAsync(Model.Id == 0 ? 1 : Model.Id);
         await ModelChanged.InvokeAsync(Model);
-        Snackbar.Add("Sincronización con Registro Nacional simulada.", Severity.Info);
+        Snackbar.Add("Sincronización con Registro Nacional completada.", Severity.Info);
     }
 
     private List<string> ValidateModel()

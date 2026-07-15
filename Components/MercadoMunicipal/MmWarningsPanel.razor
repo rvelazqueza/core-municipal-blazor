@@ -22,16 +22,16 @@ else
             @if (Items.Count >= 3)
             {
                 <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mt-3">
-                    El local acumula @Items.Count amonestaciones mock y requiere seguimiento administrativo referencial.
+                    El local acumula @Items.Count amonestaciones y requiere seguimiento administrativo.
                 </MudAlert>
             }
         </MudPaper>
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="RegisterWarningAsync">Registrar amonestación mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="GenerateDocumentAsync">Generar documento mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="NotifyAsync">Notificar mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="RegisterWarningAsync">Registrar amonestación</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="GenerateDocumentAsync">Generar documento</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="NotifyAsync">Notificar</MudButton>
             </div>
         </MudPaper>
 
@@ -45,8 +45,8 @@ else
                     <MudTh>Fecha aplicación</MudTh>
                     <MudTh>Plazo cumplimiento</MudTh>
                     <MudTh>Estado</MudTh>
-                    <MudTh>Documento mock</MudTh>
-                    <MudTh>Notificación mock</MudTh>
+                    <MudTh>Documento</MudTh>
+                    <MudTh>Notificación</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="Número">@context.WarningNumber</MudTd>
@@ -56,8 +56,8 @@ else
                     <MudTd DataLabel="Fecha aplicación">@context.AppliedDate.ToString("dd/MM/yyyy")</MudTd>
                     <MudTd DataLabel="Plazo cumplimiento">@context.ComplianceDeadline.ToString("dd/MM/yyyy")</MudTd>
                     <MudTd DataLabel="Estado">@context.Status</MudTd>
-                    <MudTd DataLabel="Documento mock">@context.DocumentMock</MudTd>
-                    <MudTd DataLabel="Notificación mock">@context.NotificationMock</MudTd>
+                    <MudTd DataLabel="Documento">@context.DocumentMock</MudTd>
+                    <MudTd DataLabel="Notificación">@context.NotificationMock</MudTd>
                 </RowTemplate>
             </MudTable>
         </MudPaper>
@@ -88,13 +88,13 @@ else
 
         var item = new MmWarningDto
         {
-            Id = $"WAR-MOCK-{Items.Count + 1:000}",
+            Id = $"WAR-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
             TenantId = Tenant?.Id ?? string.Empty,
-            WarningNumber = $"AMO-MOCK-{DateTime.Now:HHmmss}",
+            WarningNumber = $"AMO-MUN-{DateTime.Now:HHmmss}",
             LocalNumber = Local.LocalNumber,
             TenantName = Tenant?.Name ?? "Sin asignar",
-            WarningType = "Incumplimiento administrativo mock",
+            WarningType = "Incumplimiento administrativo",
             AppliedDate = DateTime.Today,
             ComplianceDeadline = DateTime.Today.AddDays(8),
             Status = "Registrada",
@@ -103,8 +103,8 @@ else
         };
 
         Items.Insert(0, item);
-        RegisterMockEvent("Registrar amonestación", string.Empty, item.WarningNumber, "Amonestaciones", "Media");
-        Snackbar.Add("Amonestación mock registrada.", Severity.Warning);
+        RegisterMockEvent("Registro de amonestación", string.Empty, item.WarningNumber, "Amonestaciones", "Media");
+        Snackbar.Add("Amonestación registrada correctamente.", Severity.Warning);
         return Task.CompletedTask;
     }
 
@@ -116,7 +116,7 @@ else
 
         item.DocumentMock = $"Documento_{item.WarningNumber}.pdf";
         RegisterMockEvent("Generar documento de amonestación", "Pendiente", item.DocumentMock, "Amonestaciones", "Baja");
-        Snackbar.Add("Documento mock de amonestación generado.", Severity.Info);
+        Snackbar.Add("Documento de amonestación generado correctamente.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -126,10 +126,10 @@ else
         if (item is null)
             return Task.CompletedTask;
 
-        item.NotificationMock = "Notificada mock";
+        item.NotificationMock = "Notificada";
         item.Status = "Notificada";
         RegisterMockEvent("Notificar amonestación", "Pendiente", item.NotificationMock, "Amonestaciones", "Alta");
-        Snackbar.Add("Notificación mock de amonestación generada.", Severity.Success);
+        Snackbar.Add("Notificación de amonestación generada.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -140,7 +140,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -151,12 +151,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel de amonestaciones",
             SourceProcess = process,
-            Comment = "Evento mock generado desde amonestaciones."
+            Comment = "Evento generado desde amonestaciones."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -166,7 +166,7 @@ else
             SourceDocument = "Panel de amonestaciones",
             Process = process,
             Severity = severity,
-            OutputReference = "Bitácora visual mock"
+            OutputReference = "Bitácora operativa"
         });
     }
 }

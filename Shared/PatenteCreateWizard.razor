@@ -2,7 +2,7 @@
 @using MudBlazor
 
 <WizardShell Title="Nueva solicitud de patente"
-             Subtitle="Registro guiado en modo demo con navegación progresiva, validaciones básicas y guardado temporal en memoria."
+             Subtitle="Registro guiado con navegación progresiva, validaciones y guardado temporal."
              SummaryTitle="Resumen de la solicitud"
              State="wizardState"
              CurrentStepTitle="@CurrentStep.Title"
@@ -25,7 +25,7 @@
         {
             case 0:
                 <MudStack Spacing="3">
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Defina el trámite inicial, el tipo de licencia y el canal de ingreso; el expediente mock se genera automáticamente para la demo.</MudAlert>
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Defina el trámite inicial, el tipo de licencia y el canal de ingreso; el expediente se genera automáticamente.</MudAlert>
                     <MudGrid Spacing="3">
                         <MudItem xs="12" md="6">
                             <MudSelect T="string" @bind-Value="model.TipoSolicitud" Label="Tipo de solicitud" Variant="Variant.Outlined">
@@ -52,7 +52,7 @@
                             </MudSelect>
                         </MudItem>
                         <MudItem xs="12" md="4">
-                            <MudTextField T="string" @bind-Value="model.NumeroExpediente" Label="Número de expediente mock" Variant="Variant.Outlined" />
+                            <MudTextField T="string" @bind-Value="model.NumeroExpediente" Label="Número de expediente" Variant="Variant.Outlined" />
                         </MudItem>
                         <MudItem xs="12" md="4">
                             <MudSelect T="string" @bind-Value="model.EstadoInicial" Label="Estado inicial" Variant="Variant.Outlined">
@@ -66,7 +66,7 @@
                             <MudSwitch T="bool" @bind-Value="model.TieneDeclaracionJurada" @bind-Value:after="OnDeclaracionJuradaChangedAsync" Color="Color.Primary" Label="Solicitud bajo modalidad de Declaración Jurada" />
                         </MudItem>
                         <MudItem xs="12" md="6" Class="d-flex align-center">
-<MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="GenerateMockExpedienteAsync">Generar expediente mock</MudButton>
+<MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="GenerateMockExpedienteAsync">Generar expediente</MudButton>
                         </MudItem>
                     </MudGrid>
                     <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
@@ -82,10 +82,10 @@
                 break;
             case 1:
                 <MudStack Spacing="3">
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Seleccione un contribuyente del mock o marque el registro pendiente para continuar con captura manual.</MudAlert>
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Seleccione un contribuyente del RUC o marque el registro pendiente para continuar con captura manual.</MudAlert>
                     <MudGrid Spacing="3">
                         <MudItem xs="12" md="8">
-                            <MudSelect T="string" @bind-Value="selectedContribuyenteId" @bind-Value:after="OnContribuyenteChangedAsync" Label="Contribuyente desde RUC mock" Variant="Variant.Outlined">
+                            <MudSelect T="string" @bind-Value="selectedContribuyenteId" @bind-Value:after="OnContribuyenteChangedAsync" Label="Contribuyente desde RUC" Variant="Variant.Outlined">
                                 <MudSelectItem T="string" Value="@(string.Empty)">Seleccionar contribuyente</MudSelectItem>
                                 @foreach (var item in contribuyentes)
                                 {
@@ -158,10 +158,10 @@
                 break;
             case 2:
                 <MudStack Spacing="3">
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Seleccione una finca o local mock para completar el domicilio del trámite. Si la licencia no requiere local físico, podrá continuar con la modalidad sin local.</MudAlert>
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Seleccione una finca o local para completar el domicilio del trámite. Si la licencia no requiere local físico, podrá continuar con la modalidad sin local.</MudAlert>
                     <MudGrid Spacing="3">
                         <MudItem xs="12" md="6">
-                            <MudSelect T="string" @bind-Value="selectedLocalId" @bind-Value:after="OnLocalChangedAsync" Label="Local / finca mock" Variant="Variant.Outlined">
+                            <MudSelect T="string" @bind-Value="selectedLocalId" @bind-Value:after="OnLocalChangedAsync" Label="Local / finca" Variant="Variant.Outlined">
                                 <MudSelectItem T="string" Value="@(string.Empty)">Seleccione un local</MudSelectItem>
                                 @foreach (var item in localesMock)
                                 {
@@ -220,7 +220,7 @@
                     </MudStack>
                     @if (model.EstadoGis.Contains("Pendiente", StringComparison.OrdinalIgnoreCase))
                     {
-                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">El estado GIS está pendiente en el demo y no bloquea el avance.</MudAlert>
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">El estado GIS está pendiente y no bloquea el avance.</MudAlert>
                     }
                     <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
                         <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Map" OnClick="ViewFincaAsync">Ver finca</MudButton>
@@ -230,10 +230,10 @@
                 break;
             case 3:
                 <MudStack Spacing="3">
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Complete la actividad comercial principal y los indicadores operativos del negocio con datos mock.</MudAlert>
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Complete la actividad comercial principal y los indicadores operativos del negocio.</MudAlert>
                     <MudGrid Spacing="3">
                         <MudItem xs="12" md="8">
-                            <MudSelect T="string" @bind-Value="selectedActividadCodigo" @bind-Value:after="OnActividadChangedAsync" Label="Actividad económica CAECR mock" Variant="Variant.Outlined">
+                            <MudSelect T="string" @bind-Value="selectedActividadCodigo" @bind-Value:after="OnActividadChangedAsync" Label="Actividad económica CAECR" Variant="Variant.Outlined">
                                 <MudSelectItem T="string" Value="@(string.Empty)">Seleccione una actividad</MudSelectItem>
                                 @foreach (var item in actividadesEconomicasMock)
                                 {
@@ -290,7 +290,7 @@
                     </MudGrid>
                     @if (model.RequiereLicores)
                     {
-                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Revisión especial de licencias de licores en modo demo.</MudAlert>
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Revisión especial de licencias de licores.</MudAlert>
                     }
                     <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
                         <MudChip T="string" Text="@($"Riesgo: {model.RiesgoActividad}")" Variant="Variant.Outlined" Color="Color.Secondary" />
@@ -304,7 +304,7 @@
                     <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No se debe otorgar patente sin uso de suelo conforme.</MudAlert>
                     @if (IsActivityWithoutPhysicalLocal())
                     {
-                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">La validación de Uso de Suelo puede ser referencial según el tipo de licencia porque la actividad se tramita sin local físico.</MudAlert>
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">La validación de Uso de Suelo se ajusta según el tipo de licencia porque la actividad puede tramitarse sin local físico.</MudAlert>
                     }
                     <MudGrid Spacing="3">
                         <MudItem xs="12" md="4">
@@ -319,7 +319,7 @@
                             </MudSelect>
                         </MudItem>
                         <MudItem xs="12" md="4">
-                            <MudTextField T="string" @bind-Value="model.Zonificacion" Label="Zonificación mock" Variant="Variant.Outlined" />
+                            <MudTextField T="string" @bind-Value="model.Zonificacion" Label="Zonificación" Variant="Variant.Outlined" />
                         </MudItem>
                         <MudItem xs="12" md="6">
                             <MudTextField T="string" @bind-Value="model.ActividadEconomica" Label="Actividad solicitada" Variant="Variant.Outlined" />
@@ -365,7 +365,7 @@
                         <MudChip T="string" Text="@($"Compatibilidad: {model.CompatibilidadUsoSuelo}")" Variant="Variant.Outlined" Color="Color.Secondary" />
                     </MudStack>
                     <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FactCheck" OnClick="SimulateUsoSueloValidationAsync">Simular validación de Uso de Suelo</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FactCheck" OnClick="SimulateUsoSueloValidationAsync">Validar Uso de Suelo</MudButton>
                         <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" OnClick="ViewUsoSueloCertificateAsync">Ver certificado</MudButton>
                         <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.NoteAdd" OnClick="RequestUsoSueloAsync">Solicitar Uso de Suelo</MudButton>
                     </MudStack>
@@ -373,14 +373,14 @@
                 break;
             case 5:
                 <MudStack Spacing="3">
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Complete el checklist documental en modo demo; los pendientes y observaciones quedarán reflejados en resolución sin bloquear totalmente el wizard.</MudAlert>
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Complete el checklist documental; los pendientes y observaciones quedarán reflejados en resolución sin bloquear totalmente el wizard.</MudAlert>
                     @if (GetNonCompliantRequirementsCount() > 0)
                     {
                         <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Hay requisitos en estado “No cumple”; la resolución no podrá aprobarse directamente.</MudAlert>
                     }
                     @if (GetPendingRequirementsCount() > 0)
                     {
-                        <MudAlert Severity="@GetRequirementsPendingAlertSeverity()" Variant="Variant.Outlined">@((model.TieneDeclaracionJurada ? "Existen requisitos pendientes permitidos temporalmente por Declaración Jurada." : "Existen requisitos pendientes; en modo demo se permite continuar, pero el expediente queda pendiente de validación."))</MudAlert>
+                        <MudAlert Severity="@GetRequirementsPendingAlertSeverity()" Variant="Variant.Outlined">@((model.TieneDeclaracionJurada ? "Existen requisitos pendientes permitidos temporalmente por Declaración Jurada." : "Existen requisitos pendientes; se permite continuar, pero el expediente queda pendiente de validación."))</MudAlert>
                     }
 
                     <MudPaper Class="pa-4">
@@ -451,11 +451,11 @@
                                         <MudTextField T="string" @bind-Value="model.FechaInicioActividad" @bind-Value:after="SyncRequirementsAfterEditAsync" Label="Fecha de inicio de actividad" Variant="Variant.Outlined" />
                                     </MudItem>
                                     <MudItem xs="12" md="6">
-                                        <MudTextField T="int" @bind-Value="model.DeclaracionJuradaDiasHabiles" @bind-Value:after="SyncRequirementsAfterEditAsync" Label="Contador mock de 60 días hábiles" Variant="Variant.Outlined" />
+                                        <MudTextField T="int" @bind-Value="model.DeclaracionJuradaDiasHabiles" @bind-Value:after="SyncRequirementsAfterEditAsync" Label="Contador de 60 días hábiles" Variant="Variant.Outlined" />
                                     </MudItem>
                                 </MudGrid>
                                 <MudProgressLinear Color="Color.Info" Value="@GetDeclaracionJuradaDeadlinePercent()" />
-                                <MudChip T="string" Text="@($"Plazo mock: {model.DeclaracionJuradaDiasHabiles} días hábiles")" Variant="Variant.Outlined" Color="Color.Info" />
+                                <MudChip T="string" Text="@($"Plazo: {model.DeclaracionJuradaDiasHabiles} días hábiles")" Variant="Variant.Outlined" Color="Color.Info" />
                                 <MudAlert Severity="@GetDeclaracionJuradaDeadlineSeverity()" Variant="Variant.Outlined">@GetDeclaracionJuradaDeadlineMessage()</MudAlert>
                             </MudStack>
                         </MudPaper>
@@ -467,8 +467,8 @@
                         </MudItem>
                         <MudItem xs="12" md="6" Class="d-flex align-center">
                             <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-                                <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="GeneratePreventionMockAsync">Generar prevención mock</MudButton>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FactCheck" OnClick="ValidateRequirementsMockAsync">Validar requisitos mock</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="GeneratePreventionMockAsync">Generar prevención</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FactCheck" OnClick="ValidateRequirementsMockAsync">Validar requisitos</MudButton>
                             </MudStack>
                         </MudItem>
                     </MudGrid>
@@ -540,10 +540,10 @@
                 break;
             case 8:
                 <MudStack Spacing="3">
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">La tasación, el cobro y la resolución de este paso son simulados para la demo institucional; no generan fórmulas, cuentas, firma digital ni notificaciones reales.</MudAlert>
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">La tasación, el cobro y la resolución de este paso son preparatorios; no generan fórmulas, cuentas, firma digital ni notificaciones reales.</MudAlert>
                     @if (HasApprovalBlockers())
                     {
-                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No es posible aprobar directamente. El expediente queda Pendiente validación o Prevenido en modo demo.</MudAlert>
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No es posible aprobar directamente. El expediente queda Pendiente validación o Prevenido.</MudAlert>
                         <MudPaper Outlined="true" Class="pa-3">
                             <MudStack Spacing="1">
                                 @foreach (var blocker in GetApprovalBlockingMessages())
@@ -575,17 +575,17 @@
                                                 <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
                                             }
                                         </MudSelect>
-                                        <MudTextField T="decimal" @bind-Value="model.MontoAnualMock" Label="Monto anual mock" Variant="Variant.Outlined" />
-                                        <MudTextField T="decimal" @bind-Value="model.MontoTrimestralMock" Label="Monto trimestral mock" Variant="Variant.Outlined" />
+                                        <MudTextField T="decimal" @bind-Value="model.MontoAnualMock" Label="Monto anual" Variant="Variant.Outlined" />
+                                        <MudTextField T="decimal" @bind-Value="model.MontoTrimestralMock" Label="Monto trimestral" Variant="Variant.Outlined" />
                                         <MudTextField T="decimal" @bind-Value="model.TimbreBiodiversidad" Label="Timbre de biodiversidad anual" Variant="Variant.Outlined" />
                                         <MudText Typo="Typo.body2">Timbre trimestral visual: @FormatCurrency(GetQuarterlyComponent(model.TimbreBiodiversidad))</MudText>
                                         <MudTextField T="decimal" @bind-Value="model.PublicidadExterior" Label="Publicidad exterior anual" Variant="Variant.Outlined" />
                                         <MudText Typo="Typo.body2">Publicidad trimestral visual: @FormatCurrency(GetQuarterlyComponent(model.PublicidadExterior))</MudText>
-                                        <MudTextField T="decimal" @bind-Value="model.Multa" Label="Multa mock" Variant="Variant.Outlined" />
-                                        <MudTextField T="decimal" @bind-Value="model.Intereses" Label="Intereses mock" Variant="Variant.Outlined" />
+                                        <MudTextField T="decimal" @bind-Value="model.Multa" Label="Multa" Variant="Variant.Outlined" />
+                                        <MudTextField T="decimal" @bind-Value="model.Intereses" Label="Intereses" Variant="Variant.Outlined" />
                                         <MudTextField T="string" @bind-Value="model.FechaInicioCobro" Label="Fecha de inicio del cobro" Variant="Variant.Outlined" />
                                         <MudTextField T="string" @bind-Value="model.CobroProporcionalVisual" Label="Cobro proporcional visual" Variant="Variant.Outlined" MaxLines="3" AutoGrow="true" />
-                                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Calculate" OnClick="SimulateTasacionMockAsync">Simular tasación</MudButton>
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Calculate" OnClick="SimulateTasacionMockAsync">Calcular tasación</MudButton>
                                     </MudStack>
                                 </MudCardContent>
                             </MudCard>
@@ -594,7 +594,7 @@
                             <MudCard Outlined="true">
                                 <MudCardContent>
                                     <MudStack Spacing="2">
-                                        <MudText Typo="Typo.subtitle1">Cobro mock</MudText>
+                                        <MudText Typo="Typo.subtitle1">Cobro</MudText>
                                         <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
                                             <MudChip T="string" Text="@($"Cobro: {model.EstadoCobro}")" Variant="Variant.Outlined" Color="@GetCobroStatusColor(model.EstadoCobro)" Size="Size.Small" />
                                             <MudChip T="string" Text="@($"Cuenta: {model.EstadoCuentaTributariaMock}")" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" />
@@ -605,9 +605,9 @@
                                                 <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
                                             }
                                         </MudSelect>
-                                        <MudTextField T="string" @bind-Value="model.EstadoCuentaTributariaMock" Label="Estado de cuenta tributaria mock" Variant="Variant.Outlined" MaxLines="3" AutoGrow="true" />
-                                        <MudTextField T="string" @bind-Value="model.ReferenciaCuentaPorCobrarMock" Label="Referencia de cuenta por cobrar mock" Variant="Variant.Outlined" />
-                                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">El cobro proporcional y la cuenta tributaria son referenciales para demo; no generan movimiento financiero real.</MudAlert>
+                                        <MudTextField T="string" @bind-Value="model.EstadoCuentaTributariaMock" Label="Estado de cuenta tributaria" Variant="Variant.Outlined" MaxLines="3" AutoGrow="true" />
+                                        <MudTextField T="string" @bind-Value="model.ReferenciaCuentaPorCobrarMock" Label="Referencia de cuenta por cobrar" Variant="Variant.Outlined" />
+                                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">El cobro proporcional y la cuenta tributaria quedan registrados para gestión municipal.</MudAlert>
                                     </MudStack>
                                 </MudCardContent>
                             </MudCard>
@@ -628,12 +628,12 @@
                                             }
                                         </MudSelect>
                                         <MudTextField T="string" @bind-Value="model.ObservacionesResolucion" Label="Observaciones de resolución" Variant="Variant.Outlined" MaxLines="4" AutoGrow="true" />
-                                        <MudSwitch T="bool" @bind-Value="model.NotificacionSimulada" Color="Color.Primary" Label="Notificación simulada" />
-                                        <MudTextField T="string" @bind-Value="model.FirmaDigitalReferencial" Label="Firma digital referencial" Variant="Variant.Outlined" />
-                                        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" OnClick="GenerateResolutionMockAsync">Generar resolución mock</MudButton>
-                                        <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="SendPreventionMockAsync">Enviar prevención mock</MudButton>
-                                        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.CheckCircle" OnClick="ApproveSolicitudMockAsync">Aprobar solicitud mock</MudButton>
-                                        <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.Cancel" OnClick="RejectSolicitudMockAsync">Rechazar solicitud mock</MudButton>
+                                        <MudSwitch T="bool" @bind-Value="model.NotificacionSimulada" Color="Color.Primary" Label="Notificación" />
+                                        <MudTextField T="string" @bind-Value="model.FirmaDigitalReferencial" Label="Firma digital" Variant="Variant.Outlined" />
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" OnClick="GenerateResolutionMockAsync">Generar resolución</MudButton>
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="SendPreventionMockAsync">Enviar prevención</MudButton>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.CheckCircle" OnClick="ApproveSolicitudMockAsync">Aprobar solicitud</MudButton>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.Cancel" OnClick="RejectSolicitudMockAsync">Rechazar solicitud</MudButton>
                                     </MudStack>
                                 </MudCardContent>
                             </MudCard>
@@ -648,7 +648,7 @@
                     @if (HasApprovalBlockers())
                     {
                         <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
-                            No es posible finalizar como aprobada mientras existan bloqueos críticos. El expediente demo quedará @GetFinalizationOutcomePreview().
+                            No es posible finalizar como aprobada mientras existan bloqueos críticos. El expediente quedará @GetFinalizationOutcomePreview().
                         </MudAlert>
                     }
 
@@ -814,10 +814,10 @@
                                         </MudStack>
                                         <MudGrid Spacing="2">
                                             <MudItem xs="12" md="4">
-                                                <MudText Typo="Typo.body2">Monto anual mock: @FormatCurrency(model.MontoAnualMock)</MudText>
+                                                <MudText Typo="Typo.body2">Monto anual: @FormatCurrency(model.MontoAnualMock)</MudText>
                                             </MudItem>
                                             <MudItem xs="12" md="4">
-                                                <MudText Typo="Typo.body2">Monto trimestral mock: @FormatCurrency(model.MontoTrimestralMock)</MudText>
+                                                <MudText Typo="Typo.body2">Monto trimestral: @FormatCurrency(model.MontoTrimestralMock)</MudText>
                                             </MudItem>
                                             <MudItem xs="12" md="4">
                                                 <MudText Typo="Typo.body2">Estado de cobro: @GetDisplayValue(model.EstadoCobro)</MudText>
@@ -838,14 +838,14 @@
                             <MudCard Outlined="true">
                                 <MudCardContent>
                                     <MudStack Spacing="2">
-                                        <MudText Typo="Typo.h6">Integraciones simuladas</MudText>
-                                        <MudText Typo="Typo.body2">RUC mock: @GetRucMockSummary()</MudText>
-                                        <MudText Typo="Typo.body2">Bienes Inmuebles mock: @GetBienesInmueblesMockSummary()</MudText>
-                                        <MudText Typo="Typo.body2">Uso de Suelo mock: @GetUsoSueloMockSummary()</MudText>
-                                        <MudText Typo="Typo.body2">Cobro mock: @GetCobroMockSummary()</MudText>
-                                        <MudText Typo="Typo.body2">Cuenta Tributaria mock: @GetCuentaTributariaMockSummary()</MudText>
-                                        <MudText Typo="Typo.body2">Notificaciones mock: @GetNotificacionesMockSummary()</MudText>
-                                        <MudText Typo="Typo.body2">Auditoría mock: @GetAuditoriaMockSummary()</MudText>
+                                        <MudText Typo="Typo.h6">Integraciones institucionales</MudText>
+                                        <MudText Typo="Typo.body2">RUC: @GetRucMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Bienes Inmuebles: @GetBienesInmueblesMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Uso de Suelo: @GetUsoSueloMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Cobro: @GetCobroMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Cuenta Tributaria: @GetCuentaTributariaMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Notificaciones: @GetNotificacionesMockSummary()</MudText>
+                                        <MudText Typo="Typo.body2">Auditoría: @GetAuditoriaMockSummary()</MudText>
                                         <MudDivider DividerType="DividerType.Middle" Class="my-1" />
                                         <MudText Typo="Typo.body2">Las acciones finales se ejecutan con la barra del wizard: Anterior, Guardar borrador, Cancelar y Finalizar.</MudText>
                                     </MudStack>
@@ -882,7 +882,7 @@
 
                 @if (HasApprovalBlockers())
                 {
-                    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true">No es posible aprobar directamente. El expediente queda Pendiente validación o Prevenido en modo demo.</MudAlert>
+                    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true">No es posible aprobar directamente. El expediente queda Pendiente validación o Prevenido.</MudAlert>
                     @foreach (var blocker in GetApprovalBlockingMessages())
                     {
                         <MudText Typo="Typo.body2">• @blocker</MudText>
@@ -890,7 +890,7 @@
                 }
                 else
                 {
-                    <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Dense="true">Sin bloqueos críticos para una aprobación demo.</MudAlert>
+                    <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Dense="true">Sin bloqueos críticos para aprobación.</MudAlert>
                 }
             </MudStack>
         </MudPaper>

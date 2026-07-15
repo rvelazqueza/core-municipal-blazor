@@ -38,7 +38,7 @@ else
                 <MudCard Outlined="true">
                     <MudCardMedia Image="@ResolveTenantImage()" Height="260" />
                     <MudCardContent>
-                        <MudText Typo="Typo.subtitle2">Fotografía placeholder del inquilino</MudText>
+                        <MudText Typo="Typo.subtitle2">Fotografía del inquilino</MudText>
                     </MudCardContent>
                 </MudCard>
             </MudItem>
@@ -46,7 +46,7 @@ else
                 <MudCard Outlined="true">
                     <MudCardMedia Image="@ResolveLocalImage()" Height="260" />
                     <MudCardContent>
-                        <MudText Typo="Typo.subtitle2">Fotografía placeholder del local</MudText>
+                        <MudText Typo="Typo.subtitle2">Fotografía del local</MudText>
                     </MudCardContent>
                 </MudCard>
             </MudItem>
@@ -75,7 +75,7 @@ else
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
                 <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ViewRucAsync">Ver RUC</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ValidateTenantAsync">Validar inquilino mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ValidateTenantAsync">Validar inquilino</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ViewPhotographicRegisterAsync">Ver padrón fotográfico</MudButton>
             </div>
         </MudPaper>
@@ -91,7 +91,7 @@ else
 
     private Task ViewRucAsync()
     {
-        Snackbar.Add("Consulta mock de RUC disponible solo como referencia visual.", Severity.Info);
+        Snackbar.Add("Consulta de RUC disponible solo como referencia visual.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -103,13 +103,13 @@ else
             Tenant.RucStatus = "Activo";
         }
 
-        Snackbar.Add("Inquilino validado en modo mock.", Severity.Success);
+        Snackbar.Add("Inquilino validado operativo.", Severity.Success);
         return Task.CompletedTask;
     }
 
     private Task ViewPhotographicRegisterAsync()
     {
-        Snackbar.Add("Padrón fotográfico mock mostrado dentro del tab actual.", Severity.Info);
+        Snackbar.Add("Padrón fotográfico mostrado dentro del tab actual.", Severity.Info);
         return Task.CompletedTask;
     }
 

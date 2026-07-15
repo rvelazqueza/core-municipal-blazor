@@ -22,10 +22,10 @@ else
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterProcedureAsync">Registrar trámite mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterProcedureAsync">Registrar trámite</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="AssignResponsibleAsync">Asignar responsable</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ResolveAsync">Resolver mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="NotifyAsync">Notificar mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ResolveAsync">Resolver</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="NotifyAsync">Notificar</MudButton>
             </div>
         </MudPaper>
 
@@ -42,7 +42,7 @@ else
                     <MudTh>Plazo</MudTh>
                     <MudTh>Fecha ingreso</MudTh>
                     <MudTh>Fecha respuesta</MudTh>
-                    <MudTh>Resolución mock</MudTh>
+                    <MudTh>Resolución</MudTh>
                     <MudTh>Adjuntos</MudTh>
                 </HeaderContent>
                 <RowTemplate>
@@ -56,7 +56,7 @@ else
                     <MudTd DataLabel="Plazo">@context.DueDate.ToString("dd/MM/yyyy")</MudTd>
                     <MudTd DataLabel="Fecha ingreso">@context.EntryDate.ToString("dd/MM/yyyy")</MudTd>
                     <MudTd DataLabel="Fecha respuesta">@(context.ResponseDate?.ToString("dd/MM/yyyy") ?? "Pendiente")</MudTd>
-                    <MudTd DataLabel="Resolución mock">@context.ResolutionMock</MudTd>
+                    <MudTd DataLabel="Resolución">@context.ResolutionMock</MudTd>
                     <MudTd DataLabel="Adjuntos">@context.AttachmentPlaceholder</MudTd>
                 </RowTemplate>
             </MudTable>
@@ -77,10 +77,10 @@ else
 
         var item = new MmCorrespondenceDto
         {
-            Id = $"COR-MOCK-{Items.Count + 1:000}",
+            Id = $"COR-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
-            ProcedureNumber = $"TRM-MOCK-{DateTime.Now:HHmmss}",
-            FileNumber = $"EXP-{Local.LocalNumber}-MOCK",
+            ProcedureNumber = $"TRM-MUN-{DateTime.Now:HHmmss}",
+            FileNumber = $"EXP-{Local.LocalNumber}-MUN",
             Channel = "Presencial",
             Type = "Consulta",
             Applicant = Local.BusinessName,
@@ -95,7 +95,7 @@ else
 
         Items.Insert(0, item);
         RegisterMockEvent("Registrar trámite", string.Empty, item.ProcedureNumber, "Correspondencia", "Media");
-        Snackbar.Add("Trámite mock registrado.", Severity.Info);
+        Snackbar.Add("Trámite registrado.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -108,7 +108,7 @@ else
         item.Responsible = "Gestión Documental Mercado";
         item.Status = "En trámite";
         RegisterMockEvent("Asignar responsable", "Pendiente", item.Responsible, "Correspondencia", "Baja");
-        Snackbar.Add("Responsable asignado de forma mock.", Severity.Success);
+        Snackbar.Add("Responsable asignado registrado.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -122,7 +122,7 @@ else
         item.ResponseDate = DateTime.Today;
         item.ResolutionMock = $"Resolución {item.ProcedureNumber}";
         RegisterMockEvent("Resolver trámite", "En trámite", item.Status, "Correspondencia", "Media");
-        Snackbar.Add("Trámite mock resuelto.", Severity.Success);
+        Snackbar.Add("Trámite resuelto.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -132,9 +132,9 @@ else
         if (item is null)
             return Task.CompletedTask;
 
-        item.AttachmentPlaceholder = "Notificación generada mock";
+        item.AttachmentPlaceholder = "Notificación generada";
         RegisterMockEvent("Notificar trámite", "Pendiente", item.AttachmentPlaceholder, "Correspondencia", "Media");
-        Snackbar.Add("Notificación mock del trámite preparada.", Severity.Info);
+        Snackbar.Add("Notificación del trámite preparada.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -145,7 +145,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -156,12 +156,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel correspondencia",
             SourceProcess = process,
-            Comment = "Evento mock generado desde correspondencia."
+            Comment = "Evento generado desde correspondencia."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -171,7 +171,7 @@ else
             SourceDocument = "Panel correspondencia",
             Process = process,
             Severity = severity,
-            OutputReference = "Bitácora visual mock"
+            OutputReference = "Bitácora visual"
         });
     }
 }

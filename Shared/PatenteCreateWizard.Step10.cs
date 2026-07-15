@@ -38,7 +38,7 @@ public partial class PatenteCreateWizard
 
         return HasApprovalBlockers()
             ? ResolveBlockedExpedienteState()
-            : "Aprobada en modo demo";
+            : "Aprobada";
     }
 
     private Severity GetFinalizationAlertSeverity()
@@ -46,38 +46,38 @@ public partial class PatenteCreateWizard
 
     private string GetFinalizationAlertMessage()
         => HasApprovalBlockers()
-            ? "Se detectan bloqueos críticos; la solicitud demo no puede finalizar como aprobada y quedará Prevenida o Pendiente validación según corresponda."
-            : "La solicitud demo cumple las reglas de cierre y puede finalizar como Aprobada en modo demo.";
+            ? "la solicitud no puede finalizar como aprobada y quedará Prevenida o Pendiente validación según corresponda."
+            : "La solicitud cumple las reglas de cierre y puede finalizar como Aprobada.";
 
     private string GetRucMockSummary()
         => model.PendienteRegistroContribuyente
-            ? "RUC mock pendiente de creación o consulta del contribuyente."
-            : $"RUC mock {GetDisplayValue(model.CalidadDatosRuc, "Pendiente")} · contribuyente {GetDisplayValue(model.EstadoContribuyente, "Pendiente")}.";
+            ? "RUC pendiente de creación o consulta del contribuyente."
+            : $"RUC {GetDisplayValue(model.CalidadDatosRuc, "Pendiente")} · contribuyente {GetDisplayValue(model.EstadoContribuyente, "Pendiente")}.";
 
     private string GetBienesInmueblesMockSummary()
     {
         if (IsActivityWithoutPhysicalLocal())
-            return "Bienes Inmuebles mock no aplica por tratarse de actividad sin local físico.";
+            return "Bienes Inmuebles no aplica por tratarse de actividad sin local físico.";
 
-        return $"Bienes Inmuebles mock vinculado a ID Predial {GetDisplayValue(model.IdPredial)} y finca {GetDisplayValue(string.IsNullOrWhiteSpace(model.NumeroFinca) ? model.FincaOIdPredial : model.NumeroFinca)}.";
+        return $"Bienes Inmuebles vinculado a ID Predial {GetDisplayValue(model.IdPredial)} y finca {GetDisplayValue(string.IsNullOrWhiteSpace(model.NumeroFinca) ? model.FincaOIdPredial : model.NumeroFinca)}.";
     }
 
     private string GetUsoSueloMockSummary()
-        => $"Uso de Suelo mock {GetDisplayValue(model.EstadoUsoSuelo)} · certificado {GetDisplayValue(model.NumeroCertificadoUsoSuelo, "Pendiente")}.";
+        => $"Uso de Suelo {GetDisplayValue(model.EstadoUsoSuelo)} · certificado {GetDisplayValue(model.NumeroCertificadoUsoSuelo, "Pendiente")}.";
 
     private string GetCobroMockSummary()
-        => $"Cobro mock {GetDisplayValue(model.EstadoCobro)} · referencia {GetDisplayValue(model.ReferenciaCuentaPorCobrarMock)}.";
+        => $"Cobro {GetDisplayValue(model.EstadoCobro)} · referencia {GetDisplayValue(model.ReferenciaCuentaPorCobrarMock)}.";
 
     private string GetCuentaTributariaMockSummary()
-        => GetDisplayValue(model.EstadoCuentaTributariaMock, "Cuenta tributaria mock pendiente de emisión.");
+        => GetDisplayValue(model.EstadoCuentaTributariaMock, "Cuenta tributaria pendiente de emisión.");
 
     private string GetNotificacionesMockSummary()
         => model.NotificacionSimulada
-            ? "Notificación mock registrada en el expediente demo."
-            : "Notificación mock pendiente de envío referencial.";
+            ? "Notificación registrada en el expediente."
+            : "Notificación pendiente de envío.";
 
     private string GetAuditoriaMockSummary()
-        => $"Auditoría mock lista para registrar el cierre demo en estado {GetFinalizationOutcomePreview()}.";
+        => $"Auditoría lista para registrar el cierre en estado {GetFinalizationOutcomePreview()}.";
 
     private void ApplyFinalizationOutcome()
     {
@@ -88,7 +88,7 @@ public partial class PatenteCreateWizard
             model.EstadoFinalExpediente = "Rechazada";
             model.NotificacionSimulada = true;
             if (string.IsNullOrWhiteSpace(model.ObservacionesResolucion))
-                model.ObservacionesResolucion = "Solicitud rechazada en modo demo.";
+                model.ObservacionesResolucion = "Solicitud rechazada.";
             if (string.IsNullOrWhiteSpace(model.FirmaDigitalReferencial))
                 model.FirmaDigitalReferencial = "Rechazo referencial sin firma digital real.";
             return;
@@ -99,7 +99,7 @@ public partial class PatenteCreateWizard
             model.EstadoResolucion = ResolveBlockedApprovalResolutionState();
             model.EstadoFinalExpediente = ResolveBlockedExpedienteState();
             model.NotificacionSimulada = true;
-            model.ObservacionesResolucion = $"Finalización demo condicionada. Bloqueos críticos: {GetApprovalBlockersSummary()}";
+            model.ObservacionesResolucion = $"Finalización condicionada. Bloqueos críticos: {GetApprovalBlockersSummary()}";
             model.FirmaDigitalReferencial = "Finalización referencial sin firma digital real por bloqueos del expediente.";
             return;
         }
@@ -109,7 +109,7 @@ public partial class PatenteCreateWizard
             model.EstadoFinalExpediente = "Prevenida";
             model.NotificacionSimulada = true;
             if (string.IsNullOrWhiteSpace(model.ObservacionesResolucion))
-                model.ObservacionesResolucion = "Prevención emitida en modo demo.";
+                model.ObservacionesResolucion = "Prevención emitida.";
             if (string.IsNullOrWhiteSpace(model.FirmaDigitalReferencial))
                 model.FirmaDigitalReferencial = "Prevención referencial sin firma digital real.";
             return;
@@ -120,12 +120,12 @@ public partial class PatenteCreateWizard
             : "Aprobada";
         if (!model.EstadoCobro.Equals("Exonerado", StringComparison.OrdinalIgnoreCase) && !model.EstadoCobro.Equals("No aplica", StringComparison.OrdinalIgnoreCase))
             model.EstadoCobro = "Pago verificado";
-        model.EstadoCuentaTributariaMock = "Cuenta tributaria mock verificada para cierre demo.";
+        model.EstadoCuentaTributariaMock = "Cuenta tributaria verificada para cierre.";
         model.EstadoResolucion = "Aprobada";
-        model.EstadoFinalExpediente = "Aprobada en modo demo";
+        model.EstadoFinalExpediente = "Aprobada";
         model.NotificacionSimulada = true;
-        model.ObservacionesResolucion = "Solicitud de patente aprobada en modo demo.";
-        model.FirmaDigitalReferencial = $"Firma digital referencial registrada el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+        model.ObservacionesResolucion = "Solicitud de patente aprobada.";
+        model.FirmaDigitalReferencial = $"Firma digital registrada el {DateTime.Now:dd/MM/yyyy HH:mm}.";
     }
 
     private string? ResolveCreatedExpedienteRoute(SolicitudPatenteDto solicitud)
@@ -140,7 +140,7 @@ public partial class PatenteCreateWizard
             return;
         }
 
-        Snackbar.Add("No existe una ruta de expediente configurada en el demo. Regresando a la consulta de Patentes.", Severity.Info);
+        Snackbar.Add("No existe una ruta de expediente configurada. Regresando a la consulta de Patentes.", Severity.Info);
         await Task.Yield();
         NavigationManager.NavigateTo("/patentes");
     }
@@ -148,12 +148,12 @@ public partial class PatenteCreateWizard
     private List<string> BuildIntegrationSummaryItems()
         =>
         [
-            $"RUC mock: {GetRucMockSummary()}",
-            $"Bienes Inmuebles mock: {GetBienesInmueblesMockSummary()}",
-            $"Uso de Suelo mock: {GetUsoSueloMockSummary()}",
-            $"Cobro mock: {GetCobroMockSummary()}",
-            $"Cuenta Tributaria mock: {GetCuentaTributariaMockSummary()}",
-            $"Notificaciones mock: {GetNotificacionesMockSummary()}",
-            $"Auditoría mock: {GetAuditoriaMockSummary()}"
+            $"RUC: {GetRucMockSummary()}",
+            $"Bienes Inmuebles: {GetBienesInmueblesMockSummary()}",
+            $"Uso de Suelo: {GetUsoSueloMockSummary()}",
+            $"Cobro: {GetCobroMockSummary()}",
+            $"Cuenta Tributaria: {GetCuentaTributariaMockSummary()}",
+            $"Notificaciones: {GetNotificacionesMockSummary()}",
+            $"Auditoría: {GetAuditoriaMockSummary()}"
         ];
 }

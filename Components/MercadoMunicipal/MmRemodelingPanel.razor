@@ -22,10 +22,10 @@ else
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterPermitAsync">Registrar permiso de remodelación mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApproveAsync">Aprobar mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="RejectAsync">Rechazar mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="GenerateUrbanismTaskAsync">Generar tarea Urbanismo mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterPermitAsync">Registrar permiso de remodelación</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApproveAsync">Aprobar</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="RejectAsync">Rechazar</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="GenerateUrbanismTaskAsync">Generar tarea Urbanismo</MudButton>
             </div>
         </MudPaper>
 
@@ -41,8 +41,8 @@ else
                     <MudTh>Estado</MudTh>
                     <MudTh>Urbanismo</MudTh>
                     <MudTh>Alcaldía</MudTh>
-                    <MudTh>Documento mock</MudTh>
-                    <MudTh>Notificación mock</MudTh>
+                    <MudTh>Documento</MudTh>
+                    <MudTh>Notificación</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="Número gestión">@context.ManagementNumber</MudTd>
@@ -54,8 +54,8 @@ else
                     <MudTd DataLabel="Estado">@context.Status</MudTd>
                     <MudTd DataLabel="Urbanismo">@context.UrbanismTask</MudTd>
                     <MudTd DataLabel="Alcaldía">@context.MayorOfficeTask</MudTd>
-                    <MudTd DataLabel="Documento mock">@context.DocumentMock</MudTd>
-                    <MudTd DataLabel="Notificación mock">@context.NotificationMock</MudTd>
+                    <MudTd DataLabel="Documento">@context.DocumentMock</MudTd>
+                    <MudTd DataLabel="Notificación">@context.NotificationMock</MudTd>
                 </RowTemplate>
             </MudTable>
         </MudPaper>
@@ -75,11 +75,11 @@ else
 
         var item = new MmRemodelingPermitDto
         {
-            Id = $"RMD-MOCK-{Items.Count + 1:000}",
+            Id = $"RMD-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
-            ManagementNumber = $"RMD-MOCK-{DateTime.Now:HHmmss}",
+            ManagementNumber = $"RMD-MUN-{DateTime.Now:HHmmss}",
             LocalNumber = Local.LocalNumber,
-            RemodelingType = "Remodelación interna mock",
+            RemodelingType = "Remodelación interna",
             RequestDate = DateTime.Today,
             ExecutionDate = DateTime.Today.AddDays(12),
             AuthorizedSchedule = "06:00 a 10:00",
@@ -92,7 +92,7 @@ else
 
         Items.Insert(0, item);
         RegisterMockEvent("Registrar remodelación", string.Empty, item.ManagementNumber, "Remodelaciones", "Media");
-        Snackbar.Add("Permiso de remodelación mock registrado.", Severity.Info);
+        Snackbar.Add("Permiso de remodelación registrado.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -103,9 +103,9 @@ else
             return Task.CompletedTask;
 
         item.Status = "Aprobada";
-        item.MayorOfficeTask = "Aprobación mock emitida";
+        item.MayorOfficeTask = "Aprobación emitida";
         RegisterMockEvent("Aprobar remodelación", "En revisión", item.Status, "Remodelaciones", "Baja");
-        Snackbar.Add("Remodelación mock aprobada.", Severity.Success);
+        Snackbar.Add("Remodelación aprobada.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -117,7 +117,7 @@ else
 
         item.Status = "Rechazada";
         RegisterMockEvent("Rechazar remodelación", "En revisión", item.Status, "Remodelaciones", "Alta");
-        Snackbar.Add("Remodelación mock rechazada.", Severity.Error);
+        Snackbar.Add("Remodelación rechazada.", Severity.Error);
         return Task.CompletedTask;
     }
 
@@ -127,9 +127,9 @@ else
         if (item is null)
             return Task.CompletedTask;
 
-        item.UrbanismTask = "Tarea Urbanismo generada mock";
+        item.UrbanismTask = "Tarea Urbanismo generada";
         RegisterMockEvent("Generar tarea Urbanismo", "Pendiente", item.UrbanismTask, "Remodelaciones", "Media");
-        Snackbar.Add("Tarea Urbanismo mock generada.", Severity.Info);
+        Snackbar.Add("Tarea Urbanismo generada.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -140,7 +140,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -151,12 +151,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel de remodelaciones",
             SourceProcess = process,
-            Comment = "Evento mock generado desde remodelaciones."
+            Comment = "Evento generado desde remodelaciones."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -166,7 +166,7 @@ else
             SourceDocument = "Panel de remodelaciones",
             Process = process,
             Severity = severity,
-            OutputReference = "Bitácora visual mock"
+            OutputReference = "Bitácora visual"
         });
     }
 }

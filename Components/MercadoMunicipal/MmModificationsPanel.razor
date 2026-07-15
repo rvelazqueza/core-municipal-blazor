@@ -15,7 +15,7 @@ else
     <div class="d-flex flex-column gap-3">
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterModificationAsync">Registrar modificación mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterModificationAsync">Registrar modificación</MudButton>
             </div>
         </MudPaper>
 
@@ -79,12 +79,12 @@ else
 
         var item = new MmModificationDto
         {
-            Id = $"MOD-MOCK-{Items.Count + 1:000}",
+            Id = $"MOD-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
-            RequestNumber = $"MM-MOD-MOCK-{DateTime.Now:HHmmss}",
+            RequestNumber = $"MM-MOD-MUN-{DateTime.Now:HHmmss}",
             AccountNumber = Local.AccountNumber,
             MovementType = "Modificación de oficio",
-            Justification = "Ajuste referencial desde expediente existente.",
+            Justification = "Ajuste desde expediente existente.",
             Status = "Registrada",
             PreviousValue = Local.Status,
             NewValue = "En revisión administrativa",
@@ -103,7 +103,7 @@ else
 
         Items.Insert(0, item);
         RegisterMockEvent("Registrar modificación", item.PreviousValue, item.NewValue, "Modificaciones", "Media");
-        Snackbar.Add("Modificación mock registrada.", Severity.Success);
+        Snackbar.Add("Modificación registrada.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -114,7 +114,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Analista Mercado",
@@ -125,12 +125,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel modificaciones",
             SourceProcess = process,
-            Comment = "Evento mock generado desde modificaciones."
+            Comment = "Evento generado desde modificaciones."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Analista Mercado",
@@ -140,7 +140,7 @@ else
             SourceDocument = "Panel modificaciones",
             Process = process,
             Severity = severity,
-            OutputReference = "Solicitud de modificación mock"
+            OutputReference = "Solicitud de modificación"
         });
     }
 }

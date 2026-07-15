@@ -30,12 +30,12 @@
     protected override void OnParametersSet()
     {
         if (entries.Count == 0)
-            entries.Add(new ChangeItem { Type = "Prórroga", Reason = "Referencia inicial del expediente", Date = DateTime.Today.AddDays(-5), User = "demo.user", Status = "Generada", Resolution = "PRR-MOCK-01", Notification = "Pendiente" });
+            entries.Add(new ChangeItem { Type = "Prórroga", Reason = "Referencia inicial del expediente", Date = DateTime.Today.AddDays(-5), User = "usuario.municipal", Status = "Generada", Resolution = "PRR-MUN-01", Notification = "Pendiente" });
     }
 
-    private Task RegisterModificationAsync() { entries.Insert(0, BuildItem("Modificación", "Ajuste técnico de planos")); Snackbar.Add("Modificación mock registrada.", Severity.Info); return Task.CompletedTask; }
-    private Task RegisterExtensionAsync() { entries.Insert(0, BuildItem("Prórroga", "Extensión de plazo referencial")); Snackbar.Add("Prórroga mock registrada.", Severity.Info); return Task.CompletedTask; }
-    private Task RegisterCancellationAsync() { entries.Insert(0, BuildItem("Anulación", "Solicitud de cierre administrativo")); Permit.PermitStatus = "Anulado"; Snackbar.Add("Anulación mock registrada.", Severity.Warning); return Task.CompletedTask; }
-    private static ChangeItem BuildItem(string type, string reason) => new() { Type = type, Reason = reason, Date = DateTime.Today, User = "demo.user", Status = "Generada", Resolution = $"{type[..3].ToUpperInvariant()}-MOCK-{DateTime.Now:HHmmss}", Notification = "Pendiente" };
+    private Task RegisterModificationAsync() { entries.Insert(0, BuildItem("Modificación", "Ajuste técnico de planos")); Snackbar.Add("Modificación registrada.", Severity.Info); return Task.CompletedTask; }
+    private Task RegisterExtensionAsync() { entries.Insert(0, BuildItem("Prórroga", "Extensión de plazo")); Snackbar.Add("Prórroga registrada.", Severity.Info); return Task.CompletedTask; }
+    private Task RegisterCancellationAsync() { entries.Insert(0, BuildItem("Anulación", "Solicitud de cierre administrativo")); Permit.PermitStatus = "Anulado"; Snackbar.Add("Anulación registrada.", Severity.Warning); return Task.CompletedTask; }
+    private static ChangeItem BuildItem(string type, string reason) => new() { Type = type, Reason = reason, Date = DateTime.Today, User = "usuario.municipal", Status = "Generada", Resolution = $"{type[..3].ToUpperInvariant()}-MUN-{DateTime.Now:HHmmss}", Notification = "Pendiente" };
     private sealed class ChangeItem { public string Type { get; set; } = string.Empty; public string Reason { get; set; } = string.Empty; public DateTime Date { get; set; } = DateTime.Today; public string User { get; set; } = string.Empty; public string Status { get; set; } = string.Empty; public string Resolution { get; set; } = string.Empty; public string Notification { get; set; } = string.Empty; }
 }

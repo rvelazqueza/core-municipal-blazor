@@ -23,7 +23,7 @@
             </div>
 
             <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mb-0">
-                Bandeja y tablero inicial del Mercado Municipal en modo demo.
+                Bandeja y tablero operativo del Mercado Municipal.
             </MudAlert>
 
             <div class="d-flex flex-wrap gap-2">
@@ -66,7 +66,7 @@
 
     private Task ShowPendingFeatureAsync(string featureName)
     {
-        Snackbar.Add($"{featureName} está disponible en el expediente mock del local seleccionado.", Severity.Info);
+        Snackbar.Add($"{featureName} está disponible en el expediente del local seleccionado.", Severity.Info);
         return Task.CompletedTask;
     }
 }

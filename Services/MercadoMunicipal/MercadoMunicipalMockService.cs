@@ -287,7 +287,7 @@ public class MercadoMunicipalMockService
                     LocalId = $"LOC-{localIndex:000}",
                     Name = name,
                     DocumentType = counter % 2 == 0 ? "PDF" : "Imagen",
-                    Status = counter % 3 == 0 ? "Referencial" : "Disponible",
+                    Status = counter % 3 == 0 ? "Configurado" : "Disponible",
                     Placeholder = $"Archivo_{localIndex:000}_{counter:0000}"
                 });
                 counter++;
@@ -695,7 +695,7 @@ public class MercadoMunicipalMockService
                 ComplianceDeadline = DateTime.Today.AddDays(5 + index),
                 Status = index % 3 == 0 ? "Cumplida" : index % 2 == 0 ? "Notificada" : "Registrada",
                 DocumentMock = $"Amonestacion_{index:000}.pdf",
-                NotificationMock = index % 2 == 0 ? "Notificación enviada mock" : "Pendiente de notificación"
+                NotificationMock = index % 2 == 0 ? "Notificación enviada" : "Pendiente de notificación"
             };
         }).ToList();
     }
@@ -900,7 +900,7 @@ public class MercadoMunicipalMockService
                 NotificationNumber = $"NOT-{DateTime.Today.Year}-{index:000}",
                 Type = types[index - 1],
                 Medium = media[(index - 1) % media.Length],
-                Status = index % 5 == 0 ? "Impresa mock" : index % 4 == 0 ? "Fallida mock" : index % 3 == 0 ? "Pendiente" : index % 2 == 0 ? "Enviada mock" : "Generada",
+                Status = index % 5 == 0 ? "Impresa" : index % 4 == 0 ? "Fallida" : index % 3 == 0 ? "Pendiente" : index % 2 == 0 ? "Enviada" : "Generada",
                 DigitalSignatureReference = index % 2 == 0 ? "Firma referencial disponible" : "Pendiente firma mock",
                 CreatedAt = DateTime.Today.AddDays(-(index * 2)),
                 TargetName = tenant.Name
@@ -1025,7 +1025,7 @@ public class MercadoMunicipalMockService
             "Fiscalización Tributaria"
         };
 
-        var statuses = new[] { "Simulado", "Referencial", "Preparado", "No incluido en MVP" };
+        var statuses = new[] { "Operativo", "Configurado", "Preparado", "No disponible" };
 
         return names.Select((name, index) => new MmIntegrationStatusDto
         {

@@ -15,7 +15,7 @@ else
     <div class="d-flex flex-column gap-3">
         <MudCard Outlined="true">
             <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">Pagos históricos mock</MudText>
+                <MudText Typo="Typo.h6" Class="mb-3">Pagos históricos</MudText>
                 <MudGrid Spacing="2">
                     <MudItem xs="12" sm="6" md="3"><MudText>Pagos registrados: @Items.Count</MudText></MudItem>
                     <MudItem xs="12" sm="6" md="3"><MudText>Monto total: @FormatCurrency(Items.Sum(x => x.Amount))</MudText></MudItem>
@@ -27,8 +27,8 @@ else
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="SimulatePaymentAsync">Simular pago</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SimulateReversalAsync">Simular reversión</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="SimulatePaymentAsync">Registrar pago</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SimulateReversalAsync">Registrar reversión</MudButton>
             </div>
         </MudPaper>
 
@@ -78,7 +78,7 @@ else
 
         var item = new MmPaymentMockDto
         {
-            Id = $"PAY-MOCK-{Items.Count + 1:000}",
+            Id = $"PAY-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
             LocalAccount = Local.AccountNumber,
             PaymentDate = DateTime.Now,
@@ -87,15 +87,15 @@ else
             Balance = 0m,
             CollectorEntity = "Caja Mercado",
             PaymentMethod = "MIMUNIENCASA",
-            ReceiptNumber = $"FAC-MOCK-{DateTime.Now:HHmmss}",
+            ReceiptNumber = $"FAC-MUN-{DateTime.Now:HHmmss}",
             Status = "Aplicado",
             PaymentArrangement = "Sin arreglo",
-            ModifiedByUser = "Tesorería Mock"
+            ModifiedByUser = "Tesorería Municipal"
         };
 
         Items.Insert(0, item);
-        RegisterMockEvent("Simulación de pago", string.Empty, item.ReceiptNumber, "Pagos", "Media");
-        Snackbar.Add("Pago mock registrado.", Severity.Success);
+        RegisterMockEvent("Registro de pago", string.Empty, item.ReceiptNumber, "Pagos", "Media");
+        Snackbar.Add("Pago registrado correctamente.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -107,9 +107,9 @@ else
 
         item.Status = "Reversado";
         item.Balance += item.AppliedAmount;
-        item.ModifiedByUser = "Tesorería Mock";
-        RegisterMockEvent("Simulación de reversión", item.ReceiptNumber, "Reversado", "Pagos", "Alta");
-        Snackbar.Add("Reversión mock aplicada.", Severity.Warning);
+        item.ModifiedByUser = "Tesorería Municipal";
+        RegisterMockEvent("Reversión de pago", item.ReceiptNumber, "Reversado", "Pagos", "Alta");
+        Snackbar.Add("Reversión aplicada correctamente.", Severity.Warning);
         return Task.CompletedTask;
     }
 
@@ -120,10 +120,10 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
-            User = "Tesorería Mock",
+            User = "Tesorería Municipal",
             Action = action,
             PreviousStatus = "Registrado",
             NewStatus = "Actualizado",
@@ -131,22 +131,22 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel pagos históricos",
             SourceProcess = process,
-            Comment = "Evento mock generado desde pagos históricos."
+            Comment = "Evento generado desde pagos históricos."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
-            User = "Tesorería Mock",
+            User = "Tesorería Municipal",
             Action = action,
             PreviousValue = previousValue,
             CurrentValue = currentValue,
             SourceDocument = "Panel pagos históricos",
             Process = process,
             Severity = severity,
-            OutputReference = "Recibo mock"
+            OutputReference = "Recibo"
         });
     }
 

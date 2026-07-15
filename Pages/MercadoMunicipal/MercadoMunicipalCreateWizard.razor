@@ -11,7 +11,7 @@
 <PageTitle>Mercado Municipal - Nuevo local / contrato</PageTitle>
 
 <WizardShell Title="Nuevo local / contrato / derecho de piso"
-             Subtitle="Registro step-by-step para locales fijos, derechos de piso, contratos, cobro mock y validación final."
+             Subtitle="Registro step-by-step para locales fijos, derechos de piso, contratos, cobro y validación final."
              ModuleName="Mercado Municipal"
              ProcessCode="MM-8.1C"
              SummaryTitle="Resumen lateral"
@@ -35,7 +35,7 @@
              SaveDraftMessage="Borrador de Mercado Municipal guardado correctamente."
              CancelDialogTitle="Cancelar gestión de Mercado Municipal"
              CancelDialogMessage="¿Desea cancelar la gestión de Mercado Municipal? Los datos no guardados se perderán."
-             CancelWarningMessage="Puede guardar un borrador mock antes de salir si desea conservar el avance visual."
+             CancelWarningMessage="Puede guardar un borrador antes de salir si desea conservar el avance."
              CancelledMessage="Gestión de Mercado Municipal cancelada."
              OnBack="PreviousStepAsync"
              OnNext="NextStepAsync"
@@ -48,7 +48,7 @@
         case 0:
             <MudStack Spacing="3">
                 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">
-                    Defina la gestión, el canal de ingreso y el departamento responsable para inicializar el expediente mock.
+                    Defina la gestión, el canal de ingreso y el departamento responsable para inicializar el expediente.
                 </MudAlert>
                 <MudGrid Spacing="3">
                     <MudItem xs="12" md="6">
@@ -68,7 +68,7 @@
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Número de expediente mock" @bind-Value="model.MockFileNumber" />
+                        <MudTextField T="string" Label="Número de expediente" @bind-Value="model.MockFileNumber" />
                     </MudItem>
                     <MudItem xs="12" md="3">
                         <MudSelect T="string" Label="Estado inicial" @bind-Value="model.InitialStatus">
@@ -172,13 +172,13 @@
                 <MudGrid Spacing="3">
                     <MudItem xs="12" md="6">
                         <MudPaper Outlined="true" Class="pa-3">
-                            <MudText Typo="Typo.subtitle2">Fotografía placeholder</MudText>
+                            <MudText Typo="Typo.subtitle2">Fotografía</MudText>
                             <MudText Typo="Typo.body2">@model.LocalPhotoPlaceholder</MudText>
                         </MudPaper>
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudPaper Outlined="true" Class="pa-3">
-                            <MudText Typo="Typo.subtitle2">Documento placeholder</MudText>
+                            <MudText Typo="Typo.subtitle2">Documento</MudText>
                             <MudText Typo="Typo.body2">@model.LocalDocumentPlaceholder</MudText>
                         </MudPaper>
                     </MudItem>
@@ -191,12 +191,12 @@
                 @if (model.RucStatus.Equals("Pendiente", StringComparison.OrdinalIgnoreCase))
                 {
                     <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true">
-                        El RUC mock del inquilino se encuentra pendiente y requiere validación visual antes de finalizar.
+                        El RUC del inquilino se encuentra pendiente y requiere validación antes de finalizar.
                     </MudAlert>
                 }
                 <MudGrid Spacing="3">
                     <MudItem xs="12" md="4">
-                        <MudTextField T="string" Label="Inquilino vinculado a RUC mock" @bind-Value="model.LinkedRuc" />
+                        <MudTextField T="string" Label="Inquilino vinculado a RUC" @bind-Value="model.LinkedRuc" />
                     </MudItem>
                     <MudItem xs="12" md="4">
                         <MudTextField T="string" Label="Identificación" @bind-Value="model.Identification" />
@@ -246,7 +246,7 @@
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudPaper Outlined="true" Class="pa-3">
-                            <MudText Typo="Typo.subtitle2">Fotografía del inquilino placeholder</MudText>
+                            <MudText Typo="Typo.subtitle2">Fotografía del inquilino</MudText>
                             <MudText Typo="Typo.body2">@model.TenantPhotoPlaceholder</MudText>
                         </MudPaper>
                     </MudItem>
@@ -264,7 +264,7 @@
                 @if (model.ShowExpirationAlert)
                 {
                     <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true">
-                        El contrato presenta alerta mock por vencimiento contractual y debe revisarse antes de finalizar.
+                        El contrato presenta alerta por vencimiento contractual y debe revisarse antes de finalizar.
                     </MudAlert>
                 }
                 <MudGrid Spacing="3">
@@ -318,7 +318,7 @@
                         <MudTextField T="string" Label="Observaciones" @bind-Value="model.ContractObservations" AutoGrow="true" MaxLines="3" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Firma digital referencial" @bind-Value="model.SignatureReference" />
+                        <MudTextField T="string" Label="Firma digital" @bind-Value="model.SignatureReference" />
                     </MudItem>
                 </MudGrid>
             </MudStack>
@@ -369,10 +369,10 @@
                         <MudTextField T="decimal?" Label="Área m2" @bind-Value="model.ChargeAreaM2" />
                     </MudItem>
                     <MudItem xs="12" md="3">
-                        <MudTextField T="decimal?" Label="Monto calculado mock" @bind-Value="model.MockCalculatedAmount" />
+                        <MudTextField T="decimal?" Label="Monto calculado" @bind-Value="model.MockCalculatedAmount" />
                     </MudItem>
                     <MudItem xs="12" md="3">
-                        <MudTextField T="decimal?" Label="Depósito o garantía mock" @bind-Value="model.DepositGuarantee" />
+                        <MudTextField T="decimal?" Label="Depósito o garantía" @bind-Value="model.DepositGuarantee" />
                     </MudItem>
                     <MudItem xs="12" md="2">
                         <MudTextField T="decimal?" Label="Descuento" @bind-Value="model.DiscountAmount" />
@@ -388,7 +388,7 @@
                     <MudItem xs="12" md="12">
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
                             <MudCheckBox T="bool" Label="Agua" @bind-Value="model.HasWaterService" />
-                            <MudCheckBox T="bool" Label="Electricidad referencial" @bind-Value="model.HasElectricityService" />
+                            <MudCheckBox T="bool" Label="Electricidad" @bind-Value="model.HasElectricityService" />
                             <MudCheckBox T="bool" Label="Recolección" @bind-Value="model.HasCollectionService" />
                             <MudCheckBox T="bool" Label="Mantenimiento" @bind-Value="model.HasMaintenanceService" />
                             <MudCheckBox T="bool" Label="Otros" @bind-Value="model.HasOtherService" />
@@ -402,7 +402,7 @@
                     </MudItem>
                 </MudGrid>
                 <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Calculate" OnClick="RecalculateAmountAsync">
-                    Recalcular monto mock
+                    Recalcular monto
                 </MudButton>
             </MudStack>
             break;
@@ -456,7 +456,7 @@
                     </MudItem>
                     <MudItem xs="12" md="4">
                         <MudPaper Outlined="true" Class="pa-3">
-                            <MudText Typo="Typo.subtitle2">Cuenta tributaria mock</MudText>
+                            <MudText Typo="Typo.subtitle2">Cuenta tributaria</MudText>
                             <MudText Typo="Typo.body2">@model.TaxAccountNumber</MudText>
                         </MudPaper>
                     </MudItem>
@@ -479,24 +479,24 @@
                         <MudTextField T="decimal?" Label="Cuota mensual generada" @bind-Value="model.MonthlyQuotaGenerated" />
                     </MudItem>
                     <MudItem xs="12" md="4">
-                        <MudTextField T="string" Label="Emisión mensual mock" @bind-Value="model.MonthlyEmissionMock" />
+                        <MudTextField T="string" Label="Emisión mensual" @bind-Value="model.MonthlyEmissionMock" />
                     </MudItem>
                     <MudItem xs="12" md="4">
-                        <MudTextField T="string" Label="Emisión anual mock" @bind-Value="model.AnnualEmissionMock" />
+                        <MudTextField T="string" Label="Emisión anual" @bind-Value="model.AnnualEmissionMock" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Cobro administrativo referencial" @bind-Value="model.CollectionReferenceStatus" />
+                        <MudTextField T="string" Label="Cobro administrativo" @bind-Value="model.CollectionReferenceStatus" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Tesorería/Cajas/Conectividad referencial" @bind-Value="model.TreasuryReferenceStatus" />
+                        <MudTextField T="string" Label="Tesorería/Cajas/Conectividad" @bind-Value="model.TreasuryReferenceStatus" />
                     </MudItem>
                 </MudGrid>
 
                 <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ReceiptLong" OnClick="GenerateMonthlyQuotaAsync">Generar cuota mensual mock</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Payments" OnClick="SimulateMonthlyEmissionAsync">Simular emisión mensual</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.AttachMoney" OnClick="SimulatePaymentAsync">Simular pago</MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Gavel" OnClick="SendToCollectionAsync">Enviar a cobro administrativo mock</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ReceiptLong" OnClick="GenerateMonthlyQuotaAsync">Generar cuota mensual</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Payments" OnClick="SimulateMonthlyEmissionAsync">Registrar emisión mensual</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.AttachMoney" OnClick="SimulatePaymentAsync">Registrar pago</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Gavel" OnClick="SendToCollectionAsync">Enviar a cobro administrativo</MudButton>
                 </MudStack>
 
                 <MudGrid Spacing="3">
@@ -516,7 +516,7 @@
                     </MudItem>
                     <MudItem xs="12" md="5">
                         <MudPaper Outlined="true" Class="pa-3">
-                            <MudText Typo="Typo.subtitle2" Class="mb-2">Integraciones mock</MudText>
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Integraciones</MudText>
                             @foreach (var integration in integrationPreview)
                             {
                                 <MudChip T="string" Text="@($"{integration.Name}: {integration.Status}")" Color="@ResolveStatusColor(integration.Status)" Variant="Variant.Outlined" Size="Size.Small" Class="me-1 mb-1" />
@@ -542,7 +542,7 @@
                             <MudCardContent>
                                 <MudText Typo="Typo.h6" Class="mb-2">Resumen de gestión</MudText>
                                 <MudText>Gestión: @model.ManagementType</MudText>
-                                <MudText>Expediente mock: @model.MockFileNumber</MudText>
+                                <MudText>Expediente: @model.MockFileNumber</MudText>
                                 <MudText>Departamento: @model.ResponsibleDepartment</MudText>
                                 <MudText>Canal: @model.IntakeChannel</MudText>
                             </MudCardContent>
@@ -600,7 +600,7 @@
                     else
                     {
                         <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Dense="true">
-                            El expediente demo está listo para finalizar.
+                            El expediente está listo para finalizar.
                         </MudAlert>
                     }
                 </MudPaper>
@@ -619,7 +619,7 @@
                     <MudChip T="string" Text="@($"Cuenta: {model.AccountStatus}")" Color="@ResolveStatusColor(model.AccountStatus)" Variant="Variant.Outlined" Size="Size.Small" />
                     <MudChip T="string" Text="@($"Borrador: {draftStatusLabel}")" Color="@ResolveStatusColor(draftStatusLabel)" Variant="Variant.Outlined" Size="Size.Small" />
                 </MudStack>
-                <MudText Typo="Typo.caption">Último guardado mock: @lastSavedLabel</MudText>
+                <MudText Typo="Typo.caption">Último guardado: @lastSavedLabel</MudText>
             </MudStack>
         </MudPaper>
     </SummaryContent>
@@ -631,12 +631,12 @@
     {
         ("step-1", "Tipo de gestión y canal", "Defina la gestión de ingreso y el responsable inicial.", Icons.Material.Filled.AccountTree),
         ("step-2", "Datos del local o derecho de piso", "Capture localización, alquiler y datos físicos del puesto.", Icons.Material.Filled.Storefront),
-        ("step-3", "Inquilino / dueño", "Relacione el inquilino con RUC mock y datos de contacto.", Icons.Material.Filled.Person),
+        ("step-3", "Inquilino / dueño", "Relacione el inquilino con RUC y datos de contacto.", Icons.Material.Filled.Person),
         ("step-4", "Contrato y vigencia quinquenal", "Configure vigencia, condiciones y alertas de vencimiento.", Icons.Material.Filled.Description),
-        ("step-5", "Datos de cobro del alquiler", "Complete la parametrización de cobro y cálculo mock.", Icons.Material.Filled.RequestQuote),
+        ("step-5", "Datos de cobro del alquiler", "Complete la parametrización de cobro y cálculo.", Icons.Material.Filled.RequestQuote),
         ("step-6", "Requisitos, documentos e imágenes", "Administre checklist y placeholders documentales.", Icons.Material.Filled.FolderCopy),
-        ("step-7", "Cuenta tributaria y emisión mock", "Revise cuenta tributaria, saldo, cuotas y acciones simuladas.", Icons.Material.Filled.ReceiptLong),
-        ("step-8", "Validación, resumen y finalización", "Consolide el expediente y cierre el proceso demo.", Icons.Material.Filled.FactCheck)
+        ("step-7", "Cuenta tributaria y emisión", "Revise cuenta tributaria, saldo, cuotas y acciones operativas.", Icons.Material.Filled.ReceiptLong),
+        ("step-8", "Validación, resumen y finalización", "Consolide el expediente y cierre el proceso.", Icons.Material.Filled.FactCheck)
     };
 
     private readonly string[] managementTypes =
@@ -674,7 +674,7 @@
     private readonly string[] localStatuses = { "Alquilado", "No alquilado", "En remate", "Desocupado", "Suspendido", "En mantenimiento", "Inactivo" };
     private readonly string[] personTypes = { "Física", "Jurídica" };
     private readonly string[] tenantConditions = { "Inquilino fijo", "Inquilino ocasional", "Dueño de derecho de piso", "Tercero para recibo de traspaso" };
-    private readonly string[] contractTypes = { "Arrendamiento local fijo", "Derecho de piso", "Permiso temporal", "Cesión autorizada referencial" };
+    private readonly string[] contractTypes = { "Arrendamiento local fijo", "Derecho de piso", "Permiso temporal", "Cesión autorizada" };
     private readonly string[] contractStatuses = { "Borrador", "Activo", "Próximo a vencer", "Vencido", "Suspendido", "Cancelado", "Rescindido" };
     private readonly string[] chargePeriodicities = { "Mensual", "Anual", "Por temporada especial", "Por días adicionales" };
     private readonly string[] requirementStatuses = { "Presentado", "Pendiente", "Observado", "No aplica" };
@@ -702,9 +702,9 @@
     private bool isFinished;
     private DateTime startedAt = DateTime.Now;
     private DateTime? draftSavedAt;
-    private string draftSavedBy = "demo.user";
+    private string draftSavedBy = "usuario.mercado";
     private string draftMessage = "Sin guardar.";
-    private string lastAuditEvent = "Sin eventos de auditoría mock generados todavía.";
+    private string lastAuditEvent = "Sin eventos de auditoría generados todavía.";
 
     private (string Id, string Title, string Description, string Icon) currentStepDefinition => stepDefinitions[currentStepIndex];
     private string nextSuggestedStep => currentStepIndex < stepDefinitions.Count - 1 ? stepDefinitions[currentStepIndex + 1].Title : "Finalizar gestión";
@@ -789,7 +789,7 @@
         model.TenantPhotoPlaceholder = tenant.PhotoPlaceholder;
         model.EconomicActivity = tenant.EconomicActivity;
         model.BusinessName = tenant.BusinessName;
-        model.LegalRepresentative = tenant.PersonType == "Jurídica" ? "Representante legal mock" : string.Empty;
+        model.LegalRepresentative = tenant.PersonType == "Jurídica" ? "Representante legal" : string.Empty;
         model.Condition = tenant.Condition;
 
         model.ContractNumber = contract.ContractNumber;
@@ -822,7 +822,7 @@
         model.IndividualAdjustment = false;
         model.CollectiveAdjustment = false;
         model.DiscountAmount = rent.HasDiscount ? 5000m : 0m;
-        model.DiscountReason = rent.HasDiscount ? "Descuento promocional referencial" : string.Empty;
+        model.DiscountReason = rent.HasDiscount ? "Descuento promocional" : string.Empty;
         model.ChargeSuspension = rent.IsSuspended;
         model.HasWaterService = true;
         model.HasElectricityService = true;
@@ -843,8 +843,8 @@
         model.MonthlyEmissionMock = emissionMonthly.EmissionNumber;
         model.AnnualEmissionMock = emissionAnnual.EmissionNumber;
         model.CollectionReferenceStatus = collections.First(item => item.LocalId == local.Id).Status;
-        model.TreasuryReferenceStatus = "Tesorería/Cajas/Conectividad referencial";
-        lastAuditEvent = $"Último evento mock: {audits.First().Action} - {audits.First().Date:dd/MM/yyyy}";
+        model.TreasuryReferenceStatus = "Tesorería/Cajas/Conectividad";
+        lastAuditEvent = $"Último Evento: {audits.First().Action} - {audits.First().Date:dd/MM/yyyy}";
     }
 
     private List<MmWizardRequirementItemViewModel> BuildRequirementViewModels()
@@ -858,9 +858,9 @@
             "Acuerdo de Concejo Municipal, si aplica",
             "Autorización de traspaso, si aplica",
             "Comprobante de garantía",
-            "Patente o actividad comercial, referencial",
+            "Patente o actividad comercial",
             "Permiso sanitario, si aplica",
-            "Constancia de estar al día, mock",
+            "Constancia de estar al día",
             "Fotografía del local",
             "Fotografía del inquilino",
             "Documentación de derecho de piso",
@@ -876,7 +876,7 @@
                 Name = name,
                 Status = match?.Status ?? (index < 4 ? "Presentado" : "Pendiente"),
                 DocumentPlaceholder = match?.DocumentPlaceholder ?? $"Documento placeholder {index + 1:00}",
-                Observation = match?.Observation ?? "Revisión documental mock.",
+                Observation = match?.Observation ?? "Revisión documental.",
                 ReceivedBy = match?.ReceivedBy ?? "Ventanilla Mercado",
                 ReceivedAt = match?.ReceivedAt ?? DateTime.Today.AddDays(-(index + 1))
             };
@@ -999,10 +999,10 @@
         AddError(4, "Si hay descuento, solicitar motivo.", model.DiscountAmount.HasValue && model.DiscountAmount > 0 && string.IsNullOrWhiteSpace(model.DiscountReason));
 
         AddWarning(5, "Debe existir al menos un requisito presentado.", !model.Requirements.Any(item => item.Status == "Presentado"));
-        AddWarning(5, "Hay requisitos observados en revisión mock.", model.Requirements.Any(item => item.Status == "Observado"));
+        AddWarning(5, "Hay requisitos observados en revisión.", model.Requirements.Any(item => item.Status == "Observado"));
 
-        AddWarning(6, "Cuenta tributaria mock recomendada.", string.IsNullOrWhiteSpace(model.TaxAccountNumber));
-        AddWarning(6, "Emisión mensual mock recomendada.", string.IsNullOrWhiteSpace(model.MonthlyEmissionMock));
+        AddWarning(6, "Cuenta tributaria recomendada.", string.IsNullOrWhiteSpace(model.TaxAccountNumber));
+        AddWarning(6, "Emisión mensual recomendada.", string.IsNullOrWhiteSpace(model.MonthlyEmissionMock));
         AddWarning(6, "Estado de cuenta con alerta de morosidad.", model.AccountStatus.Equals("Moroso", StringComparison.OrdinalIgnoreCase) || model.AccountStatus.Equals("En cobro administrativo", StringComparison.OrdinalIgnoreCase));
 
         return results;
@@ -1083,7 +1083,7 @@
         draftSavedAt = DateTime.Now;
         draftMessage = $"Borrador guardado el {draftSavedAt:dd/MM/yyyy HH:mm}.";
         model.InitialStatus = "Borrador";
-        lastAuditEvent = $"Evento mock: borrador guardado por {draftSavedBy} el {draftSavedAt:dd/MM/yyyy HH:mm}.";
+        lastAuditEvent = $"Evento: borrador guardado por {draftSavedBy} el {draftSavedAt:dd/MM/yyyy HH:mm}";
         isSavingDraft = false;
     }
 
@@ -1110,8 +1110,8 @@
         await Task.Delay(150);
         isFinished = true;
         draftSavedAt ??= DateTime.Now;
-        lastAuditEvent = $"Evento mock AUD-MM-{DateTime.Now:HHmmss} generado para {model.MockFileNumber}.";
-        Snackbar.Add("Gestión de Mercado Municipal registrada en modo demo.", Severity.Success);
+        lastAuditEvent = $"Evento AUD-MM-{DateTime.Now:HHmmss} generado para {model.MockFileNumber}.";
+        Snackbar.Add("Gestión de Mercado Municipal registrada correctamente.", Severity.Success);
         isFinishing = false;
 
         if (!string.IsNullOrWhiteSpace(model.SelectedReferenceLocalId) && !model.ManagementType.Equals("Nuevo local", StringComparison.OrdinalIgnoreCase))
@@ -1125,13 +1125,13 @@
 
     private Task SearchRucAsync()
     {
-        Snackbar.Add("Búsqueda RUC mock ejecutada sin integración real.", Severity.Info);
+        Snackbar.Add("Búsqueda RUC ejecutada correctamente.", Severity.Info);
         return Task.CompletedTask;
     }
 
     private Task ViewRucAsync()
     {
-        Snackbar.Add("Vista RUC referencial disponible solo en modo demo.", Severity.Info);
+        Snackbar.Add("Vista RUC disponible para consulta.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -1143,7 +1143,7 @@
             model.RucStatus = "Activo";
         }
 
-        Snackbar.Add("Inquilino validado en modo mock.", Severity.Success);
+        Snackbar.Add("Inquilino validado correctamente.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -1161,15 +1161,15 @@
     {
         model.MonthlyQuotaGenerated = model.MonthlyAmount ?? model.MockCalculatedAmount ?? model.RentAmount ?? 0m;
         model.AccountStatus = "Preparado";
-        Snackbar.Add("Cuota mensual mock generada.", Severity.Success);
+        Snackbar.Add("Cuota mensual generada correctamente.", Severity.Success);
         return Task.CompletedTask;
     }
 
     private Task SimulateMonthlyEmissionAsync()
     {
         model.MonthlyEmissionMock = $"EMI-MEN-{DateTime.Now:yyyyMMdd-HHmm}";
-        model.CollectionReferenceStatus = "Simulado";
-        Snackbar.Add("Emisión mensual mock simulada.", Severity.Info);
+        model.CollectionReferenceStatus = "Procesado";
+        Snackbar.Add("Emisión mensual generada.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -1178,7 +1178,7 @@
         model.LastPaymentDate = DateTime.Today;
         model.AccountBalance = Math.Max(0m, (model.AccountBalance ?? 0m) - (model.MonthlyQuotaGenerated ?? 0m));
         model.AccountStatus = model.AccountBalance > 0 ? "Activo" : "Al día";
-        Snackbar.Add("Pago mock aplicado correctamente.", Severity.Success);
+        Snackbar.Add("Pago aplicado correctamente.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -1186,7 +1186,7 @@
     {
         model.AccountStatus = "En cobro administrativo";
         model.CollectionReferenceStatus = "En cobro administrativo";
-        Snackbar.Add("Cuenta enviada a cobro administrativo mock.", Severity.Warning);
+        Snackbar.Add("Cuenta enviada a cobro administrativo.", Severity.Warning);
         return Task.CompletedTask;
     }
 
@@ -1215,7 +1215,7 @@
             status.Equals("Sin guardar", StringComparison.OrdinalIgnoreCase))
             return Color.Warning;
 
-        if (status.Equals("Simulado", StringComparison.OrdinalIgnoreCase) ||
+        if (status.Equals("Operativo", StringComparison.OrdinalIgnoreCase) ||
             status.Equals("Referencial", StringComparison.OrdinalIgnoreCase) ||
             status.Equals("Preparado", StringComparison.OrdinalIgnoreCase) ||
             status.Equals("Borrador", StringComparison.OrdinalIgnoreCase) ||

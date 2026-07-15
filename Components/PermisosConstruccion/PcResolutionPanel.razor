@@ -12,8 +12,8 @@
         <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Fecha</MudText><MudText>@FormatDate(Permit.Resolution.ApprovalDate)</MudText></MudItem>
         <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Usuario</MudText><MudText>@Permit.Resolution.ApprovedBy</MudText></MudItem>
         <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Notificación</MudText><MudText>@Permit.Resolution.NotificationSimulated</MudText></MudItem>
-        <MudItem xs="12" md="6"><MudText Typo="Typo.caption">Certificado mock</MudText><MudText>@Permit.Resolution.LicenseMock</MudText></MudItem>
-        <MudItem xs="12" md="6"><MudText Typo="Typo.caption">Firma digital referencial</MudText><MudText>@Permit.Resolution.DigitalSignatureRef</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText Typo="Typo.caption">Certificado</MudText><MudText>@Permit.Resolution.LicenseMock</MudText></MudItem>
+        <MudItem xs="12" md="6"><MudText Typo="Typo.caption">Firma digital</MudText><MudText>@Permit.Resolution.DigitalSignatureRef</MudText></MudItem>
     </MudGrid>
     <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mt-4">
         <MudButton Variant="Variant.Outlined" OnClick="GenerateAsync">Generar resolución</MudButton>
@@ -21,17 +21,17 @@
         <MudButton Variant="Variant.Outlined" OnClick="RejectAsync">Rechazar</MudButton>
         <MudButton Variant="Variant.Outlined" OnClick="AnnulAsync">Anular</MudButton>
         <MudButton Variant="Variant.Outlined" OnClick="NotifyAsync">Notificar</MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="SyncApcAsync">Sincronizar APC mock</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="SyncApcAsync">Sincronizar APC</MudButton>
     </MudStack>
 </MudPaper>
 
 @code {
     [Parameter] public PcPermitDto Permit { get; set; } = new();
-    private Task GenerateAsync() { Permit.ResolutionStatus = "Generada"; Permit.Resolution.PermitNumber = string.IsNullOrWhiteSpace(Permit.Resolution.PermitNumber) ? $"LIC-{DateTime.Now:yyMMddHHmm}" : Permit.Resolution.PermitNumber; Snackbar.Add("Resolución mock generada.", Severity.Success); return Task.CompletedTask; }
-    private Task ApproveAsync() { Permit.PermitStatus = "Aprobado"; Permit.Resolution.Result = "Aprobado"; Permit.ResolutionStatus = "Aprobada"; Permit.Resolution.ApprovalDate = DateTime.Now; Permit.Resolution.ApprovedBy = "demo.user"; Snackbar.Add("Resolución aprobada en modo demo.", Severity.Success); return Task.CompletedTask; }
-    private Task RejectAsync() { Permit.PermitStatus = "Rechazado"; Permit.Resolution.Result = "Rechazado"; Permit.ResolutionStatus = "Rechazada"; Snackbar.Add("Resolución rechazada en modo demo.", Severity.Error); return Task.CompletedTask; }
-    private Task AnnulAsync() { Permit.PermitStatus = "Anulado"; Permit.Resolution.Result = "Anulado"; Permit.ResolutionStatus = "Anulada"; Snackbar.Add("Resolución anulada en modo demo.", Severity.Warning); return Task.CompletedTask; }
-    private Task NotifyAsync() { Permit.Resolution.NotificationSimulated = "Enviada mock"; Snackbar.Add("Notificación de resolución generada en modo demo.", Severity.Info); return Task.CompletedTask; }
-    private Task SyncApcAsync() { Permit.Resolution.ApcSyncStatus = "Sincronizado"; Permit.Apc.MockSyncStatus = "Sincronizado"; Snackbar.Add("Sincronización APC mock actualizada.", Severity.Success); return Task.CompletedTask; }
+    private Task GenerateAsync() { Permit.ResolutionStatus = "Generada"; Permit.Resolution.PermitNumber = string.IsNullOrWhiteSpace(Permit.Resolution.PermitNumber) ? $"LIC-{DateTime.Now:yyMMddHHmm}" : Permit.Resolution.PermitNumber; Snackbar.Add("Resolución generada.", Severity.Success); return Task.CompletedTask; }
+    private Task ApproveAsync() { Permit.PermitStatus = "Aprobado"; Permit.Resolution.Result = "Aprobado"; Permit.ResolutionStatus = "Aprobada"; Permit.Resolution.ApprovalDate = DateTime.Now; Permit.Resolution.ApprovedBy = "usuario.municipal"; Snackbar.Add("Resolución aprobada correctamente.", Severity.Success); return Task.CompletedTask; }
+    private Task RejectAsync() { Permit.PermitStatus = "Rechazado"; Permit.Resolution.Result = "Rechazado"; Permit.ResolutionStatus = "Rechazada"; Snackbar.Add("Resolución rechazada.", Severity.Error); return Task.CompletedTask; }
+    private Task AnnulAsync() { Permit.PermitStatus = "Anulado"; Permit.Resolution.Result = "Anulado"; Permit.ResolutionStatus = "Anulada"; Snackbar.Add("Resolución anulada.", Severity.Warning); return Task.CompletedTask; }
+    private Task NotifyAsync() { Permit.Resolution.NotificationSimulated = "Enviada"; Snackbar.Add("Notificación de resolución generada.", Severity.Info); return Task.CompletedTask; }
+    private Task SyncApcAsync() { Permit.Resolution.ApcSyncStatus = "Sincronizado"; Permit.Apc.MockSyncStatus = "Sincronizado"; Snackbar.Add("Sincronización APC actualizada.", Severity.Success); return Task.CompletedTask; }
     private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
 }

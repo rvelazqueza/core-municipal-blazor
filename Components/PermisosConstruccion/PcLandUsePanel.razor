@@ -17,14 +17,14 @@
         </MudGrid>
     </MudCardContent>
     <MudCardActions>
-        <MudButton Variant="Variant.Outlined" OnClick="ValidateAsync">Validar uso de suelo mock</MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="ViewCertificateAsync">Ver certificado mock</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ValidateAsync">Validar uso de suelo</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ViewCertificateAsync">Ver certificado</MudButton>
     </MudCardActions>
 </MudCard>
 
 @code {
     [Parameter] public PcPermitDto Permit { get; set; } = new();
-    private Task ValidateAsync() { Permit.LandUse.Status = "Aprobado"; Permit.LandUse.Compatibility = "Compatible"; Permit.LandUse.EmittedAt = DateTime.Today; Permit.LandUse.ValidUntil = DateTime.Today.AddMonths(6); Snackbar.Add("Uso de suelo validado en modo demo.", Severity.Success); return Task.CompletedTask; }
-    private Task ViewCertificateAsync() { Snackbar.Add($"Certificado mock {Permit.LandUse.CertificateNumber} visible de forma referencial.", Severity.Info); return Task.CompletedTask; }
+    private Task ValidateAsync() { Permit.LandUse.Status = "Aprobado"; Permit.LandUse.Compatibility = "Compatible"; Permit.LandUse.EmittedAt = DateTime.Today; Permit.LandUse.ValidUntil = DateTime.Today.AddMonths(6); Snackbar.Add("Uso de suelo validado.", Severity.Success); return Task.CompletedTask; }
+    private Task ViewCertificateAsync() { Snackbar.Add($"Certificado {Permit.LandUse.CertificateNumber} visible.", Severity.Info); return Task.CompletedTask; }
     private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
 }

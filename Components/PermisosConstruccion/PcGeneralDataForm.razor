@@ -29,7 +29,7 @@
     <MudItem xs="12" md="4">
         <MudPaper Outlined="true" Class="pa-4 h-100">
             <MudTextField T="string" @bind-Value="Permit.Observations" Label="Observaciones" Variant="Variant.Outlined" Margin="Margin.Dense" AutoGrow="true" />
-            <MudButton Variant="Variant.Outlined" Class="mt-3" OnClick="SaveObservationAsync">Guardar observación mock</MudButton>
+            <MudButton Variant="Variant.Outlined" Class="mt-3" OnClick="SaveObservationAsync">Guardar observación</MudButton>
         </MudPaper>
     </MudItem>
 </MudGrid>
@@ -38,7 +38,7 @@
     [Parameter] public PcPermitDto Permit { get; set; } = new();
     private Task SaveObservationAsync()
     {
-        Snackbar.Add("Observaciones generales actualizadas en modo demo.", Severity.Success);
+        Snackbar.Add("Observaciones generales actualizadas correctamente.", Severity.Success);
         return Task.CompletedTask;
     }
     private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";

@@ -28,7 +28,7 @@ else
         </MudCard>
 
         <MudPaper Outlined="true" Class="pa-4">
-            <MudText Typo="Typo.subtitle1" Class="mb-3">Gestiones mock</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mb-3">Gestiones de cobro</MudText>
             <MudTable T="CollectionManagementItem" Items="managementItems" Hover="true">
                 <HeaderContent>
                     <MudTh>Fecha</MudTh>
@@ -47,9 +47,9 @@ else
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SendToAdministrativeCollectionAsync">Enviar a cobro administrativo mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="RegisterCollectionManagementAsync">Registrar gestión de cobro mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="MarkPaymentArrangementAsync">Marcar arreglo de pago mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SendToAdministrativeCollectionAsync">Enviar a cobro administrativo</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="RegisterCollectionManagementAsync">Registrar gestión de cobro</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="MarkPaymentArrangementAsync">Marcar arreglo de pago</MudButton>
             </div>
         </MudPaper>
     </div>
@@ -89,13 +89,13 @@ else
             return Task.CompletedTask;
 
         Collection.Status = "En cobro administrativo";
-        Collection.LastAction = "Envío a cobro administrativo mock";
+        Collection.LastAction = "Envío a cobro administrativo";
         Collection.ResponsibleUser = "Analista Cobro";
         Collection.LastManagementDate = DateTime.Now;
         Collection.AdministrativeStage = "Cobro administrativo";
-        AddManagement("Envío a cobro administrativo mock", Collection.ResponsibleUser, Collection.Status);
+        AddManagement("Envío a cobro administrativo", Collection.ResponsibleUser, Collection.Status);
         RegisterMockEvent("Enviar a cobro administrativo", "Moroso", Collection.Status, "Cobro", "Alta");
-        Snackbar.Add("Caso enviado a cobro administrativo mock.", Severity.Warning);
+        Snackbar.Add("Caso enviado a cobro administrativo.", Severity.Warning);
         return Task.CompletedTask;
     }
 
@@ -104,12 +104,12 @@ else
         if (Collection is null)
             return Task.CompletedTask;
 
-        Collection.LastAction = "Gestión telefónica y recordatorio de pago mock";
+        Collection.LastAction = "Gestión telefónica y recordatorio de pago";
         Collection.ResponsibleUser = "Coordinación Mercado";
         Collection.LastManagementDate = DateTime.Now;
         AddManagement(Collection.LastAction, Collection.ResponsibleUser, Collection.Status);
         RegisterMockEvent("Registrar gestión de cobro", string.Empty, Collection.LastAction, "Cobro", "Media");
-        Snackbar.Add("Gestión de cobro mock registrada.", Severity.Info);
+        Snackbar.Add("Gestión de cobro registrada.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -119,13 +119,13 @@ else
             return Task.CompletedTask;
 
         Collection.Status = "Arreglo de pago";
-        Collection.LastAction = "Arreglo de pago referencial registrado";
-        Collection.ResponsibleUser = "Tesorería Mock";
+        Collection.LastAction = "Arreglo de pago registrado";
+        Collection.ResponsibleUser = "Tesorería Municipal";
         Collection.LastManagementDate = DateTime.Now;
         Collection.AdministrativeStage = "Convenio de pago";
         AddManagement(Collection.LastAction, Collection.ResponsibleUser, Collection.Status);
         RegisterMockEvent("Marcar arreglo de pago", "En cobro administrativo", Collection.Status, "Cobro", "Media");
-        Snackbar.Add("Arreglo de pago mock marcado.", Severity.Success);
+        Snackbar.Add("Arreglo de pago marcado.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -147,7 +147,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Analista Cobro",
@@ -158,12 +158,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel cobro administrativo",
             SourceProcess = process,
-            Comment = "Evento mock generado desde morosidad / cobro administrativo."
+            Comment = "Evento generado desde morosidad / cobro administrativo."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Analista Cobro",
@@ -173,7 +173,7 @@ else
             SourceDocument = "Panel cobro administrativo",
             Process = process,
             Severity = severity,
-            OutputReference = "Gestión mock"
+            OutputReference = "Gestión"
         });
     }
 

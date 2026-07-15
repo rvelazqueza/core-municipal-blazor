@@ -15,7 +15,7 @@ else
     <div class="d-flex flex-column gap-3">
         @if (HasDuplicateEmission)
         {
-            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Ya existe una emisión mock para el mismo mes/período en este expediente.</MudAlert>
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Ya existe una emisión para el mismo mes/período en este expediente.</MudAlert>
         }
 
         <MudCard Outlined="true">
@@ -37,9 +37,9 @@ else
                 <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick='@(() => CreateEmissionAsync("Manual"))'>Crear emisión manual</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="ScheduleLastBusinessDayAsync">Programar último día hábil del mes</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ToggleAutomaticAsync">@(automaticEnabled ? "Desactivar" : "Activar") emisión automática</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ValidateDuplicatesAsync">Validar duplicidad mes/período mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApplyQualityControlAsync">Aplicar control de calidad mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SimulateEmissionAsync">Simular emisión</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ValidateDuplicatesAsync">Validar duplicidad mes/período</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApplyQualityControlAsync">Aplicar control de calidad</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SimulateEmissionAsync">Registrar emisión</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Dark" OnClick="ViewQualityReportAsync">Ver reporte de control</MudButton>
             </div>
         </MudPaper>
@@ -116,9 +116,9 @@ else
 
         var item = new MmEmissionDto
         {
-            Id = $"EMS-MOCK-{Items.Count + 1:000}",
+            Id = $"EMS-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
-            EmissionNumber = $"EM-MOCK-{DateTime.Now:HHmmss}",
+            EmissionNumber = $"EM-MUN-{DateTime.Now:HHmmss}",
             FiscalYear = DateTime.Today.Year,
             Month = DateTime.Today.Month,
             EmissionType = emissionType,
@@ -144,7 +144,7 @@ else
 
         Items.Insert(0, item);
         RegisterMockEvent($"Crear emisión {emissionType}", string.Empty, item.EmissionNumber, "Emisiones", "Media");
-        Snackbar.Add($"Emisión {emissionType.ToLowerInvariant()} mock creada.", Severity.Success);
+        Snackbar.Add($"Emisión {emissionType.ToLowerInvariant()} creada.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -157,13 +157,13 @@ else
             item.AutomaticEnabled = automaticEnabled;
 
         RegisterMockEvent("Cambio de emisión automática", automaticEnabled ? "Desactivada" : "Activada", automaticEnabled ? "Activada" : "Desactivada", "Emisiones", "Baja");
-        Snackbar.Add(automaticEnabled ? "Emisión automática activada en modo mock." : "Emisión automática desactivada en modo mock.", Severity.Info);
+        Snackbar.Add(automaticEnabled ? "Emisión automática activada operativo." : "Emisión automática desactivada operativo.", Severity.Info);
         return Task.CompletedTask;
     }
 
     private Task ValidateDuplicatesAsync()
     {
-        Snackbar.Add(HasDuplicateEmission ? "Se detectó duplicidad mock de mes/período." : "No se detectó duplicidad mock.", HasDuplicateEmission ? Severity.Warning : Severity.Success);
+        Snackbar.Add(HasDuplicateEmission ? "Se detectó duplicidad de mes/período." : "No se detectó duplicidad.", HasDuplicateEmission ? Severity.Warning : Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -177,7 +177,7 @@ else
         item.Status = "Aprobada";
         item.Inconsistencies = "Sin inconsistencias";
         RegisterMockEvent("Control de calidad de emisión", "Pendiente", "Aprobada", "Emisiones", "Media");
-        Snackbar.Add("Control de calidad mock aplicado.", Severity.Success);
+        Snackbar.Add("Control de calidad aplicado.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -187,15 +187,15 @@ else
         if (item is null)
             return Task.CompletedTask;
 
-        item.Status = "Emitida mock";
-        RegisterMockEvent("Simular emisión", "Aprobada", "Emitida mock", "Emisiones", "Alta");
-        Snackbar.Add("Emisión simulada correctamente.", Severity.Success);
+        item.Status = "Emitida";
+        RegisterMockEvent("Registrar emisión", "Aprobada", "Emitida", "Emisiones", "Alta");
+        Snackbar.Add("Emisión registrada correctamente.", Severity.Success);
         return Task.CompletedTask;
     }
 
     private Task ViewQualityReportAsync()
     {
-        Snackbar.Add("Reporte de control visualizado en modo mock.", Severity.Info);
+        Snackbar.Add("Reporte de control visualizado.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -206,7 +206,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -217,12 +217,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel de emisiones",
             SourceProcess = process,
-            Comment = "Evento mock generado desde emisiones."
+            Comment = "Evento generado desde emisiones."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -232,7 +232,7 @@ else
             SourceDocument = "Panel de emisiones",
             Process = process,
             Severity = severity,
-            OutputReference = "Reporte de control mock"
+            OutputReference = "Reporte de control"
         });
     }
 

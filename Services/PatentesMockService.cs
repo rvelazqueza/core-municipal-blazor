@@ -535,7 +535,7 @@ public class PatentesMockService : IPatentesService
             Movimientos = new List<MovimientoPatenteDto>
             {
                 new() { FechaHora = fechaSolicitud.AddHours(8), TipoMovimiento = "Solicitud", Motivo = "Ingreso mock complementario de patente", Usuario = "Plataforma", EstadoResultante = "Borrador", Origen = "Patentes" },
-                new() { FechaHora = fechaSolicitud.AddDays(1).AddHours(10), TipoMovimiento = "Revisión", Motivo = "Expediente técnico en modo demo", Usuario = responsable, EstadoResultante = estado, Origen = "Patentes" }
+                new() { FechaHora = fechaSolicitud.AddDays(1).AddHours(10), TipoMovimiento = "Revisión", Motivo = "Expediente técnico registrado", Usuario = responsable, EstadoResultante = estado, Origen = "Patentes" }
             }
         };
     }

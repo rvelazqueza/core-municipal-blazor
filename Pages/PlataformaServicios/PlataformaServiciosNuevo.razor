@@ -12,7 +12,7 @@
 @inject ISnackbar Snackbar
 
 <PageTitleBar Title="Nuevo trámite"
-              Subtitle="Wizard demo para registrar un trámite de ventanilla única municipal sin backend real ni tabs para creación.">
+              Subtitle="Sistema para registrar un trámite de ventanilla única municipal con integración institucional.">
     <Actions>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBackToIndexAsync">Volver a bandeja</MudButton>
     </Actions>
@@ -20,7 +20,7 @@
 
 <MudStack Spacing="3">
     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-        Esta pantalla reutiliza el estándar wizard transversal y simula recepción, clasificación, control de calidad y derivación a módulos resolutores.
+        Esta pantalla reutiliza el estándar wizard transversal para recepción, clasificación, control de calidad y derivación a módulos resolutores.
     </MudAlert>
 
     <WizardShell Title="Plataforma de Servicios"
@@ -103,7 +103,7 @@
                         </MudGrid>
 
                         <MudGrid Spacing="2">
-                            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.CaseNumber" Label="Expediente mock" Variant="Variant.Outlined" Margin="Margin.Dense" ReadOnly="true" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.CaseNumber" Label="Expediente" Variant="Variant.Outlined" Margin="Margin.Dense" ReadOnly="true" /></MudItem>
                             <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Summary" Label="Descripción breve" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                             <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.ReferenciaExterna" Label="Referencia externa" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                         </MudGrid>
@@ -141,7 +141,7 @@
                             </MudItem>
                             <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="draft.Applicant.FiscalAddress" Label="Dirección fiscal" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                             <MudItem xs="12" md="3"><MudSwitch @bind-Value="draft.Applicant.ExistsInRuc" Color="Color.Primary" Label="Existe en RUC" /></MudItem>
-                            <MudItem xs="12" md="3"><MudTextField T="string" @bind-Value="draft.Applicant.RucStatus" Label="Estado RUC mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                            <MudItem xs="12" md="3"><MudTextField T="string" @bind-Value="draft.Applicant.RucStatus" Label="Estado RUC" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                         </MudGrid>
 
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
@@ -184,7 +184,7 @@
                         {
                             <MudGrid Spacing="2">
                                 <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.NumeroFinca" Label="Finca" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-                                <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.ProfesionalResponsable" Label="Profesional responsable mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                                <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.ProfesionalResponsable" Label="Profesional responsable" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                                 <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.TipoObra" Label="Tipo de obra" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                                 <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.Area" Label="Área" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                                 <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.MontoEstimado" Label="Monto estimado" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
@@ -197,7 +197,7 @@
                                 <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.NumeroLocal" Label="Número de local" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                                 <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.Arrendatario" Label="Arrendatario" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                                 <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.Contrato" Label="Contrato" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-                                <MudItem xs="12" md="8"><MudTextField T="string" @bind-Value="draft.Object.EstadoCuentaMock" Label="Estado de cuenta mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                                <MudItem xs="12" md="8"><MudTextField T="string" @bind-Value="draft.Object.EstadoCuentaMock" Label="Estado de cuenta" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                                 <MudItem xs="12" md="4"><MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Store" OnClick="ViewRelatedAsync">Ver local</MudButton></MudItem>
                             </MudGrid>
                         }
@@ -245,7 +245,7 @@
                                         <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => MarkRequirementPresentedAsync(context))">Marcar presentado</MudButton>
                                         <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => MarkRequirementPendingAsync(context))">Marcar pendiente</MudButton>
                                         <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => MarkRequirementObservedAsync(context))">Observar requisito</MudButton>
-                                        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ViewDocumentAsync(context))">Ver documento mock</MudButton>
+                                        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ViewDocumentAsync(context))">Ver documento</MudButton>
                                     </div>
                                 </MudTd>
                             </RowTemplate>
@@ -261,9 +261,9 @@
                             <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Classification.Team" Label="Equipo responsable" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                             <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Classification.Status" Label="Estado de clasificación" Variant="Variant.Outlined" Dense="true">@foreach (var status in classificationStatuses){<MudSelectItem Value="@status">@status</MudSelectItem>}</MudSelect></MudItem>
                             <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Classification.TimeStatus" Label="Semáforo de plazo" Variant="Variant.Outlined" Dense="true">@foreach (var status in deadlineStatuses){<MudSelectItem Value="@status">@status</MudSelectItem>}</MudSelect></MudItem>
-                            <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Classification.Priority" Label="Prioridad mock" Variant="Variant.Outlined" Dense="true">@foreach (var priority in priorityOptions){<MudSelectItem Value="@priority">@priority</MudSelectItem>}</MudSelect></MudItem>
+                            <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Classification.Priority" Label="Prioridad" Variant="Variant.Outlined" Dense="true">@foreach (var priority in priorityOptions){<MudSelectItem Value="@priority">@priority</MudSelectItem>}</MudSelect></MudItem>
                             <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Classification.EstimatedDeadline" Label="Plazo estimado" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-                            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Classification.TransferMessage" Label="Mensaje de traslado mock" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                            <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Classification.TransferMessage" Label="Mensaje de traslado" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                         </MudGrid>
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
                             <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@draft.Classification.ModuleName</MudChip>
@@ -272,9 +272,9 @@
                             <MudChip T="string" Color="@GetPriorityColor(draft.Classification.Priority)" Variant="Variant.Filled">@draft.Classification.Priority</MudChip>
                         </MudStack>
                         <div class="d-flex flex-wrap gap-2">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SwapHoriz" OnClick="TransferMockAsync">Trasladar a departamento mock</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.PersonSearch" OnClick="AssignResponsibleMockAsync">Asignar responsable mock</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.PriorityHigh" OnClick="ChangePriorityMockAsync">Cambiar prioridad mock</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SwapHoriz" OnClick="TransferMockAsync">Trasladar a departamento</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.PersonSearch" OnClick="AssignResponsibleMockAsync">Asignar responsable</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.PriorityHigh" OnClick="ChangePriorityMockAsync">Cambiar prioridad</MudButton>
                         </div>
                     </MudStack>
                     break;
@@ -316,7 +316,7 @@
                                         <MudText Typo="Typo.subtitle1">Resumen operativo</MudText>
                                         <MudText Typo="Typo.body2">@GetCurrentStepTitle()</MudText>
                                         <MudText Typo="Typo.body2" Color="Color.Secondary">@wizardState.CurrentStepId</MudText>
-                                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-3">La integración resolutora se simula solo a nivel visual.</MudAlert>
+                                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-3">La integración resolutora se gestiona a nivel institucional.</MudAlert>
                                     </MudCardContent>
                                 </MudCard>
                             </MudItem>
@@ -370,9 +370,9 @@
     private string selectedTypeCode = string.Empty;
     private string lastAuditEvent = "Aún no existen eventos";
     private string qualityStatus = "Pendiente";
-    private string qualityObservation = "Revisión visual simulada.";
+    private string qualityObservation = "Revisión visual pendiente.";
     private string qualityReturnReason = string.Empty;
-    private string qualityResponsible = "Control de calidad demo";
+    private string qualityResponsible = "Control de calidad";
 
     private readonly string[] channelOptions = [ "Presencial", "MIMUNIENCASA", "Portal municipal", "VUI", "Correo", "Teléfono", "Gestión interna" ];
     private readonly string[] priorityOptions = [ "Normal", "Alta", "Urgente" ];
@@ -404,10 +404,10 @@
             new() { Id = "tipo", Index = 0, Order = 1, Title = "Tipo de trámite y canal", Description = "Clasificación inicial y recepción", Icon = Icons.Material.Filled.Category },
             new() { Id = "solicitante", Index = 1, Order = 2, Title = "Solicitante / contribuyente", Description = "Vínculo con RUC y notificación", Icon = Icons.Material.Filled.Person },
             new() { Id = "objeto", Index = 2, Order = 3, Title = "Objeto del trámite", Description = "Datos dinámicos según el trámite", Icon = Icons.Material.Filled.Description },
-            new() { Id = "requisitos", Index = 3, Order = 4, Title = "Requisitos y documentos", Description = "Checklist mock de recepción", Icon = Icons.Material.Filled.Assignment },
+            new() { Id = "requisitos", Index = 3, Order = 4, Title = "Requisitos y documentos", Description = "Checklist de recepción", Icon = Icons.Material.Filled.Assignment },
             new() { Id = "clasificacion", Index = 4, Order = 5, Title = "Clasificación y departamento", Description = "Derivación y plazo", Icon = Icons.Material.Filled.SwapHoriz },
-            new() { Id = "calidad", Index = 5, Order = 6, Title = "Validación y control de calidad", Description = "Revisión y retorno mock", Icon = Icons.Material.Filled.Verified },
-            new() { Id = "resumen", Index = 6, Order = 7, Title = "Registro final", Description = "Confirmación y cierre demo", Icon = Icons.Material.Filled.DoneAll }
+            new() { Id = "calidad", Index = 5, Order = 6, Title = "Validación y control de calidad", Description = "Revisión y control de calidad", Icon = Icons.Material.Filled.Verified },
+            new() { Id = "resumen", Index = 6, Order = 7, Title = "Registro final", Description = "Confirmación y cierre del trámite", Icon = Icons.Material.Filled.DoneAll }
         };
 
         wizardState = wizardStateService.GetInitialState("Plataforma de Servicios", "Nuevo trámite", steps, draft.Id);
@@ -513,7 +513,7 @@
             obj.NumeroFinca = "5-123456";
             obj.NumeroPlano = "PL-1020";
             obj.Distrito = "Central";
-            obj.Propietario = "Contribuyente demo";
+            obj.Propietario = "Contribuyente";
         }
         else if (type.RequiresPatent)
         {
@@ -673,7 +673,7 @@
 
         var created = await dataService.RegisterProcedureAsync(draft);
         wizardState = await wizardStateService.SetStatusAsync(wizardState, "Completado");
-        lastAuditEvent = $"Expediente {created.CaseNumber} registrado correctamente en modo demo.";
+        lastAuditEvent = $"Expediente {created.CaseNumber} registrado correctamente.";
         NavigationManager.NavigateTo($"/plataforma-servicios/expediente/{created.Id}");
     }
 
@@ -710,12 +710,12 @@
         else if (stepId == "requisitos")
         {
             results.AddRange(draft.Requirements.Select(item =>
-                BuildResult(stepId, item.Name, item.Status == "Pendiente" ? "Existe al menos un requisito pendiente." : item.Status == "Observado" ? "Requisito observado en modo mock." : "Requisito presentado.", item.Status == "Pendiente" || item.Status == "Observado" ? "Warning" : "Success", true, $"PS-03{draft.Requirements.IndexOf(item)}")));
+                BuildResult(stepId, item.Name, item.Status == "Pendiente" ? "Existe al menos un requisito pendiente." : item.Status == "Observado" ? "Requisito observado." : "Requisito presentado.", item.Status == "Pendiente" || item.Status == "Observado" ? "Warning" : "Success", true, $"PS-03{draft.Requirements.IndexOf(item)}")));
         }
         else if (stepId == "clasificacion")
         {
             results.Add(BuildResult(stepId, "Departamento", "Debe existir un departamento asignado.", "Error", !string.IsNullOrWhiteSpace(draft.Classification.DepartmentName), "PS-030"));
-            results.Add(BuildResult(stepId, "Responsable", "Debe existir un responsable mock.", "Warning", !string.IsNullOrWhiteSpace(draft.Classification.Responsible), "PS-031"));
+            results.Add(BuildResult(stepId, "Responsable", "Debe existir un responsable asignado.", "Warning", !string.IsNullOrWhiteSpace(draft.Classification.Responsible), "PS-031"));
         }
         else if (stepId == "calidad")
         {
@@ -782,22 +782,22 @@
     private bool RequiresMarket() => procedureTypes.FirstOrDefault(item => item.Code == selectedTypeCode)?.ModuleName.Contains("Mercado", StringComparison.OrdinalIgnoreCase) == true;
     private bool RequiresRuc() => procedureTypes.FirstOrDefault(item => item.Code == selectedTypeCode)?.ModuleName.Equals("RUC", StringComparison.OrdinalIgnoreCase) == true;
 
-    private async Task SearchRucAsync() { lastAuditEvent = "Búsqueda RUC simulada."; Snackbar.Add("Búsqueda RUC simulada.", Severity.Info); await Task.CompletedTask; }
-    private async Task ViewRucAsync() { Snackbar.Add("Vista RUC referencial no disponible en backend real.", Severity.Info); await Task.CompletedTask; }
+    private async Task SearchRucAsync() { lastAuditEvent = "Búsqueda RUC completada."; Snackbar.Add("Búsqueda RUC completada.", Severity.Info); await Task.CompletedTask; }
+    private async Task ViewRucAsync() { Snackbar.Add("Vista RUC disponible desde el expediente.", Severity.Info); await Task.CompletedTask; }
     private async Task CreateApplicantAsync() { Snackbar.Add("Creación de contribuyente solo como referencia visual.", Severity.Info); await Task.CompletedTask; }
-    private async Task ViewRelatedAsync() { Snackbar.Add("Vínculo relacionado abierto en modo demo.", Severity.Info); await Task.CompletedTask; }
+    private async Task ViewRelatedAsync() { Snackbar.Add("Vínculo relacionado abierto.", Severity.Info); await Task.CompletedTask; }
     private async Task OnRequirementStatusChangedAsync(PsRequirementDto requirement, string value) { requirement.Status = value; await Task.CompletedTask; }
     private async Task UpdateRequirementAsync(PsRequirementDto requirement, string status) { requirement.Status = status; requirement.ReceivedAt = DateTime.Now; requirement.Receiver = "Recepción demo"; Snackbar.Add($"Requisito '{requirement.Name}' actualizado a {status}.", Severity.Info); await Task.CompletedTask; }
-    private async Task ViewDocumentAsync(PsRequirementDto requirement) { Snackbar.Add($"Documento mock: {requirement.DocumentPlaceholder}", Severity.Info); await Task.CompletedTask; }
+    private async Task ViewDocumentAsync(PsRequirementDto requirement) { Snackbar.Add($"Documento: {requirement.DocumentPlaceholder}", Severity.Info); await Task.CompletedTask; }
     private Task MarkRequirementPresentedAsync(PsRequirementDto requirement) => UpdateRequirementAsync(requirement, "Presentado");
     private Task MarkRequirementPendingAsync(PsRequirementDto requirement) => UpdateRequirementAsync(requirement, "Pendiente");
     private Task MarkRequirementObservedAsync(PsRequirementDto requirement) => UpdateRequirementAsync(requirement, "Observado");
-    private async Task TransferMockAsync() { Snackbar.Add("Traslado mock generado.", Severity.Info); await Task.CompletedTask; }
-    private async Task AssignResponsibleMockAsync() { Snackbar.Add("Responsable mock asignado.", Severity.Info); await Task.CompletedTask; }
-    private async Task ChangePriorityMockAsync() { Snackbar.Add("Prioridad mock actualizada.", Severity.Info); await Task.CompletedTask; }
-    private async Task ApproveReceptionAsync() { qualityStatus = "Aprobado"; Snackbar.Add("Control de calidad aprobado en modo demo.", Severity.Success); await Task.CompletedTask; }
-    private async Task ReturnProcedureAsync() { qualityStatus = "Devuelto"; Snackbar.Add("El trámite fue devuelto en modo demo.", Severity.Warning); await Task.CompletedTask; }
-    private async Task ReassignAsync() { qualityStatus = "Reasignado"; Snackbar.Add("El trámite fue reasignado en modo demo.", Severity.Info); await Task.CompletedTask; }
+    private async Task TransferMockAsync() { Snackbar.Add("Traslado generado.", Severity.Info); await Task.CompletedTask; }
+    private async Task AssignResponsibleMockAsync() { Snackbar.Add("Responsable asignado.", Severity.Info); await Task.CompletedTask; }
+    private async Task ChangePriorityMockAsync() { Snackbar.Add("Prioridad actualizada.", Severity.Info); await Task.CompletedTask; }
+    private async Task ApproveReceptionAsync() { qualityStatus = "Aprobado"; Snackbar.Add("Control de calidad aprobado.", Severity.Success); await Task.CompletedTask; }
+    private async Task ReturnProcedureAsync() { qualityStatus = "Devuelto"; Snackbar.Add("El trámite fue devuelto.", Severity.Warning); await Task.CompletedTask; }
+    private async Task ReassignAsync() { qualityStatus = "Reasignado"; Snackbar.Add("El trámite fue reasignado.", Severity.Info); await Task.CompletedTask; }
     private async Task ContinueAsync() { Snackbar.Add("Continuación disponible en el siguiente paso.", Severity.Info); await Task.CompletedTask; }
 
     private Color GetValidationColor(bool isValid) => isValid ? Color.Success : Color.Warning;

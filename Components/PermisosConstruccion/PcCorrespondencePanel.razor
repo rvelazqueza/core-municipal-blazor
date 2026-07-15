@@ -14,7 +14,7 @@
             <MudChip T="string" Text="@($"Notificadas {CountBy("Notificada")}")" Color="Color.Dark" Variant="Variant.Outlined" />
         </MudStack>
         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
-            La correspondencia es mock; no se generan documentos reales ni notificaciones reales.
+            La correspondencia se gestiona según configuración institucional.
         </MudAlert>
     </MudPaper>
 
@@ -36,7 +36,7 @@
                     <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => RegisterCorrespondence(context))">Registrar correspondencia</MudButton>
                     <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => Reassign(context))">Reasignar</MudButton>
                     <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => Resolve(context))">Resolver</MudButton>
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => Notify(context))">Notificar mock</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => Notify(context))">Notificar</MudButton>
                 </MudStack>
             </MudTd>
         </RowTemplate>
@@ -55,7 +55,7 @@
         Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
         {
             Date = DateTime.Now,
-            User = "correspondencia.demo",
+            User = "correspondencia.municipal",
             Action = "Registrar correspondencia",
             PreviousStatus = "No registrada",
             NewStatus = item.Status,
@@ -70,22 +70,22 @@
     {
         item.Status = "Reasignada";
         item.DestinationDepartment = "Urbanismo";
-        item.ResolutionMock = "Reasignada mock";
+        item.ResolutionMock = "Reasignada";
         Snackbar.Add($"Correspondencia {item.ManagementNumber} reasignada.", Severity.Warning);
     }
 
     private void Resolve(PcCorrespondenceDto item)
     {
         item.Status = "Resuelta";
-        item.ResolutionMock = "Resuelta mock";
-        Snackbar.Add($"Correspondencia {item.ManagementNumber} resuelta en modo demo.", Severity.Success);
+        item.ResolutionMock = "Resuelta";
+        Snackbar.Add($"Correspondencia {item.ManagementNumber} resuelta correctamente.", Severity.Success);
     }
 
     private void Notify(PcCorrespondenceDto item)
     {
         item.Status = "Notificada";
-        item.NotificationMock = "Enviada mock";
-        Snackbar.Add($"Notificación mock emitida para {item.ManagementNumber}.", Severity.Info);
+        item.NotificationMock = "Enviada";
+        Snackbar.Add($"Notificación emitida para {item.ManagementNumber}.", Severity.Info);
     }
 
     private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";

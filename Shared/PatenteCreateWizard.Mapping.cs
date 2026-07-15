@@ -119,7 +119,7 @@ public partial class PatenteCreateWizard
             EstadoFinalExpediente = model.EstadoFinalExpediente,
             FechaSolicitud = DateTime.Today,
             Responsable = "analista.patentes",
-            Estado = "Registrada demo",
+            Estado = "Registrada",
             Observaciones = model.Observaciones,
             Requisitos = CloneRequirements(model.Requisitos),
             UsoSuelo = new UsoSueloVinculadoDto
@@ -128,7 +128,7 @@ public partial class PatenteCreateWizard
                 Estado = model.EstadoUsoSuelo,
                 EsConforme = model.EstadoUsoSuelo.Equals("Conforme", StringComparison.OrdinalIgnoreCase),
                 FechaValidacion = model.FechaValidacionUsoSuelo ?? DateTime.Today,
-                Observaciones = string.IsNullOrWhiteSpace(model.Observaciones) ? $"Demo wizard · {model.ResultadoUsoSuelo}" : model.Observaciones,
+                Observaciones = string.IsNullOrWhiteSpace(model.Observaciones) ? $"Wizard · {model.ResultadoUsoSuelo}" : model.Observaciones,
                 Fuente = "Wizard Patentes"
             }
         };

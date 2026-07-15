@@ -28,10 +28,10 @@ public partial class PatenteCreateWizard
             ? estadosResolucionMock.First(x => x.Equals(model.EstadoResolucion, StringComparison.OrdinalIgnoreCase))
             : "Pendiente validación";
         model.FechaInicioCobro = string.IsNullOrWhiteSpace(model.FechaInicioCobro) ? DateTime.Today.ToString("dd/MM/yyyy") : model.FechaInicioCobro;
-        model.EstadoCuentaTributariaMock = string.IsNullOrWhiteSpace(model.EstadoCuentaTributariaMock) ? "Cuenta tributaria mock pendiente de emisión." : model.EstadoCuentaTributariaMock;
+        model.EstadoCuentaTributariaMock = string.IsNullOrWhiteSpace(model.EstadoCuentaTributariaMock) ? "Cuenta tributaria pendiente de emisión." : model.EstadoCuentaTributariaMock;
         model.ReferenciaCuentaPorCobrarMock = string.IsNullOrWhiteSpace(model.ReferenciaCuentaPorCobrarMock) ? BuildReceivableReference() : model.ReferenciaCuentaPorCobrarMock;
-        model.ObservacionesResolucion = string.IsNullOrWhiteSpace(model.ObservacionesResolucion) ? "Resolución mock pendiente de generación." : model.ObservacionesResolucion;
-        model.FirmaDigitalReferencial = string.IsNullOrWhiteSpace(model.FirmaDigitalReferencial) ? "Pendiente firma digital referencial." : model.FirmaDigitalReferencial;
+        model.ObservacionesResolucion = string.IsNullOrWhiteSpace(model.ObservacionesResolucion) ? "Resolución pendiente de generación." : model.ObservacionesResolucion;
+        model.FirmaDigitalReferencial = string.IsNullOrWhiteSpace(model.FirmaDigitalReferencial) ? "Pendiente firma digital." : model.FirmaDigitalReferencial;
 
         if (model.MontoAnualMock <= 0 || model.MontoTrimestralMock <= 0 || model.TimbreBiodiversidad <= 0)
             ApplyMockAssessmentAmounts();
@@ -49,7 +49,7 @@ public partial class PatenteCreateWizard
         if (model.EstadoTasacion.Equals("Puesta al cobro", StringComparison.OrdinalIgnoreCase))
         {
             if (model.EstadoCobro.Equals("Pendiente", StringComparison.OrdinalIgnoreCase))
-                model.EstadoCuentaTributariaMock = $"Cuenta tributaria mock en cobro para {model.PeriodoFiscal}.";
+                model.EstadoCuentaTributariaMock = $"Cuenta tributaria en cobro para {model.PeriodoFiscal}.";
         }
 
         if (model.EstadoCobro.Equals("Pago verificado", StringComparison.OrdinalIgnoreCase) && model.EstadoTasacion.Equals("Calculada", StringComparison.OrdinalIgnoreCase))
@@ -87,7 +87,7 @@ public partial class PatenteCreateWizard
         if (model.EstadoResolucion.Equals("Aprobada", StringComparison.OrdinalIgnoreCase))
         {
             if (canAdjustWorkflow)
-                model.EstadoFinalExpediente = "Aprobada en modo demo";
+                model.EstadoFinalExpediente = "Aprobada";
             return;
         }
 
@@ -106,13 +106,13 @@ public partial class PatenteCreateWizard
         model.EstadoTasacion = "Calculada";
         model.FechaInicioCobro = DateTime.Today.ToString("dd/MM/yyyy");
         model.CobroProporcionalVisual = BuildProportionalChargeVisual();
-        model.EstadoCuentaTributariaMock = $"Cuenta tributaria mock calculada para {model.PeriodoFiscal}.";
+        model.EstadoCuentaTributariaMock = $"Cuenta tributaria calculada para {model.PeriodoFiscal}.";
         model.ReferenciaCuentaPorCobrarMock = BuildReceivableReference();
 
         if (!model.EstadoCobro.Equals("Exonerado", StringComparison.OrdinalIgnoreCase) && !model.EstadoCobro.Equals("No aplica", StringComparison.OrdinalIgnoreCase))
             model.EstadoCobro = "Pendiente";
 
-        Snackbar.Add($"Tasación mock simulada. Monto anual {FormatCurrency(model.MontoAnualMock)}.", Severity.Success);
+        Snackbar.Add($"Tasación calculada. Monto anual {FormatCurrency(model.MontoAnualMock)}.", Severity.Success);
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -123,16 +123,16 @@ public partial class PatenteCreateWizard
         if (HasApprovalBlockers())
         {
             model.EstadoResolucion = ResolveBlockedApprovalResolutionState();
-            model.ObservacionesResolucion = $"Resolución mock condicionada. Bloqueos detectados: {GetApprovalBlockersSummary()}";
-            model.FirmaDigitalReferencial = "Firma digital referencial no aplicable mientras existan bloqueos.";
-            Snackbar.Add("Resolución mock generada con condicionantes del expediente demo.", Severity.Warning);
+            model.ObservacionesResolucion = $"Resolución condicionada. Bloqueos detectados: {GetApprovalBlockersSummary()}";
+            model.FirmaDigitalReferencial = "Firma digital no aplicable mientras existan bloqueos.";
+            Snackbar.Add("Resolución generada con condicionantes del expediente.", Severity.Warning);
         }
         else
         {
             model.EstadoResolucion = "Pendiente firma";
-            model.ObservacionesResolucion = "Resolución mock generada y lista para firma referencial.";
-            model.FirmaDigitalReferencial = "Pendiente firma digital referencial.";
-            Snackbar.Add("Resolución mock generada correctamente.", Severity.Success);
+            model.ObservacionesResolucion = "Resolución generada y lista para firma.";
+            model.FirmaDigitalReferencial = "Pendiente firma digital.";
+            Snackbar.Add("Resolución generada correctamente.", Severity.Success);
         }
 
         model.NotificacionSimulada = false;
@@ -143,10 +143,10 @@ public partial class PatenteCreateWizard
     {
         model.EstadoResolucion = "Prevenida";
         model.EstadoFinalExpediente = "Prevenida";
-        model.ObservacionesResolucion = $"Prevención mock generada el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+        model.ObservacionesResolucion = $"Prevención generada el {DateTime.Now:dd/MM/yyyy HH:mm}.";
         model.NotificacionSimulada = true;
         model.FirmaDigitalReferencial = "Prevención emitida sin firma digital real.";
-        Snackbar.Add("Prevención mock enviada al expediente demo.", Severity.Warning);
+        Snackbar.Add("Prevención enviada al expediente.", Severity.Warning);
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -157,8 +157,8 @@ public partial class PatenteCreateWizard
             model.EstadoResolucion = ResolveBlockedApprovalResolutionState();
             model.EstadoFinalExpediente = ResolveBlockedExpedienteState();
             model.ObservacionesResolucion = $"No es posible aprobar directamente. Bloqueos detectados: {GetApprovalBlockersSummary()}";
-            model.FirmaDigitalReferencial = "No se emite firma digital referencial por bloqueos del expediente.";
-            Snackbar.Add("No es posible aprobar directamente. El expediente queda Pendiente validación o Prevenido en modo demo.", Severity.Warning);
+            model.FirmaDigitalReferencial = "No se emite firma digital por bloqueos del expediente.";
+            Snackbar.Add("No es posible aprobar directamente. El expediente queda Pendiente validación o Prevenido.", Severity.Warning);
             await RefreshWizardStateAsync(persist: false);
             return;
         }
@@ -167,13 +167,13 @@ public partial class PatenteCreateWizard
         model.EstadoTasacion = "Aprobada";
         if (!model.EstadoCobro.Equals("Exonerado", StringComparison.OrdinalIgnoreCase) && !model.EstadoCobro.Equals("No aplica", StringComparison.OrdinalIgnoreCase))
             model.EstadoCobro = "Pago verificado";
-        model.EstadoCuentaTributariaMock = "Cuenta tributaria mock verificada para el expediente demo.";
+        model.EstadoCuentaTributariaMock = "Cuenta tributaria verificada para el expediente.";
         model.EstadoResolucion = "Aprobada";
-        model.EstadoFinalExpediente = "Aprobada en modo demo";
+        model.EstadoFinalExpediente = "Aprobada";
         model.NotificacionSimulada = true;
-        model.FirmaDigitalReferencial = $"Firma digital referencial registrada el {DateTime.Now:dd/MM/yyyy HH:mm}.";
-        model.ObservacionesResolucion = "Solicitud aprobada en modo demo.";
-        Snackbar.Add("Solicitud aprobada en modo demo.", Severity.Success);
+        model.FirmaDigitalReferencial = $"Firma digital registrada el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+        model.ObservacionesResolucion = "Solicitud aprobada.";
+        Snackbar.Add("Solicitud aprobada.", Severity.Success);
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -181,10 +181,10 @@ public partial class PatenteCreateWizard
     {
         model.EstadoResolucion = "Rechazada";
         model.EstadoFinalExpediente = "Rechazada";
-        model.ObservacionesResolucion = $"Solicitud rechazada en modo demo el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+        model.ObservacionesResolucion = $"Solicitud rechazada el {DateTime.Now:dd/MM/yyyy HH:mm}.";
         model.NotificacionSimulada = true;
         model.FirmaDigitalReferencial = "Rechazo registrado sin firma digital real.";
-        Snackbar.Add("Solicitud rechazada en modo demo.", Severity.Error);
+        Snackbar.Add("Solicitud rechazada.", Severity.Error);
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -262,17 +262,17 @@ public partial class PatenteCreateWizard
     }
 
     private string BuildReceivableReference()
-        => $"CXC-MOCK-{DateTime.Today:yyyyMMdd}-{model.NumeroSolicitud.Replace("-", string.Empty)}";
+        => $"CXC-MUN-{DateTime.Today:yyyyMMdd}-{model.NumeroSolicitud.Replace("-", string.Empty)}";
 
     private string BuildProportionalChargeVisual()
     {
         var proporcional = DateTime.Today.Day <= 10
-            ? "Se visualizaría el 100% del trimestre demo."
+            ? "Se visualizaría el 100% del trimestre."
             : DateTime.Today.Day <= 20
-                ? "Se visualizaría un cobro proporcional del 75% del trimestre demo."
-                : "Se visualizaría un cobro proporcional del 50% del trimestre demo.";
+                ? "Se visualizaría un cobro proporcional del 75% del trimestre."
+                : "Se visualizaría un cobro proporcional del 50% del trimestre.";
 
-        return $"Inicio de cobro mock: {model.FechaInicioCobro}. {proporcional}";
+        return $"Inicio de cobro: {model.FechaInicioCobro}. {proporcional}";
     }
 
     private bool HasApprovalBlockers()
@@ -299,7 +299,7 @@ public partial class PatenteCreateWizard
             blockers.Add("Existen requisitos pendientes sin cobertura de Declaración Jurada.");
 
         if (model.TieneDeclaracionJurada && model.DeclaracionJuradaDiasHabiles <= 0)
-            blockers.Add("La Declaración Jurada mock venció y requiere gestión administrativa.");
+            blockers.Add("La Declaración Jurada venció y requiere gestión administrativa.");
 
         if (IsMorosityBlocking())
             blockers.Add($"Morosidad en estado {model.ResultadoMorosidad}.");

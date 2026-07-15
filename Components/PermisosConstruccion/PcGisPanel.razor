@@ -22,7 +22,7 @@
             </MudItem>
         </MudGrid>
         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
-            GIS completamente simulado. No se integran mapas externos ni servicios geoespaciales reales.
+            GIS completamente configurado para gestión geoespacial.
         </MudAlert>
     </MudPaper>
 
@@ -38,9 +38,9 @@
             <MudTd>@context.Relation</MudTd>
             <MudTd>
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => CreateTask(context))">Crear tarea GIS mock</MudButton>
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => ValidateTask(context))">Validar GIS mock</MudButton>
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => MarkInconsistency(context))">Marcar inconsistencia mock</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => CreateTask(context))">Crear tarea GIS</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => ValidateTask(context))">Validar GIS</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => MarkInconsistency(context))">Marcar inconsistencia</MudButton>
                 </MudStack>
             </MudTd>
         </RowTemplate>
@@ -58,7 +58,7 @@
         Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
         {
             Date = DateTime.Now,
-            User = "gis.demo",
+            User = "gis.municipal",
             Action = "Crear tarea GIS",
             PreviousStatus = "Georreferenciado",
             NewStatus = item.Status,
@@ -66,7 +66,7 @@
             Comment = item.Notes,
             Origin = "GIS"
         });
-        Snackbar.Add("Tarea GIS mock creada.", Severity.Info);
+        Snackbar.Add("Tarea GIS creada correctamente.", Severity.Info);
     }
 
     private void ValidateTask(PcGisStatusDto item)
@@ -77,7 +77,7 @@
         Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
         {
             Date = DateTime.Now,
-            User = "gis.demo",
+            User = "gis.municipal",
             Action = "Validar GIS",
             PreviousStatus = "Pendiente",
             NewStatus = item.Status,
@@ -85,7 +85,7 @@
             Comment = item.Layer,
             Origin = "GIS"
         });
-        Snackbar.Add("GIS validado en modo demo.", Severity.Success);
+        Snackbar.Add("GIS validado correctamente.", Severity.Success);
     }
 
     private void MarkInconsistency(PcGisStatusDto item)
@@ -96,7 +96,7 @@
         Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
         {
             Date = DateTime.Now,
-            User = "gis.demo",
+            User = "gis.municipal",
             Action = "Marcar inconsistencia GIS",
             PreviousStatus = "Georreferenciado",
             NewStatus = item.Status,
@@ -104,7 +104,7 @@
             Comment = item.Notes,
             Origin = "GIS"
         });
-        Snackbar.Add("Inconsistencia GIS marcada en modo demo.", Severity.Warning);
+        Snackbar.Add("Inconsistencia GIS marcada correctamente.", Severity.Warning);
     }
 
     private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";

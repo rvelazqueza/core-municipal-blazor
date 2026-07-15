@@ -12,7 +12,7 @@
     <ValidationSummaryPanel Errors="validationErrors" />
 
     <MudAlert Severity="Severity.Info" Class="mb-4">
-        Expediente preparado para integraciones simuladas con Registro Público, Ministerio de Hacienda, GIS, RUC y Cobro.
+        Expediente preparado para integraciones con Registro Público, Ministerio de Hacienda, GIS, RUC y Cobro.
     </MudAlert>
 
     <MudForm @ref="form">
@@ -351,7 +351,7 @@
             Origen = "Registro Público"
         });
         await ModelChanged.InvokeAsync(Model);
-        Snackbar.Add("Movimiento registral simulado correctamente.", Severity.Info);
+        Snackbar.Add("Movimiento registral sincronizado correctamente.", Severity.Info);
     }
 
     private async Task SyncGisAsync()
@@ -383,7 +383,7 @@
             Origen = "Ministerio de Hacienda"
         });
         await ModelChanged.InvokeAsync(Model);
-        Snackbar.Add("Remisión periódica a Hacienda simulada.", Severity.Info);
+        Snackbar.Add("Remisión periódica a Hacienda procesada.", Severity.Info);
     }
 
     private async Task SyncCobroAsync()

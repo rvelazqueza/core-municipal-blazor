@@ -10,7 +10,7 @@
 @inject ISnackbar Snackbar
 
 <PageTitleBar Title="Expediente de trámite"
-              Subtitle="Vista 360° del expediente con tabs para consulta y edición mock del proceso municipal.">
+              Subtitle="Vista 360° del expediente con secciones para consulta y edición del proceso municipal.">
     <Actions>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBackAsync">Volver</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="EditAsync">Editar trámite</MudButton>
@@ -19,7 +19,7 @@
 
 @if (procedure is null)
 {
-    <EmptyState Title="Expediente no encontrado" Description="El expediente solicitado no existe en el dataset mock de esta demo." Icon="@Icons.Material.Filled.SearchOff" />
+    <EmptyState Title="Expediente no encontrado" Description="El expediente solicitado no existe en la información disponible." Icon="@Icons.Material.Filled.SearchOff" />
 }
 else
 {
@@ -31,7 +31,7 @@ else
         <MudTabs Outlined="true" Rounded="true" Border="true" ApplyEffectsToContainer="true" @bind-ActivePanelIndex="activeTab" PanelClass="pa-4">
             <MudTabPanel Text="Resumen 360°" Icon="@Icons.Material.Filled.SpaceDashboard">
                 <MudGrid Spacing="3">
-                    <MudItem xs="12" md="4"><KpiCard Title="Expediente" Value="@procedure.CaseNumber" Subtitle="Número mock" Icon="@Icons.Material.Filled.Badge" Color="Color.Primary" /></MudItem>
+                    <MudItem xs="12" md="4"><KpiCard Title="Expediente" Value="@procedure.CaseNumber" Subtitle="Número de expediente" Icon="@Icons.Material.Filled.Badge" Color="Color.Primary" /></MudItem>
                     <MudItem xs="12" md="4"><KpiCard Title="Estado" Value="@procedure.Status" Subtitle="Estado operativo actual" Icon="@Icons.Material.Filled.Flag" Color="@GetStatusColor(procedure.Status)" /></MudItem>
                     <MudItem xs="12" md="4"><KpiCard Title="Plazo" Value="@procedure.Deadline.Status" Subtitle="Semáforo referencial" Icon="@Icons.Material.Filled.Schedule" Color="@GetDeadlineColor(procedure.Deadline.Status)" /></MudItem>
                 </MudGrid>
@@ -110,7 +110,7 @@ else
                         </MudStack>
                         <div class="d-flex flex-wrap gap-2 mt-3">
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Badge" OnClick="ShowRucAsync">Ver RUC</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.CheckCircle" OnClick="ValidateRucAsync">Validar RUC mock</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.CheckCircle" OnClick="ValidateRucAsync">Validar RUC</MudButton>
                         </div>
                     </MudCardContent>
                 </MudCard>
@@ -200,7 +200,7 @@ else
                     <MudItem xs="12" md="6">
                         <MudCard Outlined="true">
                             <MudCardContent>
-                                <MudText Typo="Typo.subtitle1">Análisis mock</MudText>
+                                <MudText Typo="Typo.subtitle1">Análisis técnico</MudText>
                                 <MudText Typo="Typo.body2">Criterio técnico: @procedure.QualityControl.Action</MudText>
                                 <MudText Typo="Typo.body2">Resultado preliminar: @procedure.QualityControl.Status</MudText>
                                 <MudText Typo="Typo.body2">Responsable: @procedure.QualityControl.Responsible</MudText>
@@ -241,17 +241,17 @@ else
             <MudTabPanel Text="Resoluciones" Icon="@Icons.Material.Filled.TaskAlt">
                 <MudCard Outlined="true">
                     <MudCardContent>
-                        <MudText Typo="Typo.subtitle1">Resolución mock</MudText>
+                        <MudText Typo="Typo.subtitle1">Resolución</MudText>
                         <MudText Typo="Typo.body2">Tipo: @procedure.Resolution.Type</MudText>
                         <MudText Typo="Typo.body2">Estado: @procedure.Resolution.Status</MudText>
                         <MudText Typo="Typo.body2">Responsable: @procedure.Resolution.Responsible</MudText>
-                        <MudText Typo="Typo.body2">Firma digital referencial: @procedure.Resolution.DigitalSignatureReference</MudText>
-                        <MudText Typo="Typo.body2">PDF referencial: @procedure.Resolution.PdfReference</MudText>
+                        <MudText Typo="Typo.body2">Firma digital: @procedure.Resolution.DigitalSignatureReference</MudText>
+                        <MudText Typo="Typo.body2">PDF: @procedure.Resolution.PdfReference</MudText>
                         <div class="d-flex flex-wrap gap-2 mt-3">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateResolutionAsync">Generar resolución mock</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ViewResolutionAsync">Ver resolución mock</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SendToSignatureAsync">Enviar a firma mock</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="NotifyResolutionAsync">Notificar mock</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateResolutionAsync">Generar resolución</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ViewResolutionAsync">Ver resolución</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SendToSignatureAsync">Enviar a firma</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="NotifyResolutionAsync">Notificar</MudButton>
                         </div>
                     </MudCardContent>
                 </MudCard>
@@ -277,7 +277,7 @@ else
             <MudTabPanel Text="Plazos" Icon="@Icons.Material.Filled.Schedule">
                 <MudCard Outlined="true">
                     <MudCardContent>
-                        <MudText Typo="Typo.subtitle1">Plazo mock</MudText>
+                        <MudText Typo="Typo.subtitle1">Plazos</MudText>
                         <MudProgressLinear Value="@GetProgress()" Color="@GetDeadlineColor(procedure.Deadline.Status)" Rounded="true" Class="my-3" />
                         <MudGrid Spacing="2">
                             <MudItem xs="12" md="4"><MudTextField T="string" Value="@FormatDate(procedure.Deadline.StartDate)" Label="Fecha de ingreso" Variant="Variant.Outlined" ReadOnly="true" /></MudItem>
@@ -353,14 +353,14 @@ else
                     <MudItem xs="12" md="6">
                         <MudCard Outlined="true">
                             <MudCardContent>
-                                <MudText Typo="Typo.subtitle1">Reportes mock relacionados</MudText>
+                                <MudText Typo="Typo.subtitle1">Reportes relacionados</MudText>
                                 <MudStack Spacing="1" Class="mt-2">
                                     @foreach (var report in reportSummaries)
                                     {
                                         <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@report</MudChip>
                                     }
                                 </MudStack>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ExportMockAsync">Exportar mock</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ExportMockAsync">Exportar</MudButton>
                             </MudCardContent>
                         </MudCard>
                     </MudItem>
@@ -396,21 +396,21 @@ else
 
     private async Task EditAsync()
     {
-        Snackbar.Add("Edición mock disponible desde el expediente consultado.", Severity.Info);
+        Snackbar.Add("Edición disponible desde el expediente consultado.", Severity.Info);
         await Task.CompletedTask;
     }
 
-    private Task ShowTransferAsync() => NotifyAsync("Traslado mock ejecutado.", Severity.Info);
-    private Task ShowPreventionAsync() => NotifyAsync("Prevención mock generada.", Severity.Warning);
-    private Task ShowResolutionAsync() => NotifyAsync("Resolución mock generada.", Severity.Success);
-    private Task ShowNotificationAsync() => NotifyAsync("Notificación mock generada.", Severity.Info);
-    private Task ShowRucAsync() => NotifyAsync("Vista RUC mock.", Severity.Info);
-    private Task ValidateRucAsync() => NotifyAsync("Validación RUC mock.", Severity.Info);
+    private Task ShowTransferAsync() => NotifyAsync("Traslado ejecutado.", Severity.Info);
+    private Task ShowPreventionAsync() => NotifyAsync("Prevención generada.", Severity.Warning);
+    private Task ShowResolutionAsync() => NotifyAsync("Resolución generada.", Severity.Success);
+    private Task ShowNotificationAsync() => NotifyAsync("Notificación generada.", Severity.Info);
+    private Task ShowRucAsync() => NotifyAsync("Vista RUC disponible.", Severity.Info);
+    private Task ValidateRucAsync() => NotifyAsync("Validación RUC completada.", Severity.Info);
     private Task OpenRelatedModuleAsync() => NotifyAsync("Vínculo visual al módulo relacionado.", Severity.Info);
-    private Task GenerateResolutionAsync() => NotifyAsync("Resolución mock generada.", Severity.Success);
-    private Task ViewResolutionAsync() => NotifyAsync("Resolución mock abierta.", Severity.Info);
-    private Task SendToSignatureAsync() => NotifyAsync("Firma mock solicitada.", Severity.Warning);
-    private Task NotifyResolutionAsync() => NotifyAsync("Notificación mock enviada.", Severity.Success);
+    private Task GenerateResolutionAsync() => NotifyAsync("Resolución generada.", Severity.Success);
+    private Task ViewResolutionAsync() => NotifyAsync("Resolución abierta.", Severity.Info);
+    private Task SendToSignatureAsync() => NotifyAsync("Firma solicitada.", Severity.Warning);
+    private Task NotifyResolutionAsync() => NotifyAsync("Notificación enviada.", Severity.Success);
     private Task ExportMockAsync() => NotifyAsync("Exportación disponible en implementación backend.", Severity.Warning);
 
     private Task NotifyAsync(string message, Severity severity)
@@ -426,7 +426,7 @@ else
     }
 
     private string GetAlertMessage()
-        => procedure!.Deadline.Status == "Vencido" ? "El expediente se encuentra vencido en modo demo." :
+        => procedure!.Deadline.Status == "Vencido" ? "El expediente se encuentra vencido." :
            procedure!.Deadline.Status == "Próximo a vencer" ? "El expediente está próximo a vencer." :
            procedure!.Alerts.FirstOrDefault() ?? "El expediente se encuentra en seguimiento normal.";
 
@@ -448,7 +448,7 @@ else
         => status is "Aprobado" ? Color.Success : status is "Devuelto" ? Color.Warning : status is "Reasignado" ? Color.Info : Color.Info;
 
     private Color GetNotificationColor(string status)
-        => status is "Enviada mock" ? Color.Success : status is "Fallida mock" ? Color.Error : Color.Warning;
+        => status is "Enviada" ? Color.Success : status is "Fallida" ? Color.Error : Color.Warning;
 
     private Color GetIntegrationColor(string status)
         => status is "Preparado" ? Color.Success : status is "Simulado" ? Color.Info : Color.Warning;

@@ -24,7 +24,7 @@ else
                     <MudItem xs="12" sm="6"><MudText>Precio propuesto: @FormatCurrency(Local.ProposedPrice)</MudText></MudItem>
                     <MudItem xs="12" sm="6"><MudText>Fecha cobro: Día @Rent.DueDay de cada período</MudText></MudItem>
                     <MudItem xs="12" sm="6"><MudText>Fecha vencimiento: @($"{Rent.EndMonth:00}/{Rent.EndYear}")</MudText></MudItem>
-                    <MudItem xs="12" sm="6"><MudText>Depósito de garantía mock: @FormatCurrency(GuaranteeDeposit)</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Depósito de garantía: @FormatCurrency(GuaranteeDeposit)</MudText></MudItem>
                     <MudItem xs="12" sm="6"><MudText>Ajuste anual: @AnnualAdjustment%</MudText></MudItem>
                     <MudItem xs="12" sm="6"><MudText>Reajuste individual: @IndividualAdjustment%</MudText></MudItem>
                     <MudItem xs="12" sm="6"><MudText>Reajuste colectivo: @CollectiveAdjustment%</MudText></MudItem>
@@ -58,10 +58,10 @@ else
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ModifyRentAsync">Modificar alquiler mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ApplyAnnualAdjustmentAsync">Aplicar ajuste anual mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApplyDiscountAsync">Aplicar descuento mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SuspendChargeAsync">Suspender cobro mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ModifyRentAsync">Modificar alquiler</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ApplyAnnualAdjustmentAsync">Aplicar ajuste anual</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApplyDiscountAsync">Aplicar descuento</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SuspendChargeAsync">Suspender cobro</MudButton>
             </div>
         </MudPaper>
     </div>
@@ -141,7 +141,7 @@ else
         Rent.MonthlyAmount += 10m;
         Local.RentAmount = Rent.MonthlyAmount;
         RegisterChange("Modificación de alquiler", $"Nuevo monto {FormatCurrency(Rent.MonthlyAmount)}", "Analista Mercado");
-        Snackbar.Add("Alquiler modificado en modo mock.", Severity.Info);
+        Snackbar.Add("Alquiler modificado operativo.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -153,7 +153,7 @@ else
         Rent.MonthlyAmount = Math.Round(Rent.MonthlyAmount * 1.07m, 2);
         Local.RentAmount = Rent.MonthlyAmount;
         RegisterChange("Ajuste anual", $"Monto reajustado a {FormatCurrency(Rent.MonthlyAmount)}", "Coordinación Mercado");
-        Snackbar.Add("Ajuste anual mock aplicado.", Severity.Success);
+        Snackbar.Add("Ajuste anual aplicado.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -165,8 +165,8 @@ else
         Rent.HasDiscount = true;
         Rent.MonthlyAmount = Math.Max(0m, Rent.MonthlyAmount - 12m);
         Local.RentAmount = Rent.MonthlyAmount;
-        RegisterChange("Aplicación de descuento", $"Monto con descuento {FormatCurrency(Rent.MonthlyAmount)}", "Tesorería Mock");
-        Snackbar.Add("Descuento mock aplicado.", Severity.Success);
+        RegisterChange("Aplicación de descuento", $"Monto con descuento {FormatCurrency(Rent.MonthlyAmount)}", "Tesorería Municipal");
+        Snackbar.Add("Descuento aplicado.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -177,7 +177,7 @@ else
 
         Rent.IsSuspended = !Rent.IsSuspended;
         RegisterChange("Suspensión de cobro", Rent.IsSuspended ? "Cobro suspendido" : "Cobro reactivado", "Analista Cobro");
-        Snackbar.Add(Rent.IsSuspended ? "Cobro suspendido en modo mock." : "Cobro reactivado en modo mock.", Severity.Warning);
+        Snackbar.Add(Rent.IsSuspended ? "Cobro suspendido operativo." : "Cobro reactivado operativo.", Severity.Warning);
         return Task.CompletedTask;
     }
 

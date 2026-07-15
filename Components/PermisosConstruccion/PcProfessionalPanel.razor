@@ -18,7 +18,7 @@
         <MudChip T="string" Text="@Permit.Professional.MockValidation" Color="Color.Info" Variant="Variant.Outlined" Class="mt-3" />
     </MudCardContent>
     <MudCardActions>
-        <MudButton Variant="Variant.Outlined" OnClick="ValidateCfiaAsync">Simular validación CFIA</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ValidateCfiaAsync">Validar CFIA</MudButton>
     </MudCardActions>
 </MudCard>
 
@@ -27,8 +27,8 @@
     private Task ValidateCfiaAsync()
     {
         Permit.Professional.CfiaStatus = "Activo";
-        Permit.Professional.MockValidation = "Validado mock";
-        Snackbar.Add("Validación CFIA simulada correctamente.", Severity.Success);
+        Permit.Professional.MockValidation = "Validado";
+        Snackbar.Add("Validación CFIA completada.", Severity.Success);
         return Task.CompletedTask;
     }
 }

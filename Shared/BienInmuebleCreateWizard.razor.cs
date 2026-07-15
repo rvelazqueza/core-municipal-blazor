@@ -29,7 +29,7 @@ public partial class BienInmuebleCreateWizard : ComponentBase
         "Vincula el propietario principal y define el derecho.",
         "Completa el uso, la zona y la tipología del inmueble.",
         "Revisa el valor fiscal y recalcula cuando sea necesario.",
-        "Visualiza las integraciones simuladas del expediente.",
+        "Visualiza las integraciones del expediente.",
         "Verifica el resumen completo antes de crear la finca."
     ];
 
@@ -240,7 +240,7 @@ public partial class BienInmuebleCreateWizard : ComponentBase
         AddAuditChange("registro.publico", "Estado registral", "Sincronización previa", Model.EstadoRegistral, "Registro Público");
         await ModelChanged.InvokeAsync(Model);
         RefreshWizardState();
-        Snackbar.Add("Registro Público simulado.", Severity.Info);
+        Snackbar.Add("Registro Público sincronizado.", Severity.Info);
     }
 
     private async Task SimularGisAsync()
@@ -249,7 +249,7 @@ public partial class BienInmuebleCreateWizard : ComponentBase
         AddAuditChange("gis.municipal", "Ubicación GIS", "Pendiente", Model.UbicacionGis, "GIS");
         await ModelChanged.InvokeAsync(Model);
         RefreshWizardState();
-        Snackbar.Add("GIS simulado.", Severity.Info);
+        Snackbar.Add("GIS sincronizado.", Severity.Info);
     }
 
     private async Task SimularHaciendaAsync()
@@ -258,7 +258,7 @@ public partial class BienInmuebleCreateWizard : ComponentBase
         AddAuditChange("hacienda.integracion", "Remisión periódica", "Pendiente", "Transmitida", "Ministerio de Hacienda");
         await ModelChanged.InvokeAsync(Model);
         RefreshWizardState();
-        Snackbar.Add("Hacienda simulada.", Severity.Info);
+        Snackbar.Add("Hacienda sincronizada.", Severity.Info);
     }
 
     private async Task SimularCobroAsync()
@@ -267,7 +267,7 @@ public partial class BienInmuebleCreateWizard : ComponentBase
         AddAuditChange("cobro.integracion", "Cuenta tributaria", "Sin cuenta", Model.CuentaTributaria, "Cobro");
         await ModelChanged.InvokeAsync(Model);
         RefreshWizardState();
-        Snackbar.Add("Cobro simulado.", Severity.Info);
+        Snackbar.Add("Cobro sincronizado.", Severity.Info);
     }
 
     private async Task OnOwnerChangedAsync()

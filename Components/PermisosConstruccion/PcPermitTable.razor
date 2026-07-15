@@ -9,7 +9,7 @@
         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
             <div>
                 <MudText Typo="Typo.h6">Bandeja de permisos</MudText>
-                <MudText Typo="Typo.body2">Consulta, clasificación y acciones operativas sobre permisos mock.</MudText>
+                <MudText Typo="Typo.body2">Consulta, clasificación y acciones operativas sobre permisos.</MudText>
             </div>
             <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FilterAltOff" OnClick="ClearFilters">Limpiar filtros</MudButton>
         </MudStack>
@@ -170,7 +170,7 @@
                         <MudMenuItem Disabled="@(!OnReview.HasDelegate)" OnClick="@(_ => OnReview.InvokeAsync(context))">Revisar</MudMenuItem>
                         <MudMenuItem Disabled="@(!OnPrevention.HasDelegate)" OnClick="@(_ => OnPrevention.InvokeAsync(context))">Prevenir</MudMenuItem>
                         <MudMenuItem Disabled="@(!OnAssess.HasDelegate)" OnClick="@(_ => OnAssess.InvokeAsync(context))">Tasar</MudMenuItem>
-                        <MudMenuItem Disabled="@(!OnSimulatePayment.HasDelegate)" OnClick="@(_ => OnSimulatePayment.InvokeAsync(context))">Simular pago</MudMenuItem>
+                        <MudMenuItem Disabled="@(!OnSimulatePayment.HasDelegate)" OnClick="@(_ => OnSimulatePayment.InvokeAsync(context))">Registrar pago</MudMenuItem>
                         <MudMenuItem Disabled="@(!OnApprove.HasDelegate)" OnClick="@(_ => OnApprove.InvokeAsync(context))">Aprobar</MudMenuItem>
                         <MudMenuItem Disabled="@(!OnAnnul.HasDelegate)" OnClick="@(_ => OnAnnul.InvokeAsync(context))">Anular</MudMenuItem>
                         <MudMenuItem Disabled="@(!OnRequestInspection.HasDelegate)" OnClick="@(_ => OnRequestInspection.InvokeAsync(context))">Solicitar inspección</MudMenuItem>

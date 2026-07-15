@@ -9,7 +9,7 @@
 
 <MudStack Spacing="4">
     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mb-0">
-        Consulta consolidada con datos mock en memoria para seguimiento institucional y preparación de futuras pantallas operativas.
+        Consulta consolidada con información operativa para seguimiento institucional y preparación de futuras pantallas operativas.
     </MudAlert>
 
     <MudGrid Spacing="3">
@@ -55,7 +55,7 @@
             <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
                 <div>
                     <MudText Typo="Typo.h6">Filtros compactos</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">Aplique filtros sobre el dataset mock para explorar licencias, solicitudes y trazabilidad.</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Aplique filtros para explorar licencias, solicitudes y trazabilidad.</MudText>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="ApplyFiltersAsync">Filtrar</MudButton>
@@ -141,7 +141,7 @@
                     <MudText Typo="Typo.h6">Resultado de consulta</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">@resultSummary</MudText>
                 </div>
-                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Dataset mock en memoria</MudChip>
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Información operativa disponible</MudChip>
             </div>
 
             @if (filteredLicencias.Count > 0)

@@ -15,10 +15,10 @@ else
     <div class="d-flex flex-column gap-3">
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SimulateMergerAsync">Simular fusión</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="SimulateSegregationAsync">Simular segregación</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="GenerateGisTaskAsync">Generar tarea GIS mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="GenerateCommercialTaskAsync">Generar tarea Comercial mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SimulateMergerAsync">Registrar fusión</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="SimulateSegregationAsync">Registrar segregación</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="GenerateGisTaskAsync">Generar tarea GIS</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="GenerateCommercialTaskAsync">Generar tarea Comercial</MudButton>
             </div>
         </MudPaper>
 
@@ -62,7 +62,7 @@ else
 
         Items.Insert(0, new MmMergerSegregationDto
         {
-            Id = $"FSG-MOCK-{Items.Count + 1:000}",
+            Id = $"FSG-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
             Type = "Fusión",
             SourceLocal = Local.LocalNumber,
@@ -74,8 +74,8 @@ else
             Status = "Registrada"
         });
 
-        RegisterMockEvent("Simular fusión", Local.LocalNumber, $"{Local.LocalNumber}-FUS", "Fusiones / segregaciones", "Alta");
-        Snackbar.Add("Fusión mock registrada.", Severity.Success);
+        RegisterMockEvent("Registrar fusión", Local.LocalNumber, $"{Local.LocalNumber}-FUS", "Fusiones / segregaciones", "Alta");
+        Snackbar.Add("Fusión registrada.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -86,7 +86,7 @@ else
 
         Items.Insert(0, new MmMergerSegregationDto
         {
-            Id = $"FSG-MOCK-{Items.Count + 1:000}",
+            Id = $"FSG-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
             Type = "Segregación",
             SourceLocal = Local.LocalNumber,
@@ -98,22 +98,22 @@ else
             Status = "Registrada"
         });
 
-        RegisterMockEvent("Simular segregación", Local.LocalNumber, $"{Local.LocalNumber}-A / {Local.LocalNumber}-B", "Fusiones / segregaciones", "Alta");
-        Snackbar.Add("Segregación mock registrada.", Severity.Info);
+        RegisterMockEvent("Registrar segregación", Local.LocalNumber, $"{Local.LocalNumber}-A / {Local.LocalNumber}-B", "Fusiones / segregaciones", "Alta");
+        Snackbar.Add("Segregación registrada.", Severity.Info);
         return Task.CompletedTask;
     }
 
     private Task GenerateGisTaskAsync()
     {
-        RegisterMockEvent("Generar tarea GIS", "Pendiente", "Tarea GIS mock generada", "Fusiones / segregaciones", "Media");
-        Snackbar.Add("Tarea GIS mock generada.", Severity.Success);
+        RegisterMockEvent("Generar tarea GIS", "Pendiente", "Tarea GIS generada", "Fusiones / segregaciones", "Media");
+        Snackbar.Add("Tarea GIS generada.", Severity.Success);
         return Task.CompletedTask;
     }
 
     private Task GenerateCommercialTaskAsync()
     {
-        RegisterMockEvent("Generar tarea Comercial", "Pendiente", "Tarea Comercial mock generada", "Fusiones / segregaciones", "Media");
-        Snackbar.Add("Tarea Comercial mock generada.", Severity.Success);
+        RegisterMockEvent("Generar tarea Comercial", "Pendiente", "Tarea Comercial generada", "Fusiones / segregaciones", "Media");
+        Snackbar.Add("Tarea Comercial generada.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -124,7 +124,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Coordinación Mercado",
@@ -135,12 +135,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel fusiones y segregaciones",
             SourceProcess = process,
-            Comment = "Evento mock generado desde fusiones / segregaciones."
+            Comment = "Evento generado desde fusiones / segregaciones."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Coordinación Mercado",
@@ -150,7 +150,7 @@ else
             SourceDocument = "Panel fusiones y segregaciones",
             Process = process,
             Severity = severity,
-            OutputReference = "Tarea mock"
+            OutputReference = "Tarea municipal"
         });
     }
 }

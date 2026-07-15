@@ -20,13 +20,13 @@ public partial class PatenteCreateWizard
         }
         else if (HasApprovalBlockers())
         {
-            reviewMessages.Add("El expediente puede registrarse en modo demo, pero no finalizar como aprobado debido a bloqueos críticos.");
+            reviewMessages.Add("El expediente puede registrarse, pero no finalizar como aprobado debido a bloqueos críticos.");
             reviewMessages.AddRange(GetApprovalBlockingMessages());
             reviewMessages.Add($"Resultado sugerido de finalización: {GetFinalizationOutcomePreview()}.");
         }
         else
         {
-            reviewMessages.Add("El expediente demo cumple con la estructura mínima para registrar la solicitud y puede finalizar como Aprobada en modo demo.");
+            reviewMessages.Add("El expediente cumple con la estructura mínima para registrar la solicitud y puede finalizar como Aprobada.");
         }
 
         results.Add(new StepValidationResultDto
@@ -77,7 +77,7 @@ public partial class PatenteCreateWizard
                 ValidateRequired(result, model.TipoSolicitud, "Seleccione el tipo de solicitud.");
                 ValidateRequired(result, model.TipoLicencia, "Seleccione el tipo de licencia.");
                 ValidateRequired(result, model.CanalIngreso, "Seleccione el canal de ingreso.");
-                ValidateRequired(result, model.NumeroExpediente, "Ingrese el número de expediente mock.");
+                ValidateRequired(result, model.NumeroExpediente, "Ingrese el número de expediente.");
                 ValidateRequired(result, model.EstadoInicial, "Defina el estado inicial del expediente.");
                 ValidateRequired(result, model.ModalidadDeclaracionJurada, "Indique la modalidad de declaración jurada.");
                 break;
@@ -111,13 +111,13 @@ public partial class PatenteCreateWizard
                 if (model.PendienteRegistroContribuyente)
                 {
                     result.HasWarnings = true;
-                    result.Messages.Add("El contribuyente quedará marcado como pendiente de registro en el RUC mock.");
+                    result.Messages.Add("El contribuyente quedará marcado como pendiente de registro en el RUC.");
                 }
 
                 if (model.EstadoContribuyente.Equals("Suspendido", StringComparison.OrdinalIgnoreCase) || model.CalidadDatosRuc.Equals("Revisar", StringComparison.OrdinalIgnoreCase))
                 {
                     result.HasWarnings = true;
-                    result.Messages.Add("El contribuyente requiere revisión o está en estado no óptimo para demo.");
+                    result.Messages.Add("El contribuyente requiere revisión o está en estado no óptimo.");
                 }
                 break;
             case 2:
@@ -145,7 +145,7 @@ public partial class PatenteCreateWizard
                 if (string.IsNullOrWhiteSpace(model.EstadoGis) || model.EstadoGis.Equals("Pendiente", StringComparison.OrdinalIgnoreCase))
                 {
                     result.HasWarnings = true;
-                    result.Messages.Add("El estado GIS está pendiente en el demo.");
+                    result.Messages.Add("El estado GIS está pendiente.");
                 }
                 break;
             case 3:
@@ -161,14 +161,14 @@ public partial class PatenteCreateWizard
                 if (model.RequiereLicores)
                 {
                     result.HasWarnings = true;
-                    result.Messages.Add("Revisión especial de licencias de licores en modo demo.");
+                    result.Messages.Add("Revisión especial de licencias de licores.");
                 }
                 break;
             case 4:
                 ValidateRequired(result, model.EstadoUsoSuelo, "Defina el estado de Uso de Suelo.");
                 ValidateRequired(result, model.Zonificacion, "Registre la zonificación.");
                 ValidateRequired(result, model.ActividadEconomica, "Complete la actividad solicitada para el análisis de Uso de Suelo.");
-                ValidateRequired(result, model.ActividadesAutorizadas, "Registre las actividades autorizadas mock.");
+                ValidateRequired(result, model.ActividadesAutorizadas, "Registre las actividades autorizadas.");
                 ValidateRequired(result, model.CompatibilidadUsoSuelo, "Registre la compatibilidad.");
                 ValidateRequired(result, model.ResultadoUsoSuelo, "Defina el resultado de la validación de Uso de Suelo.");
 
@@ -180,7 +180,7 @@ public partial class PatenteCreateWizard
                 else if (model.EstadoUsoSuelo.Equals("Pendiente", StringComparison.OrdinalIgnoreCase))
                 {
                     result.HasWarnings = true;
-                    result.Messages.Add("Uso de Suelo pendiente: el expediente queda en pendiente de validación para la resolución demo.");
+                    result.Messages.Add("Uso de Suelo pendiente: el expediente queda en pendiente de validación para la resolución.");
                 }
                 else if (model.EstadoUsoSuelo.Equals("No conforme", StringComparison.OrdinalIgnoreCase) || model.EstadoUsoSuelo.Equals("Vencido", StringComparison.OrdinalIgnoreCase))
                 {
@@ -205,13 +205,13 @@ public partial class PatenteCreateWizard
                 ValidateChecklistState(result, model.EstadoFodesafChecklist, "FODESAF");
                 ValidateChecklistState(result, model.EstadoInsChecklist, "INS");
                 ValidateChecklistState(result, model.EstadoDeclaracionJuradaChecklist, "Declaración jurada");
-                ValidateChecklistState(result, model.EstadoComprobantePago, "Comprobante de pago mock");
+                ValidateChecklistState(result, model.EstadoComprobantePago, "Comprobante de pago");
                 ValidateChecklistState(result, model.EstadoCroquis, "Croquis");
 
                 if (!model.Requisitos.Any())
                 {
                     result.IsValid = false;
-                    result.Messages.Add("Debe existir al menos un requisito en el checklist demo.");
+                    result.Messages.Add("Debe existir al menos un requisito en el checklist.");
                 }
 
                 if (GetNonCompliantRequirementsCount() > 0)
@@ -224,8 +224,8 @@ public partial class PatenteCreateWizard
                 {
                     result.HasWarnings = true;
                     result.Messages.Add(model.TieneDeclaracionJurada
-                        ? "La declaración jurada permite continuar con requisitos pendientes dentro del plazo mock."
-                        : "Existen requisitos pendientes; en modo demo se permite continuar y el expediente queda pendiente de validación.");
+                        ? "La declaración jurada permite continuar con requisitos pendientes dentro del plazo."
+                        : "Existen requisitos pendientes; se permite continuar y el expediente queda pendiente de validación.");
                 }
 
                 if (model.TieneDeclaracionJurada)
@@ -268,23 +268,23 @@ public partial class PatenteCreateWizard
                 }
 
                 if (result.HasWarnings)
-                    result.Messages.Add("Existen alertas de morosidad o revisión que no bloquean el demo.");
+                    result.Messages.Add("Existen alertas de morosidad o revisión que no bloquean el proceso.");
                 break;
             case 8:
                 ValidateRequired(result, model.TipoTasacion, "Defina el tipo de tasación.");
                 ValidateRequired(result, model.EstadoTasacion, "Defina el estado de tasación.");
-                ValidateRequired(result, model.FechaInicioCobro, "Registre la fecha de inicio del cobro mock.");
+                ValidateRequired(result, model.FechaInicioCobro, "Registre la fecha de inicio del cobro.");
                 ValidateRequired(result, model.EstadoCobro, "Defina el estado de cobro.");
-                ValidateRequired(result, model.EstadoCuentaTributariaMock, "Registre el estado de cuenta tributaria mock.");
-                ValidateRequired(result, model.ReferenciaCuentaPorCobrarMock, "Registre la referencia de cuenta por cobrar mock.");
+                ValidateRequired(result, model.EstadoCuentaTributariaMock, "Registre el estado de cuenta tributaria.");
+                ValidateRequired(result, model.ReferenciaCuentaPorCobrarMock, "Registre la referencia de cuenta por cobrar.");
                 ValidateRequired(result, model.EstadoResolucion, "Defina el estado de resolución.");
                 ValidateRequired(result, model.ObservacionesResolucion, "Registre las observaciones de resolución.");
-                ValidateRequired(result, model.FirmaDigitalReferencial, "Registre la firma digital referencial.");
+                ValidateRequired(result, model.FirmaDigitalReferencial, "Registre la firma digital.");
 
                 if (model.MontoAnualMock < 0 || model.MontoTrimestralMock < 0 || model.TimbreBiodiversidad < 0 || model.PublicidadExterior < 0 || model.Multa < 0 || model.Intereses < 0)
                 {
                     result.IsValid = false;
-                    result.Messages.Add("Los montos mock no pueden ser negativos.");
+                    result.Messages.Add("Los montos no pueden ser negativos.");
                 }
 
                 if (HasApprovalBlockers())
@@ -295,14 +295,14 @@ public partial class PatenteCreateWizard
                     if (model.EstadoResolucion.Equals("Aprobada", StringComparison.OrdinalIgnoreCase))
                     {
                         result.IsValid = false;
-                        result.Messages.Add("No es posible aprobar directamente. El expediente queda Pendiente validación o Prevenido en modo demo.");
+                        result.Messages.Add("No es posible aprobar directamente. El expediente queda Pendiente validación o Prevenido.");
                     }
                 }
 
                 if (model.EstadoResolucion.Equals("Pendiente firma", StringComparison.OrdinalIgnoreCase) && !model.NotificacionSimulada)
                 {
                     result.HasWarnings = true;
-                    result.Messages.Add("La resolución mock está pendiente de firma y notificación simulada.");
+                    result.Messages.Add("La resolución está pendiente de firma y notificación.");
                 }
                 break;
         }
@@ -325,7 +325,7 @@ public partial class PatenteCreateWizard
         if (estado.Equals("Observado", StringComparison.OrdinalIgnoreCase))
         {
             result.HasWarnings = true;
-            result.Messages.Add($"{entidad} se encuentra observado en el demo.");
+            result.Messages.Add($"{entidad} se encuentra observado.");
         }
     }
 
@@ -405,8 +405,8 @@ public partial class PatenteCreateWizard
     {
         var items = new List<string>
         {
-            $"Solicitud demo: {model.NumeroSolicitud}",
-            $"Expediente demo: {model.NumeroExpediente}",
+            $"Solicitud: {model.NumeroSolicitud}",
+            $"Expediente: {model.NumeroExpediente}",
             $"Tipo de solicitud: {GetDisplayValue(model.TipoSolicitud)}",
             $"Tipo de licencia: {GetDisplayValue(model.TipoLicencia)}",
             $"Canal de ingreso: {GetDisplayValue(model.CanalIngreso)}",
@@ -429,9 +429,9 @@ public partial class PatenteCreateWizard
             $"Declaración Jurada: {(model.TieneDeclaracionJurada ? GetDeclaracionJuradaDeadlineMessage() : "No aplica.")}",
             $"Hacienda / CCSS / FODESAF / INS: {GetDisplayValue(model.EstadoHacienda)} / {GetDisplayValue(model.EstadoCcss)} / {GetDisplayValue(model.EstadoFodesaf)} / {GetDisplayValue(model.EstadoIns)}",
             $"Morosidad / inspección / revisión: {GetDisplayValue(model.ResultadoMorosidad)} / {GetDisplayValue(model.EstadoInspeccion)} / {GetDisplayValue(model.ResultadoRevision)}",
-            $"Tasación mock: anual {FormatCurrency(model.MontoAnualMock)} · trimestral {FormatCurrency(model.MontoTrimestralMock)}",
-            $"Cobro mock: {GetDisplayValue(model.EstadoCobro)} · cuenta {GetDisplayValue(model.EstadoCuentaTributariaMock)}",
-            $"Resolución demo: {GetDisplayValue(model.EstadoResolucion)} · observaciones {GetDisplayValue(model.ObservacionesResolucion)}",
+            $"Tasación: anual {FormatCurrency(model.MontoAnualMock)} · trimestral {FormatCurrency(model.MontoTrimestralMock)}",
+            $"Cobro: {GetDisplayValue(model.EstadoCobro)} · cuenta {GetDisplayValue(model.EstadoCuentaTributariaMock)}",
+            $"Resolución: {GetDisplayValue(model.EstadoResolucion)} · observaciones {GetDisplayValue(model.ObservacionesResolucion)}",
             $"Bloqueos de aprobación: {GetApprovalBlockersSummary()}",
             $"Resultado esperado de finalización: {GetFinalizationOutcomePreview()}"
         };

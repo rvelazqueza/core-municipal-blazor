@@ -17,7 +17,7 @@
             }
             else
             {
-                <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">No hay advertencias pendientes para este cierre demo.</MudAlert>
+                <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">No hay advertencias pendientes para este cierre.</MudAlert>
             }
         </MudStack>
     </DialogContent>
@@ -30,7 +30,7 @@
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
     [Parameter] public string Title { get; set; } = "Finalizar proceso";
-    [Parameter] public string Message { get; set; } = "Revise el resumen antes de completar el proceso en modo demo.";
+    [Parameter] public string Message { get; set; } = "Revise el resumen antes de completar el proceso.";
     [Parameter] public List<string> Warnings { get; set; } = new();
 
     private void Back() => MudDialog.Cancel();

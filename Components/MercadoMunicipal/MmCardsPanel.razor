@@ -23,8 +23,8 @@ else
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterCardAsync">Registrar carné mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="RenewCardAsync">Renovar carné mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterCardAsync">Registrar carné</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="RenewCardAsync">Renovar carné</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="GenerateExpirationAlertAsync">Generar alerta vencimiento</MudButton>
             </div>
         </MudPaper>
@@ -70,14 +70,14 @@ else
 
         var item = new MmCardDto
         {
-            Id = $"CRD-MOCK-{Items.Count + 1:000}",
+            Id = $"CRD-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
             TenantId = Tenant?.Id ?? string.Empty,
-            CardNumber = $"CAR-MOCK-{DateTime.Now:HHmmss}",
+            CardNumber = $"CAR-MUN-{DateTime.Now:HHmmss}",
             Name = Tenant?.Name ?? "Colaborador temporal",
             Identification = Tenant?.Identification ?? "0-000-000",
             Condition = Tenant is null ? "Colaborador" : "Inquilino",
-            PhotoPlaceholder = "https://placehold.co/140x180?text=Carn%C3%A9+Mock",
+            PhotoPlaceholder = "https://placehold.co/140x180?text=Carn%C3%A9",
             IssueDate = DateTime.Today,
             ExpirationDate = DateTime.Today.AddMonths(12),
             Status = "Vigente"
@@ -85,7 +85,7 @@ else
 
         Items.Insert(0, item);
         RegisterMockEvent("Registrar carné", string.Empty, item.CardNumber, "Carnés", "Baja");
-        Snackbar.Add("Carné mock registrado.", Severity.Success);
+        Snackbar.Add("Carné registrado.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -98,7 +98,7 @@ else
         item.ExpirationDate = item.ExpirationDate.AddMonths(12);
         item.Status = "Vigente";
         RegisterMockEvent("Renovar carné", "Vencimiento previo", item.ExpirationDate.ToString("dd/MM/yyyy"), "Carnés", "Baja");
-        Snackbar.Add("Carné mock renovado.", Severity.Info);
+        Snackbar.Add("Carné renovado.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -110,7 +110,7 @@ else
 
         item.Status = item.ExpirationDate <= DateTime.Today ? "Vencido" : "Próximo a vencer";
         RegisterMockEvent("Generar alerta de vencimiento", string.Empty, item.Status, "Carnés", "Media");
-        Snackbar.Add("Alerta de vencimiento mock generada.", Severity.Warning);
+        Snackbar.Add("Alerta de vencimiento generada.", Severity.Warning);
         return Task.CompletedTask;
     }
 
@@ -121,7 +121,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -132,12 +132,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel de carnés",
             SourceProcess = process,
-            Comment = "Evento mock generado desde carnés."
+            Comment = "Evento generado desde carnés."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -147,7 +147,7 @@ else
             SourceDocument = "Panel de carnés",
             Process = process,
             Severity = severity,
-            OutputReference = "Bitácora visual mock"
+            OutputReference = "Bitácora visual"
         });
     }
 }

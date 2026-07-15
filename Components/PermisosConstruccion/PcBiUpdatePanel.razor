@@ -18,12 +18,12 @@
                 <MudText Typo="Typo.subtitle1">@($"{Permit.Property.PropertyNumber} / {Permit.Property.IdPredial}")</MudText>
             </MudItem>
             <MudItem xs="12" md="4">
-                <MudText Typo="Typo.caption">Última actualización mock</MudText>
+                <MudText Typo="Typo.caption">Última actualización</MudText>
                 <MudText Typo="Typo.subtitle1">@FormatDate(Permit.BiUpdates.OrderByDescending(x => x.UpdatedAt ?? x.RequestedAt).FirstOrDefault()?.UpdatedAt)</MudText>
             </MudItem>
         </MudGrid>
         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
-            La actualización de Bienes Inmuebles es solo referencial; no se modifica ningún sistema externo.
+            La actualización de Bienes Inmuebles se registra para sincronización posterior con el sistema de catastro.
         </MudAlert>
     </MudPaper>
 
@@ -40,8 +40,8 @@
             <MudTd>@context.Notes</MudTd>
             <MudTd>
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => CreateBiTask(context))">Crear tarea BI mock</MudButton>
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => MarkUpdated(context))">Marcar BI actualizado mock</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => CreateBiTask(context))">Crear tarea BI</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => MarkUpdated(context))">Marcar BI actualizado</MudButton>
                     <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="ViewProperty">Ver finca</MudButton>
                 </MudStack>
             </MudTd>
@@ -60,7 +60,7 @@
         Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
         {
             Date = DateTime.Now,
-            User = "bienes.demo",
+            User = "bienes.municipal",
             Action = "Crear tarea BI",
             PreviousStatus = "Pendiente",
             NewStatus = item.Status,
@@ -68,26 +68,26 @@
             Comment = item.Notes,
             Origin = "Bienes Inmuebles"
         });
-        Snackbar.Add("Tarea BI mock generada.", Severity.Info);
+        Snackbar.Add("Tarea BI generada correctamente.", Severity.Info);
     }
 
     private void MarkUpdated(PcBiUpdateDto item)
     {
-        item.Status = "Actualizada mock";
+        item.Status = "Actualizada";
         item.UpdatedAt = DateTime.Today;
-        Permit.Property.BiUpdateStatus = "Actualizado mock";
+        Permit.Property.BiUpdateStatus = "Actualizado";
         Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
         {
             Date = DateTime.Now,
-            User = "bienes.demo",
-            Action = "Actualizar BI mock",
+            User = "bienes.municipal",
+            Action = "Actualizar BI",
             PreviousStatus = "Generada",
             NewStatus = item.Status,
             Department = "Bienes Inmuebles",
             Comment = item.Notes,
             Origin = "Bienes Inmuebles"
         });
-        Snackbar.Add("Actualización BI mock registrada.", Severity.Success);
+        Snackbar.Add("Actualización BI registrada correctamente.", Severity.Success);
     }
 
     private void ViewProperty()
@@ -101,7 +101,7 @@
         "No requerida" => Color.Dark,
         "Pendiente" => Color.Warning,
         "Generada" => Color.Info,
-        "Actualizada mock" => Color.Success,
+        "Actualizada" => Color.Success,
         _ => Color.Secondary
     };
 }

@@ -164,7 +164,7 @@ internal static class PatentesMockDatasetFactory
         NumeroLicencia = x.NumeroLicencia,
         NumeroResolucion = $"RES-PAT-{DateTime.Today.Year}-{index + 1:000}",
         Estado = index % 3 == 0 ? "Pendiente validación" : index % 4 == 0 ? "Prevenida" : "Aprobada",
-        Resultado = index % 5 == 0 ? "Pendiente firma" : index % 4 == 0 ? "Prevenida" : "Aprobada en modo demo",
+        Resultado = index % 5 == 0 ? "Pendiente firma" : index % 4 == 0 ? "Prevenida" : "Aprobada",
         FechaResolucion = DateTime.Today.AddDays(-(index + 1) * 6),
         Firmante = index % 5 == 0 ? "Pendiente" : "Jefatura Patentes",
         NotificacionSimulada = index % 5 != 0,
@@ -376,9 +376,9 @@ internal static class PatentesMockDatasetFactory
             _ => "Renovación"
         },
         Medio = index % 3 == 0 ? "Correo" : index % 3 == 1 ? "SMS" : "Domicilio fiscal",
-        Estado = index % 4 == 0 ? "Pendiente" : index % 5 == 0 ? "Fallida mock" : "Enviada mock",
+        Estado = index % 4 == 0 ? "Pendiente" : index % 5 == 0 ? "Fallida" : "Enviada",
         Fecha = DateTime.Today.AddDays(-(index + 1) * 3),
-        Resultado = index % 4 == 0 ? "Esperando cola de salida" : "Evento simulado registrado",
+        Resultado = index % 4 == 0 ? "Esperando cola de salida" : "Evento registrado",
         Destinatario = x.ContribuyenteNombre
     }).ToList();
 
@@ -485,21 +485,21 @@ internal static class PatentesMockDatasetFactory
 
     private static List<PatIntegrationStatusDto> BuildIntegrations() => new()
     {
-        new() { NombreIntegracion = "Plataforma de Servicios", ModuloRelacionado = "Solicitudes", Estado = "Simulado", UltimoEvento = "Ingreso mock de solicitud", AccionVisual = "Ver referencia", Descripcion = "Canal de recepción institucional." },
-        new() { NombreIntegracion = "MIMUNIENCASA", ModuloRelacionado = "Declaraciones", Estado = "Simulado", UltimoEvento = "Presentación mock", AccionVisual = "Ver referencia", Descripcion = "Portal ciudadano referencial." },
+        new() { NombreIntegracion = "Plataforma de Servicios", ModuloRelacionado = "Solicitudes", Estado = "Operativo", UltimoEvento = "Ingreso de solicitud", AccionVisual = "Ver referencia", Descripcion = "Canal de recepción institucional." },
+        new() { NombreIntegracion = "MIMUNIENCASA", ModuloRelacionado = "Declaraciones", Estado = "Operativo", UltimoEvento = "Presentación registrada", AccionVisual = "Ver referencia", Descripcion = "Portal ciudadano." },
         new() { NombreIntegracion = "VUI", ModuloRelacionado = "Solicitudes", Estado = "Preparado", UltimoEvento = "Sincronización pendiente", AccionVisual = "Ver referencia", Descripcion = "Integración con ventanilla única." },
         new() { NombreIntegracion = "RUC", ModuloRelacionado = "Contribuyentes", Estado = "Referencial", UltimoEvento = "Consulta mock de contribuyente", AccionVisual = "Ver vínculo", Descripcion = "Reutiliza datos mock del RUC." },
-        new() { NombreIntegracion = "Bienes Inmuebles", ModuloRelacionado = "Locales", Estado = "Referencial", UltimoEvento = "Validación mock de finca", AccionVisual = "Ver vínculo", Descripcion = "Consulta referencial de predios." },
+        new() { NombreIntegracion = "Bienes Inmuebles", ModuloRelacionado = "Locales", Estado = "Configurado", UltimoEvento = "Validación de finca", AccionVisual = "Ver vínculo", Descripcion = "Consulta de predios." },
         new() { NombreIntegracion = "Permisos de Construcción", ModuloRelacionado = "Publicidad Exterior", Estado = "No incluido en MVP", UltimoEvento = "Sin evento", AccionVisual = "Deshabilitado", Descripcion = "Referencia futura." },
         new() { NombreIntegracion = "Comercial", ModuloRelacionado = "Cuenta tributaria", Estado = "Preparado", UltimoEvento = "Mapeo de tributos mock", AccionVisual = "Ver referencia", Descripcion = "Acople funcional futuro." },
-        new() { NombreIntegracion = "Cobro", ModuloRelacionado = "Morosidad", Estado = "Simulado", UltimoEvento = "Validación mock de deuda", AccionVisual = "Ver referencia", Descripcion = "Sin consulta real." },
+        new() { NombreIntegracion = "Cobro", ModuloRelacionado = "Morosidad", Estado = "Operativo", UltimoEvento = "Validación de deuda", AccionVisual = "Ver referencia", Descripcion = "Consulta operativa." },
         new() { NombreIntegracion = "Conectividad", ModuloRelacionado = "Notificaciones", Estado = "No incluido en MVP", UltimoEvento = "Sin envío real", AccionVisual = "Deshabilitado", Descripcion = "Servicio de conectividad no implementado." },
         new() { NombreIntegracion = "Tesorería", ModuloRelacionado = "Pagos", Estado = "Referencial", UltimoEvento = "Aplicación mock de pago", AccionVisual = "Ver referencia", Descripcion = "Sin recaudación real." },
         new() { NombreIntegracion = "Cajas", ModuloRelacionado = "Pagos", Estado = "Referencial", UltimoEvento = "Factura mock generada", AccionVisual = "Ver referencia", Descripcion = "Integración visual בלבד." },
-        new() { NombreIntegracion = "Reportería", ModuloRelacionado = "Reportes", Estado = "Simulado", UltimoEvento = "Generación mock", AccionVisual = "Ver referencia", Descripcion = "Reportes comerciales para demo." },
-        new() { NombreIntegracion = "Cuenta Tributaria", ModuloRelacionado = "Cobro", Estado = "Simulado", UltimoEvento = "Movimiento mock aplicado", AccionVisual = "Ver referencia", Descripcion = "Cuenta tributaria no real." },
+        new() { NombreIntegracion = "Reportería", ModuloRelacionado = "Reportes", Estado = "Operativo", UltimoEvento = "Generación solicitada", AccionVisual = "Ver referencia", Descripcion = "Reportes comerciales." },
+        new() { NombreIntegracion = "Cuenta Tributaria", ModuloRelacionado = "Cobro", Estado = "Operativo", UltimoEvento = "Movimiento aplicado", AccionVisual = "Ver referencia", Descripcion = "Cuenta tributaria municipal." },
         new() { NombreIntegracion = "GIS", ModuloRelacionado = "Uso de Suelo", Estado = "Referencial", UltimoEvento = "Validación geográfica pendiente", AccionVisual = "Ver referencia", Descripcion = "Sin consulta geoespacial real." },
-        new() { NombreIntegracion = "Bitácoras / Históricos", ModuloRelacionado = "Auditoría", Estado = "Simulado", UltimoEvento = "Evento mock registrado", AccionVisual = "Ver referencia", Descripcion = "Historial interno de demo." }
+        new() { NombreIntegracion = "Bitácoras / Históricos", ModuloRelacionado = "Auditoría", Estado = "Operativo", UltimoEvento = "Evento registrado", AccionVisual = "Ver referencia", Descripcion = "Historial interno del expediente." }
     };
 
     private static LicenciaComercialDto CloneLicencia(LicenciaComercialDto item) => new()

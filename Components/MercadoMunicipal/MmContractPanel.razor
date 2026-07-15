@@ -6,7 +6,7 @@
 
 @if (Contract is null)
 {
-    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">El local no tiene contrato asociado en el mock actual.</MudAlert>
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">El local no tiene contrato asociado actualmente.</MudAlert>
 }
 else
 {
@@ -22,7 +22,7 @@ else
                     <MudItem xs="12" sm="6"><MudText>Vigencia quinquenal: @(Contract.IsFiveYearTerm ? "Sí" : "No")</MudText></MudItem>
                     <MudItem xs="12" sm="6"><MudText>Estado: @Contract.Status</MudText></MudItem>
                     <MudItem xs="12" sm="6"><MudText>Responsable: @Contract.ResponsibleUser</MudText></MudItem>
-                    <MudItem xs="12" sm="6"><MudText>Firma digital referencial: @(Contract.HasDigitalSignature ? "Disponible" : "No registrada")</MudText></MudItem>
+                    <MudItem xs="12" sm="6"><MudText>Firma digital: @(Contract.HasDigitalSignature ? "Disponible" : "No registrada")</MudText></MudItem>
                     <MudItem xs="12"><MudText>Obligaciones: @Contract.Obligations</MudText></MudItem>
                     <MudItem xs="12"><MudText>Condiciones: @Contract.Conditions</MudText></MudItem>
                     <MudItem xs="12"><MudText>Notas: @Contract.Notes</MudText></MudItem>
@@ -42,11 +42,11 @@ else
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RenewAsync">Renovar contrato mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SuspendAsync">Suspender contrato mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="CancelAsync">Cancelar contrato mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Dark" OnClick="RescindAsync">Rescindir contrato mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ViewDocumentAsync">Ver documento mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RenewAsync">Renovar contrato</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SuspendAsync">Suspender contrato</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="CancelAsync">Cancelar contrato</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Dark" OnClick="RescindAsync">Rescindir contrato</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ViewDocumentAsync">Ver documento</MudButton>
             </div>
         </MudPaper>
     </div>
@@ -66,7 +66,7 @@ else
             Contract.Status = "Activo";
         }
 
-        Snackbar.Add("Renovación mock aplicada al contrato.", Severity.Success);
+        Snackbar.Add("Renovación aplicada al contrato.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -74,7 +74,7 @@ else
     {
         if (Contract is not null)
             Contract.Status = "Suspendido";
-        Snackbar.Add("Contrato suspendido de forma mock.", Severity.Warning);
+        Snackbar.Add("Contrato suspendido correctamente.", Severity.Warning);
         return Task.CompletedTask;
     }
 
@@ -82,7 +82,7 @@ else
     {
         if (Contract is not null)
             Contract.Status = "Cancelado";
-        Snackbar.Add("Contrato cancelado en modo demo.", Severity.Error);
+        Snackbar.Add("Contrato cancelado correctamente.", Severity.Error);
         return Task.CompletedTask;
     }
 
@@ -90,13 +90,13 @@ else
     {
         if (Contract is not null)
             Contract.Status = "Rescindido";
-        Snackbar.Add("Contrato rescindido visualmente.", Severity.Warning);
+        Snackbar.Add("Contrato rescindido correctamente.", Severity.Warning);
         return Task.CompletedTask;
     }
 
     private Task ViewDocumentAsync()
     {
-        Snackbar.Add($"Documento mock disponible: {Contract?.DocumentPlaceholder ?? "Sin documento"}.", Severity.Info);
+        Snackbar.Add($"Documento disponible: {Contract?.DocumentPlaceholder ?? "Sin documento"}.", Severity.Info);
         return Task.CompletedTask;
     }
 }

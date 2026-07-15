@@ -79,7 +79,7 @@ else
         new("Auditoría", href: null, disabled: true)
     };
 
-    private readonly string currentUser = "auditor.demo";
+    private readonly string currentUser = "auditor.municipal";
     private AuditFilterDto filter = new();
     private List<AuditEventDto> allEvents = new();
     private List<AuditEventDto> filteredEvents = new();
@@ -202,7 +202,7 @@ else
 
     private Task CopyReferenceAsync(AuditEventDto item)
     {
-        Snackbar.Add($"Referencia mock preparada: {item.Id}", Severity.Info);
+        Snackbar.Add($"Referencia preparada: {item.Id}", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -243,7 +243,7 @@ else
             RequestId = item.RequestId,
             ResultMessage = item.ResultMessage,
             FieldChanged = item.Action,
-            Observation = $"Evento mock del módulo {item.Module}.",
+            Observation = $"Evento del módulo {item.Module}.",
             TechnicalMessage = item.ResultMessage,
             IntegrationRelated = item.Module == "Integraciones" ? item.Source : string.Empty,
             PreviousState = item.PreviousValue,

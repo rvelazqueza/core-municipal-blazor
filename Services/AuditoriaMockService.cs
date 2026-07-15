@@ -243,7 +243,7 @@ public class AuditoriaMockService : IAuditoriaService
                 Action = "Exportación mock de auditoría solicitada",
                 EventType = "Exportación mock",
                 Severity = "Información",
-                Status = "Simulado",
+                Status = "Operativo",
                 EntityName = string.IsNullOrWhiteSpace(request.EntityName) ? "Auditoría" : request.EntityName,
                 EntityId = request.EntityId,
                 ExpedientNumber = request.ExpedientNumber,
@@ -359,7 +359,7 @@ public class AuditoriaMockService : IAuditoriaService
         };
 
         var severities = new[] { "Información", "Éxito", "Advertencia", "Error", "Crítico" };
-        var statuses = new[] { "Exitoso", "Fallido", "Pendiente", "Observado", "Simulado", "Bloqueado" };
+        var statuses = new[] { "Exitoso", "Fallido", "Pendiente", "Observado", "Operativo", "Bloqueado" };
         var channels = new[] { "Web", "Backoffice", "API mock", "Móvil", "Plataforma digital" };
         var sources = new[] { "Formulario", "Flujo institucional", "Servicio mock", "Proceso batch", "Revisión manual" };
 
@@ -456,7 +456,7 @@ public class AuditoriaMockService : IAuditoriaService
                 Action = "Generación de notificación mock",
                 EventType = "Notificación simulada",
                 Severity = index % 3 == 0 ? "Advertencia" : "Información",
-                Status = index % 2 == 0 ? "Exitoso" : "Simulado",
+                Status = index % 2 == 0 ? "Exitoso" : "Operativo",
                 EntityName = "Notificación",
                 EntityId = $"NOT-{index:000}",
                 ExpedientNumber = $"EXP-{((index - 1) % 8) + 1:000}",
@@ -470,7 +470,7 @@ public class AuditoriaMockService : IAuditoriaService
                 SessionId = $"NOT-SES-{index:000}",
                 CorrelationId = $"NOT-COR-{index:000}",
                 RequestId = $"NOT-REQ-{index:000}",
-                ResultMessage = "Notificación mock registrada."
+                ResultMessage = "Notificación registrada."
             });
         }
 
@@ -486,7 +486,7 @@ public class AuditoriaMockService : IAuditoriaService
                 Action = "Exportación mock de auditoría solicitada",
                 EventType = "Exportación mock",
                 Severity = "Información",
-                Status = "Simulado",
+                Status = "Operativo",
                 EntityName = "Auditoría",
                 EntityId = $"EXP-REQ-{index:000}",
                 ExpedientNumber = $"EXP-{index:000}",
@@ -520,9 +520,9 @@ public class AuditoriaMockService : IAuditoriaService
             ("Inicio de sesión exitoso", "Exitoso", "Información", "Acceso concedido"),
             ("Inicio de sesión fallido", "Fallido", "Advertencia", "Intento inválido"),
             ("Cierre de sesión", "Exitoso", "Información", "Sesión cerrada"),
-            ("MFA simulado exitoso", "Exitoso", "Información", "Segundo factor validado"),
-            ("MFA simulado fallido", "Fallido", "Error", "Segundo factor rechazado"),
-            ("Firma digital simulada", "Simulado", "Información", "Firma referencial aplicada"),
+            ("MFA validado exitoso", "Exitoso", "Información", "Segundo factor validado"),
+            ("MFA validado fallido", "Fallido", "Error", "Segundo factor rechazado"),
+            ("Firma digital aplicada", "Operativo", "Información", "Firma aplicada"),
             ("Cambio de contraseña", "Exitoso", "Información", "Actualización confirmada"),
             ("Recuperación de contraseña", "Exitoso", "Información", "Proceso de recuperación"),
             ("Acceso a módulo", "Exitoso", "Información", "Módulo autorizado"),
@@ -564,19 +564,19 @@ public class AuditoriaMockService : IAuditoriaService
     {
         var items = new[]
         {
-            ("RUC", "Seguridad", "RUC", "Simulado", "Consulta referencial sincronizada"),
+            ("RUC", "Seguridad", "RUC", "Operativo", "Consulta sincronizada"),
             ("Bienes Inmuebles", "Bienes Inmuebles", "Catastro", "Referencial", "Consulta de finca recibida"),
             ("Patentes", "Patentes", "Patentes", "Preparado", "Intercambio listo para despliegue"),
-            ("Plataforma de Servicios", "Plataforma de Servicios", "Trámites", "Simulado", "Expediente consultado"),
-            ("Permisos de Construcción", "Permisos de Construcción", "APC / CFIA", "Simulado", "Estado de expediente sincronizado"),
+            ("Plataforma de Servicios", "Plataforma de Servicios", "Trámites", "Operativo", "Expediente consultado"),
+            ("Permisos de Construcción", "Permisos de Construcción", "APC / CFIA", "Operativo", "Estado de expediente sincronizado"),
             ("Mercado Municipal", "Mercado Municipal", "Mercado", "Preparado", "Gestión de local referencial"),
             ("GIS", "GIS", "Mapas", "Referencial", "Ubicación geográfica consultada"),
-            ("Cobro", "Cobro mock", "Caja", "Simulado", "Consulta de cobro referencial"),
+            ("Cobro", "Cobro", "Caja", "Operativo", "Consulta de cobro registrada"),
             ("Cuenta Tributaria", "Cuenta Tributaria mock", "Tesorería", "Preparado", "Cuenta tributaria preparada"),
-            ("Tesorería", "Cobro mock", "Tesorería", "Simulado", "Conciliación mock registrada"),
-            ("Cajas", "Cobro mock", "Cajas", "Simulado", "Movimiento de caja referencial"),
+            ("Tesorería", "Cobro", "Tesorería", "Operativo", "Conciliación registrada"),
+            ("Cajas", "Cobro", "Cajas", "Operativo", "Movimiento de caja registrado"),
             ("Conectividad", "Integraciones", "Infraestructura", "Referencial", "Conectividad validada"),
-            ("Notificaciones", "Notificaciones", "Canal digital", "Simulado", "Plantilla notificada"),
+            ("Notificaciones", "Notificaciones", "Canal digital", "Operativo", "Plantilla notificada"),
             ("MIMUNIENCASA", "Plataforma de Servicios", "MIMUNIENCASA", "Preparado", "Canal remoto listo"),
             ("VUI", "Plataforma de Servicios", "VUI", "Fallido mock", "Interoperabilidad en revisión")
         };
@@ -590,7 +590,7 @@ public class AuditoriaMockService : IAuditoriaService
             Module = "Integraciones",
             Action = $"Integración {item.Item1}",
             EventType = "Integración simulada",
-            Severity = item.Item4 == "Simulado" ? "Información" : "Advertencia",
+            Severity = item.Item4 == "Operativo" ? "Información" : "Advertencia",
             Status = item.Item4,
             EntityName = "Integración",
             EntityId = $"INT-{index + 1:000}",
@@ -660,7 +660,7 @@ public class AuditoriaMockService : IAuditoriaService
             Parameter = item.Item3,
             Justification = item.Item6,
             AffectedModule = item.Item2,
-            ConfigurationState = index % 2 == 0 ? "Exitoso" : "Simulado"
+            ConfigurationState = index % 2 == 0 ? "Exitoso" : "Operativo"
         }).ToList();
     }
 }

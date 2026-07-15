@@ -15,9 +15,9 @@ else
     <div class="d-flex flex-column gap-3">
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterTransferAsync">Registrar traspaso mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ApproveCouncilAsync">Aprobar por Concejo mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApplyTransferAsync">Aplicar traspaso mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RegisterTransferAsync">Registrar traspaso</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ApproveCouncilAsync">Aprobar por Concejo</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ApplyTransferAsync">Aplicar traspaso</MudButton>
             </div>
         </MudPaper>
 
@@ -71,25 +71,25 @@ else
         var currentName = Tenant?.Name ?? "Sin asignar";
         var item = new MmTransferDto
         {
-            Id = $"TRA-MOCK-{Items.Count + 1:000}",
+            Id = $"TRA-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
-            RequestNumber = $"MM-TRA-MOCK-{DateTime.Now:HHmmss}",
+            RequestNumber = $"MM-TRA-MUN-{DateTime.Now:HHmmss}",
             LocalNumber = Local.LocalNumber,
             LocalAccount = Local.AccountNumber,
             CurrentTaxpayer = currentName,
             PreviousTaxpayer = currentName,
-            NewTaxpayer = $"Nuevo contribuyente mock {Items.Count + 1:00}",
+            NewTaxpayer = $"Nuevo contribuyente {Items.Count + 1:00}",
             RequestDate = DateTime.Now,
             Status = "Registrado",
             CouncilAgreementMock = "Pendiente de acuerdo",
-            ThirdPartyReceiptMock = $"RT-MOCK-{Items.Count + 1:000}",
+            ThirdPartyReceiptMock = $"RT-MUN-{Items.Count + 1:000}",
             ReceivablesUpdateMock = "Pendiente de actualización",
             OwnershipHistory = $"Titular actual: {currentName}"
         };
 
         Items.Insert(0, item);
         RegisterMockEvent("Registrar traspaso", currentName, item.NewTaxpayer, "Traspasos", "Media");
-        Snackbar.Add("Traspaso mock registrado.", Severity.Success);
+        Snackbar.Add("Traspaso registrado.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -100,9 +100,9 @@ else
             return Task.CompletedTask;
 
         item.Status = "Aprobado";
-        item.CouncilAgreementMock = $"Acuerdo CM-MOCK-{DateTime.Now:HHmmss}";
+        item.CouncilAgreementMock = $"Acuerdo CM-MUN-{DateTime.Now:HHmmss}";
         RegisterMockEvent("Aprobación por Concejo", "Pendiente Concejo", item.Status, "Traspasos", "Alta");
-        Snackbar.Add("Traspaso aprobado por Concejo en modo mock.", Severity.Info);
+        Snackbar.Add("Traspaso aprobado por Concejo operativo.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -113,10 +113,10 @@ else
             return Task.CompletedTask;
 
         item.Status = "Aplicado";
-        item.ReceivablesUpdateMock = "Actualización mock aplicada";
+        item.ReceivablesUpdateMock = "Actualización aplicada";
         item.OwnershipHistory = $"Titular anterior: {item.CurrentTaxpayer} / Nuevo titular: {item.NewTaxpayer}";
         RegisterMockEvent("Aplicar traspaso", item.CurrentTaxpayer, item.NewTaxpayer, "Traspasos", "Alta");
-        Snackbar.Add("Traspaso mock aplicado.", Severity.Success);
+        Snackbar.Add("Traspaso aplicado.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -127,7 +127,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Coordinación Mercado",
@@ -138,12 +138,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel traspasos",
             SourceProcess = process,
-            Comment = "Evento mock generado desde traspasos."
+            Comment = "Evento generado desde traspasos."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Coordinación Mercado",
@@ -153,7 +153,7 @@ else
             SourceDocument = "Panel traspasos",
             Process = process,
             Severity = severity,
-            OutputReference = "Acuerdo mock"
+            OutputReference = "Acuerdo generado"
         });
     }
 }

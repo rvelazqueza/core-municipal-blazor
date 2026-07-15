@@ -23,7 +23,7 @@ else
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CreateInspectionAsync">Crear inspección mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CreateInspectionAsync">Crear inspección</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="AssignInspectorAsync">Asignar inspector</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="RegisterResultAsync">Registrar resultado</MudButton>
             </div>
@@ -72,10 +72,10 @@ else
 
         var item = new MmInspectionDto
         {
-            Id = $"INSP-MOCK-{Items.Count + 1:000}",
+            Id = $"INSP-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
             TenantId = Tenant?.Id ?? string.Empty,
-            InspectionNumber = $"INSP-MOCK-{DateTime.Now:HHmmss}",
+            InspectionNumber = $"INSP-MUN-{DateTime.Now:HHmmss}",
             LocalNumber = Local.LocalNumber,
             TenantName = Tenant?.Name ?? "Sin asignar",
             Inspector = "Pendiente asignación",
@@ -83,12 +83,12 @@ else
             Reason = "Amonestación",
             Status = "Solicitada",
             Result = "Pendiente",
-            EvidencePlaceholder = "https://placehold.co/320x180?text=Inspecci%C3%B3n+Mock"
+            EvidencePlaceholder = "https://placehold.co/320x180?text=Inspecci%C3%B3n"
         };
 
         Items.Insert(0, item);
         RegisterMockEvent("Crear inspección", string.Empty, item.InspectionNumber, "Inspecciones", "Media");
-        Snackbar.Add("Inspección mock creada.", Severity.Info);
+        Snackbar.Add("Inspección creada.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -101,7 +101,7 @@ else
         item.Inspector = "Inspector Mercado QA";
         item.Status = "Asignada";
         RegisterMockEvent("Asignar inspector", "Pendiente asignación", item.Inspector, "Inspecciones", "Baja");
-        Snackbar.Add("Inspector asignado de forma mock.", Severity.Success);
+        Snackbar.Add("Inspector asignado registrado.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -114,7 +114,7 @@ else
         item.Status = "Finalizada";
         item.Result = "Requiere corrección";
         RegisterMockEvent("Registrar resultado de inspección", "Pendiente", item.Result, "Inspecciones", "Alta");
-        Snackbar.Add("Resultado de inspección mock registrado.", Severity.Warning);
+        Snackbar.Add("Resultado de inspección registrado.", Severity.Warning);
         return Task.CompletedTask;
     }
 
@@ -125,7 +125,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -136,12 +136,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel de inspecciones",
             SourceProcess = process,
-            Comment = "Evento mock generado desde inspecciones."
+            Comment = "Evento generado desde inspecciones."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -151,7 +151,7 @@ else
             SourceDocument = "Panel de inspecciones",
             Process = process,
             Severity = severity,
-            OutputReference = "Bitácora visual mock"
+            OutputReference = "Bitácora visual"
         });
     }
 }

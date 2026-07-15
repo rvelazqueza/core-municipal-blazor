@@ -12,7 +12,7 @@
 
         @if (Events is null || !Events.Any())
         {
-            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">No se encontraron eventos relacionados para la entidad mock seleccionada.</MudAlert>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">No se encontraron eventos relacionados para la entidad seleccionada.</MudAlert>
         }
         else
         {
@@ -33,7 +33,7 @@
                 </MudItem>
                 <MudItem xs="12" md="3">
                     <MudPaper Outlined="true" Class="pa-3">
-                        <MudText Typo="Typo.caption">Estado actual mock</MudText>
+                        <MudText Typo="Typo.caption">Estado actual</MudText>
                         <MudText>@latest.Status</MudText>
                     </MudPaper>
                 </MudItem>

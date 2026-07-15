@@ -64,7 +64,7 @@ public class MmManagementWizardViewModel
     public string TenantObligations { get; set; } = string.Empty;
     public string ContractObservations { get; set; } = string.Empty;
     public string ContractDocumentPlaceholder { get; set; } = "Contrato placeholder";
-    public string SignatureReference { get; set; } = "Firma digital referencial";
+    public string SignatureReference { get; set; } = "Firma digital";
     public bool ShowExpirationAlert { get; set; }
 
     public decimal? MonthlyAmount { get; set; }

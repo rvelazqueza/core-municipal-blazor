@@ -29,17 +29,17 @@
     </MudTable>
 
     <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-        <MudButton Variant="Variant.Outlined" OnClick="CreateWaterTaskAsync">Crear tarea Acueductos mock</MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="CreateSewerTaskAsync">Crear tarea Alcantarillado mock</MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="ApproveAllAsync">Marcar aprobado mock</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="CreateWaterTaskAsync">Crear tarea Acueductos</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="CreateSewerTaskAsync">Crear tarea Alcantarillado</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ApproveAllAsync">Marcar aprobado</MudButton>
     </MudStack>
 </MudStack>
 
 @code {
     [Parameter] public PcPermitDto Permit { get; set; } = new();
-    private Task CreateWaterTaskAsync() { UpdateService("Agua", "En trámite"); Snackbar.Add("Tarea mock enviada a Acueductos.", Severity.Info); return Task.CompletedTask; }
-    private Task CreateSewerTaskAsync() { UpdateService("Alcantarillado", "En trámite"); Snackbar.Add("Tarea mock enviada a Alcantarillado.", Severity.Info); return Task.CompletedTask; }
-    private Task ApproveAllAsync() { foreach (var item in Permit.PublicServices) item.Status = "Aprobado"; Snackbar.Add("Servicios públicos aprobados en modo demo.", Severity.Success); return Task.CompletedTask; }
+    private Task CreateWaterTaskAsync() { UpdateService("Agua", "En trámite"); Snackbar.Add("Tarea enviada a Acueductos.", Severity.Info); return Task.CompletedTask; }
+    private Task CreateSewerTaskAsync() { UpdateService("Alcantarillado", "En trámite"); Snackbar.Add("Tarea enviada a Alcantarillado.", Severity.Info); return Task.CompletedTask; }
+    private Task ApproveAllAsync() { foreach (var item in Permit.PublicServices) item.Status = "Aprobado"; Snackbar.Add("Servicios públicos aprobados.", Severity.Success); return Task.CompletedTask; }
     private void UpdateService(string key, string status) { var item = Permit.PublicServices.FirstOrDefault(x => x.ServiceType.Contains(key, StringComparison.OrdinalIgnoreCase)); if (item is not null) item.Status = status; }
     private static Color ResolveColor(string status) => status.Contains("Aprob", StringComparison.OrdinalIgnoreCase) ? Color.Success : status.Contains("trámite", StringComparison.OrdinalIgnoreCase) ? Color.Info : Color.Warning;
 }

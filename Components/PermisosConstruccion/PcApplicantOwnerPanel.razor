@@ -19,7 +19,7 @@
             </MudCardContent>
             <MudCardActions>
                 <MudButton Variant="Variant.Outlined" OnClick="ViewRucAsync">Ver RUC</MudButton>
-                <MudButton Variant="Variant.Outlined" OnClick="ValidateRucAsync">Validar RUC mock</MudButton>
+                <MudButton Variant="Variant.Outlined" OnClick="ValidateRucAsync">Validar RUC</MudButton>
             </MudCardActions>
         </MudCard>
     </MudItem>
@@ -32,9 +32,9 @@
                 <MudDivider Class="my-2" />
                 <MudText>Relación: @Permit.Owner.Relationship</MudText>
                 <MudText>Porcentaje de derecho: @Permit.Owner.OwnershipPercentage%</MudText>
-                <MudText>Autorización mock: @Permit.Owner.AuthorizationMock</MudText>
+                <MudText>Autorización: @Permit.Owner.AuthorizationMock</MudText>
                 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-2">
-                    @((Permit.Applicant.Identification == Permit.Owner.Identification) ? "Solicitante y propietario coinciden." : "Solicitante y propietario son distintos; existe autorización mock referencial.")
+                    @((Permit.Applicant.Identification == Permit.Owner.Identification) ? "Solicitante y propietario coinciden." : "Solicitante y propietario son distintos; existe autorización.")
                 </MudAlert>
             </MudCardContent>
         </MudCard>
@@ -46,7 +46,7 @@
 
     private Task ViewRucAsync()
     {
-        Snackbar.Add("Vista RUC referencial; no se abre un módulo externo en este MVP.", Severity.Info);
+        Snackbar.Add("Vista RUC disponible desde el sistema.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -54,7 +54,7 @@
     {
         Permit.Applicant.RucStatus = "Validado";
         Permit.Applicant.ExistsInRuc = true;
-        Snackbar.Add("Validación RUC mock completada.", Severity.Success);
+        Snackbar.Add("Validación RUC completada correctamente.", Severity.Success);
         return Task.CompletedTask;
     }
 }

@@ -25,10 +25,10 @@ public partial class PatenteCreateWizard : ComponentBase
         new() { Index = 3, Title = "Actividad económica y datos del negocio", Subtitle = "Registre el giro comercial y la identificación operativa del negocio.", Icon = Icons.Material.Filled.BusinessCenter },
         new() { Index = 4, Title = "Uso de Suelo", Subtitle = "Consigne el estado base de la validación urbanística.", Icon = Icons.Material.Filled.Map },
         new() { Index = 5, Title = "Requisitos y declaración jurada", Subtitle = "Marque el avance documental mínimo y la declaración jurada.", Icon = Icons.Material.Filled.FactCheck },
-        new() { Index = 6, Title = "Hacienda / CCSS / FODESAF / INS", Subtitle = "Controle el avance de las validaciones externas simuladas.", Icon = Icons.Material.Filled.Description },
+        new() { Index = 6, Title = "Hacienda / CCSS / FODESAF / INS", Subtitle = "Controle el avance de las validaciones externas.", Icon = Icons.Material.Filled.Description },
         new() { Index = 7, Title = "Morosidad, inspección y revisión", Subtitle = "Complete el estado general de revisión institucional.", Icon = Icons.Material.Filled.Search },
-        new() { Index = 8, Title = "Tasación, cobro mock y resolución", Subtitle = "Deje preparada la salida financiera y resolutiva demo.", Icon = Icons.Material.Filled.Article },
-        new() { Index = 9, Title = "Resumen y finalización", Subtitle = "Revise el proceso antes de registrar la solicitud demo.", Icon = Icons.Material.Filled.CheckCircle }
+        new() { Index = 8, Title = "Tasación, cobro y resolución", Subtitle = "Deje preparada la salida financiera y resolutiva.", Icon = Icons.Material.Filled.Article },
+        new() { Index = 9, Title = "Resumen y finalización", Subtitle = "Revise el proceso antes de registrar la solicitud.", Icon = Icons.Material.Filled.CheckCircle }
     ];
 
     private readonly List<string> tiposSolicitud = ["Licencia comercial nueva", "Licencia temporal", "Licencia de licores", "Renovación", "Modificación", "Exoneración", "Declaración", "Reposición de certificado"];
@@ -183,9 +183,9 @@ public partial class PatenteCreateWizard : ComponentBase
         model.ModalidadDeclaracionJurada = string.IsNullOrWhiteSpace(model.ModalidadDeclaracionJurada) ? "Sí" : model.ModalidadDeclaracionJurada;
         model.TieneDeclaracionJurada = string.Equals(model.ModalidadDeclaracionJurada, "Sí", StringComparison.OrdinalIgnoreCase);
         model.TipoPersona = string.IsNullOrWhiteSpace(model.TipoPersona) ? "Fisica" : model.TipoPersona;
-        model.Correo = string.IsNullOrWhiteSpace(model.Correo) ? "demo.patentes@municipalidad.go.cr" : model.Correo;
+        model.Correo = string.IsNullOrWhiteSpace(model.Correo) ? "patentes@municipalidad.go.cr" : model.Correo;
         model.Telefono = string.IsNullOrWhiteSpace(model.Telefono) ? "2222-2222" : model.Telefono;
-        model.DireccionFiscal = string.IsNullOrWhiteSpace(model.DireccionFiscal) ? "Dirección fiscal demo" : model.DireccionFiscal;
+        model.DireccionFiscal = string.IsNullOrWhiteSpace(model.DireccionFiscal) ? "Dirección fiscal" : model.DireccionFiscal;
         model.MedioNotificacion = string.IsNullOrWhiteSpace(model.MedioNotificacion) ? "Correo electrónico" : model.MedioNotificacion;
         model.EstadoContribuyente = string.IsNullOrWhiteSpace(model.EstadoContribuyente) ? "Activo" : model.EstadoContribuyente;
         model.CalidadDatosRuc = string.IsNullOrWhiteSpace(model.CalidadDatosRuc) ? "Validado" : model.CalidadDatosRuc;
@@ -194,20 +194,20 @@ public partial class PatenteCreateWizard : ComponentBase
         model.TipoUbicacion = string.IsNullOrWhiteSpace(model.TipoUbicacion)
             ? (model.RequiereLocalFisico ? "Local físico" : "Actividad sin local físico")
             : model.TipoUbicacion;
-        model.DireccionLocal = string.IsNullOrWhiteSpace(model.DireccionLocal) ? "Avenida Central, local demo" : model.DireccionLocal;
+        model.DireccionLocal = string.IsNullOrWhiteSpace(model.DireccionLocal) ? "Avenida Central, local comercial" : model.DireccionLocal;
         model.FincaOIdPredial = string.IsNullOrWhiteSpace(model.FincaOIdPredial) ? "F-0001" : model.FincaOIdPredial;
         model.IdPredial = string.IsNullOrWhiteSpace(model.IdPredial) ? "ID-PR-0001" : model.IdPredial;
         model.NumeroFinca = string.IsNullOrWhiteSpace(model.NumeroFinca) ? "1-23456" : model.NumeroFinca;
-        model.Dueno = string.IsNullOrWhiteSpace(model.Dueno) ? "Municipalidad Demo" : model.Dueno;
+        model.Dueno = string.IsNullOrWhiteSpace(model.Dueno) ? "Municipalidad" : model.Dueno;
         model.CondicionOcupacion = string.IsNullOrWhiteSpace(model.CondicionOcupacion) ? "Propiedad" : model.CondicionOcupacion;
         model.AreaLocal = string.IsNullOrWhiteSpace(model.AreaLocal) ? "120 m²" : model.AreaLocal;
-        model.NombreComercialLocal = string.IsNullOrWhiteSpace(model.NombreComercialLocal) ? "Local demo" : model.NombreComercialLocal;
+        model.NombreComercialLocal = string.IsNullOrWhiteSpace(model.NombreComercialLocal) ? "Local comercial" : model.NombreComercialLocal;
         model.EstadoGis = string.IsNullOrWhiteSpace(model.EstadoGis) ? "Pendiente" : model.EstadoGis;
         model.Distrito = string.IsNullOrWhiteSpace(model.Distrito) && distritos.Any() ? distritos[0] : model.Distrito;
         model.ActividadEconomica = string.IsNullOrWhiteSpace(model.ActividadEconomica) ? "Restaurante" : model.ActividadEconomica;
         model.CodigoCaecr = string.IsNullOrWhiteSpace(model.CodigoCaecr) ? "5610" : model.CodigoCaecr;
         model.CodigoCiiuVisual = string.IsNullOrWhiteSpace(model.CodigoCiiuVisual) ? "CIIU 5610" : model.CodigoCiiuVisual;
-        model.NombreComercial = string.IsNullOrWhiteSpace(model.NombreComercial) ? "Comercio Demo" : model.NombreComercial;
+        model.NombreComercial = string.IsNullOrWhiteSpace(model.NombreComercial) ? "Comercio Municipal" : model.NombreComercial;
         model.ActividadPrincipal = string.IsNullOrWhiteSpace(model.ActividadPrincipal) ? "Venta de alimentos" : model.ActividadPrincipal;
         model.ActividadesSecundarias = string.IsNullOrWhiteSpace(model.ActividadesSecundarias) ? "Servicio al cliente, Delivery" : model.ActividadesSecundarias;
         model.RiesgoActividad = string.IsNullOrWhiteSpace(model.RiesgoActividad) ? "Bajo" : model.RiesgoActividad;
@@ -217,8 +217,8 @@ public partial class PatenteCreateWizard : ComponentBase
         model.RequierePermisoSanitario = true;
         model.RequiereInspeccion = true;
         model.ActividadTemporal = false;
-        model.CertificadoUsoSuelo = string.IsNullOrWhiteSpace(model.CertificadoUsoSuelo) ? "CUS-DEMO-001" : model.CertificadoUsoSuelo;
-        model.NumeroCertificadoUsoSuelo = string.IsNullOrWhiteSpace(model.NumeroCertificadoUsoSuelo) ? "CUS-DEMO-001" : model.NumeroCertificadoUsoSuelo;
+        model.CertificadoUsoSuelo = string.IsNullOrWhiteSpace(model.CertificadoUsoSuelo) ? "CUS-MUN-001" : model.CertificadoUsoSuelo;
+        model.NumeroCertificadoUsoSuelo = string.IsNullOrWhiteSpace(model.NumeroCertificadoUsoSuelo) ? "CUS-MUN-001" : model.NumeroCertificadoUsoSuelo;
         model.Zonificacion = string.IsNullOrWhiteSpace(model.Zonificacion) ? "Mixta comercial" : model.Zonificacion;
         model.ActividadesAutorizadas = string.IsNullOrWhiteSpace(model.ActividadesAutorizadas) ? "Comercio, alimentos, atención al público" : model.ActividadesAutorizadas;
         model.CompatibilidadUsoSuelo = string.IsNullOrWhiteSpace(model.CompatibilidadUsoSuelo) ? "Compatible" : model.CompatibilidadUsoSuelo;
@@ -256,7 +256,7 @@ public partial class PatenteCreateWizard : ComponentBase
         model.ResultadoMorosidad = string.IsNullOrWhiteSpace(model.ResultadoMorosidad) ? "Conforme" : model.ResultadoMorosidad;
         model.SolicitarInspeccion = model.SolicitarInspeccion;
         model.EstadoInspeccion = string.IsNullOrWhiteSpace(model.EstadoInspeccion) ? "Solicitada" : model.EstadoInspeccion;
-        model.InspectorAsignado = string.IsNullOrWhiteSpace(model.InspectorAsignado) ? "Inspector Demo" : model.InspectorAsignado;
+        model.InspectorAsignado = string.IsNullOrWhiteSpace(model.InspectorAsignado) ? "Inspector Municipal" : model.InspectorAsignado;
         model.EstadoRevision = string.IsNullOrWhiteSpace(model.EstadoRevision) ? "Conforme" : model.EstadoRevision;
         model.ResultadoRevision = string.IsNullOrWhiteSpace(model.ResultadoRevision) ? "Conforme" : model.ResultadoRevision;
         model.Multa = model.Multa < 0 ? 0m : model.Multa;
@@ -382,7 +382,7 @@ public partial class PatenteCreateWizard : ComponentBase
 
         if (local.SinLocalFisico)
         {
-            Snackbar.Add("Actividad sin local físico seleccionada en modo mock.", Severity.Info);
+            Snackbar.Add("Actividad sin local físico seleccionada.", Severity.Info);
         }
 
         if (refresh)
@@ -415,7 +415,7 @@ public partial class PatenteCreateWizard : ComponentBase
             model.EstadoInspeccion = "Solicitada";
 
         if (model.RequiereLicores)
-            Snackbar.Add("Revisión especial de licencias de licores en modo demo.", Severity.Warning);
+            Snackbar.Add("Revisión especial de licencias de licores.", Severity.Warning);
 
         if (refresh)
             await RefreshWizardStateAsync(persist: false);
@@ -435,17 +435,17 @@ public partial class PatenteCreateWizard : ComponentBase
                 ? "Operación temporal y permisos asociados"
                 : actividad.Categoria.Equals("Ambulante", StringComparison.OrdinalIgnoreCase)
                     ? "Cobertura móvil y atención por ruta"
-                    : "Operación comercial demo";
+                    : "Operación comercial municipal";
 
     private async Task ViewRucAsync()
     {
         if (string.IsNullOrWhiteSpace(model.ContribuyenteNombre) || string.IsNullOrWhiteSpace(model.Identificacion))
         {
-            Snackbar.Add("Primero seleccione o complete los datos del contribuyente para ver el RUC mock.", Severity.Info);
+            Snackbar.Add("Primero seleccione o complete los datos del contribuyente para ver el RUC.", Severity.Info);
             return;
         }
 
-        Snackbar.Add($"RUC mock: {model.ContribuyenteNombre} · {model.Identificacion}", Severity.Info);
+        Snackbar.Add($"RUC: {model.ContribuyenteNombre} · {model.Identificacion}", Severity.Info);
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -459,13 +459,13 @@ public partial class PatenteCreateWizard : ComponentBase
 
         model.CalidadDatosRuc = "Validado";
         model.EstadoContribuyente = string.IsNullOrWhiteSpace(model.EstadoContribuyente) ? "Activo" : model.EstadoContribuyente;
-        Snackbar.Add("Contribuyente validado en modo mock.", Severity.Success);
+        Snackbar.Add("Contribuyente validado.", Severity.Success);
         await RefreshWizardStateAsync(persist: false);
     }
 
     private async Task CreateOrConsultContribuyenteAsync()
     {
-        Snackbar.Add("Acción mock: apertura simulada para crear o consultar contribuyente sin salir del wizard.", Severity.Info);
+        Snackbar.Add("Acción: apertura para crear o consultar contribuyente sin salir del wizard.", Severity.Info);
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -473,11 +473,11 @@ public partial class PatenteCreateWizard : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(model.NombreComercialLocal) && string.IsNullOrWhiteSpace(model.FincaOIdPredial))
         {
-            Snackbar.Add("Seleccione una finca o local mock para ver su detalle.", Severity.Info);
+            Snackbar.Add("Seleccione una finca o local para ver su detalle.", Severity.Info);
             return;
         }
 
-        Snackbar.Add($"Finca mock: {model.NombreComercialLocal} · {model.FincaOIdPredial} · {model.Distrito}", Severity.Info);
+        Snackbar.Add($"Finca: {model.NombreComercialLocal} · {model.FincaOIdPredial} · {model.Distrito}", Severity.Info);
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -485,11 +485,11 @@ public partial class PatenteCreateWizard : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(model.DireccionLocal) && string.IsNullOrWhiteSpace(model.IdPredial))
         {
-            Snackbar.Add("Complete la selección del local mock antes de validarlo.", Severity.Warning);
+            Snackbar.Add("Complete la selección del local antes de validarlo.", Severity.Warning);
             return;
         }
 
-        Snackbar.Add("Local validado en modo mock.", Severity.Success);
+        Snackbar.Add("Local validado.", Severity.Success);
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -508,25 +508,25 @@ public partial class PatenteCreateWizard : ComponentBase
         }
 
         model.NumeroCertificadoUsoSuelo = string.IsNullOrWhiteSpace(model.NumeroCertificadoUsoSuelo)
-            ? $"CUS-DEMO-{DateTime.Today:yyyy}-{DateTime.Now:HHmm}"
+            ? $"CUS-MUN-{DateTime.Today:yyyy}-{DateTime.Now:HHmm}"
             : model.NumeroCertificadoUsoSuelo;
         model.CertificadoUsoSuelo = model.NumeroCertificadoUsoSuelo;
         model.FechaValidacionUsoSuelo = DateTime.Today;
         model.FechaVencimientoUsoSuelo ??= DateTime.Today.AddYears(1);
         model.ActividadesAutorizadas = string.IsNullOrWhiteSpace(model.ActividadesAutorizadas)
-            ? $"{model.ActividadEconomica}, operación comercial demo"
+            ? $"{model.ActividadEconomica}, operación comercial municipal"
             : model.ActividadesAutorizadas;
         model.Observaciones = BuildUsoSueloObservation();
         SyncUsoSueloState();
 
-        Snackbar.Add($"Validación mock de Uso de Suelo generada con estado {model.EstadoUsoSuelo}.", model.EstadoUsoSuelo.Equals("Conforme", StringComparison.OrdinalIgnoreCase) ? Severity.Success : Severity.Warning);
+        Snackbar.Add($"Validación de Uso de Suelo generada con estado {model.EstadoUsoSuelo}.", model.EstadoUsoSuelo.Equals("Conforme", StringComparison.OrdinalIgnoreCase) ? Severity.Success : Severity.Warning);
         await RefreshWizardStateAsync(persist: false);
     }
 
     private async Task ViewUsoSueloCertificateAsync()
     {
         var certificado = string.IsNullOrWhiteSpace(model.NumeroCertificadoUsoSuelo) ? "sin número" : model.NumeroCertificadoUsoSuelo;
-        Snackbar.Add($"Certificado mock de Uso de Suelo: {certificado} · {model.EstadoUsoSuelo}", Severity.Info);
+        Snackbar.Add($"Certificado de Uso de Suelo: {certificado} · {model.EstadoUsoSuelo}", Severity.Info);
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -538,10 +538,10 @@ public partial class PatenteCreateWizard : ComponentBase
         model.NumeroCertificadoUsoSuelo = string.Empty;
         model.FechaValidacionUsoSuelo = DateTime.Today;
         model.FechaVencimientoUsoSuelo = null;
-        model.Observaciones = "Solicitud mock de Uso de Suelo creada en modo demo.";
+        model.Observaciones = "Solicitud de Uso de Suelo creada.";
         SyncUsoSueloState();
 
-        Snackbar.Add("Solicitud mock de Uso de Suelo registrada sin salir del wizard.", Severity.Info);
+        Snackbar.Add("Solicitud de Uso de Suelo registrada sin salir del wizard.", Severity.Info);
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -599,15 +599,15 @@ public partial class PatenteCreateWizard : ComponentBase
     private string BuildUsoSueloObservation()
     {
         if (model.EstadoUsoSuelo.Equals("Conforme", StringComparison.OrdinalIgnoreCase))
-            return "Validación mock conforme para otorgamiento demo sujeto a revisión final.";
+            return "Validación conforme para otorgamiento sujeto a revisión final.";
 
         if (model.EstadoUsoSuelo.Equals("No conforme", StringComparison.OrdinalIgnoreCase))
-            return "El Uso de Suelo mock no es compatible con la actividad solicitada.";
+            return "El Uso de Suelo no es compatible con la actividad solicitada.";
 
         if (model.EstadoUsoSuelo.Equals("Vencido", StringComparison.OrdinalIgnoreCase))
-            return "El certificado mock está vencido y requiere actualización.";
+            return "El certificado está vencido y requiere actualización.";
 
-        return "La validación mock de Uso de Suelo queda pendiente de análisis técnico.";
+        return "La validación de Uso de Suelo queda pendiente de análisis técnico.";
     }
 
     private async Task OnRequierePermisoSanitarioChangedAsync()
@@ -701,7 +701,7 @@ public partial class PatenteCreateWizard : ComponentBase
         {
             Usuario = "analista.patentes",
             FechaHora = DateTime.Now,
-            CampoModificado = "Solicitud de patente demo",
+            CampoModificado = "Solicitud de patente",
             ValorAnterior = "Borrador",
             ValorNuevo = $"{solicitud.NumeroSolicitud} · {model.EstadoFinalExpediente}",
             Origen = "Wizard Patentes"
@@ -711,7 +711,7 @@ public partial class PatenteCreateWizard : ComponentBase
         DraftStore.TryRemove(ProcessKey, out _);
         await wizardStateService.ClearStateAsync(ProcessKey);
         await OnCompleted.InvokeAsync(solicitud);
-        Snackbar.Add("Solicitud de patente registrada en modo demo.", Severity.Success);
+        Snackbar.Add("Solicitud de patente registrada.", Severity.Success);
         await NavigateAfterFinalizationAsync(solicitud);
     }
 

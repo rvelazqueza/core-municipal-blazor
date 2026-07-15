@@ -8,7 +8,7 @@
 @using BlazorApp.Shared
 @inject NavigationManager Navigation
 
-<PageTitleBar Title="Expediente de Permisos de Construcción" Subtitle="Vista 360°, edición controlada y trazabilidad mock del permiso." />
+<PageTitleBar Title="Expediente de Permisos de Construcción" Subtitle="Vista 360°, edición controlada y trazabilidad del permiso." />
 
 @if (permit is null)
 {
@@ -36,7 +36,7 @@ else
                 </MudStack>
             </MudStack>
             <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
-                Expediente funcional completo en modo demo para consulta y edición controlada. Las integraciones siguen siendo simuladas o referenciales.
+                Expediente funcional completo para consulta y edición controlada. Las integraciones se presentan según el estado operativo del expediente.
             </MudAlert>
         </MudPaper>
 
@@ -83,7 +83,7 @@ else
             <MudTabPanel Text="Tasación y cobros">
                 <PcAssessmentPanel Permit="@permit" />
             </MudTabPanel>
-            <MudTabPanel Text="Pago / póliza INS mock">
+            <MudTabPanel Text="Pago / póliza INS">
                 <PcPaymentMockPanel Permit="@permit" />
             </MudTabPanel>
             <MudTabPanel Text="Resolución / licencia">

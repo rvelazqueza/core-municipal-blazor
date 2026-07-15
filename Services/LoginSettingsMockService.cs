@@ -34,7 +34,7 @@ public class LoginSettingsMockService : ILoginSettingsService
         DemoUser = "admin@municipal.go.cr",
         DemoPassword = "Admin123!Demo",
         DemoTwoFactorCode = "123456",
-        DemoHelperText = "Use estas credenciales únicamente para pruebas del prototipo.",
+        DemoHelperText = "Use estas credenciales para acceso de prueba del sistema.",
         HabilitarFirmaDigital = true,
         HabilitarTwoFactor = true,
         MaxIntentosFallidos = 5

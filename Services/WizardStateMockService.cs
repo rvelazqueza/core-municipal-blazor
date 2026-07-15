@@ -86,7 +86,7 @@ public class WizardStateMockService : IWizardStateService
                 ProcessName = processName,
                 Status = "Sin guardar",
                 HasUnsavedChanges = false,
-                Message = "Proceso iniciado en modo demo."
+                Message = "Proceso iniciado correctamente."
             }
         };
 

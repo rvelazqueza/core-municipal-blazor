@@ -9,7 +9,7 @@ namespace BlazorApp.Shared;
 
 public partial class PatenteCreateWizard
 {
-    private readonly List<string> origenesRequisito = ["Manual", "Plataforma de Servicios", "Mock", "No aplica"];
+    private readonly List<string> origenesRequisito = ["Manual", "Plataforma de Servicios", "Institucional", "No aplica"];
 
     private void EnsureRequirementDefaults()
     {
@@ -26,37 +26,37 @@ public partial class PatenteCreateWizard
         model.Requisitos =
         [
             BuildRequirement(existing, "identificacion", "Identificación del solicitante", model.EstadoIdentificacion, true,
-                string.IsNullOrWhiteSpace(model.Identificacion) ? "Cédula o identificación mock pendiente" : $"ID mock: {model.Identificacion}",
+                string.IsNullOrWhiteSpace(model.Identificacion) ? "Cédula o identificación pendiente" : $"ID: {model.Identificacion}",
                 "Plataforma de Servicios"),
             BuildRequirement(existing, "personeria", "Personería jurídica", model.EstadoPersoneriaJuridica, IsJuridicalPerson(),
-                "Certificación de personería jurídica mock", "Manual"),
+                "Certificación de personería jurídica", "Manual"),
             BuildRequirement(existing, "uso-suelo", "Uso de Suelo", model.EstadoUsoSueloChecklist, true,
-                string.IsNullOrWhiteSpace(model.NumeroCertificadoUsoSuelo) ? "Certificado de Uso de Suelo mock pendiente" : $"Certificado mock: {model.NumeroCertificadoUsoSuelo}",
-                "Mock"),
+                string.IsNullOrWhiteSpace(model.NumeroCertificadoUsoSuelo) ? "Certificado de Uso de Suelo pendiente" : $"Certificado: {model.NumeroCertificadoUsoSuelo}",
+                "Institucional"),
             BuildRequirement(existing, "permiso-sanitario", "Permiso sanitario de funcionamiento", model.EstadoPermisoSanitario, model.RequierePermisoSanitario,
-                "Permiso sanitario mock", "Mock"),
+                "Permiso sanitario", "Institucional"),
             BuildRequirement(existing, "arrendamiento-propiedad", "Contrato de arrendamiento o documento de propiedad", model.EstadoArrendamientoPropiedad, true,
-                IsActivityWithoutPhysicalLocal() ? "Referencia de actividad sin local físico" : "Contrato o propiedad mock del local", "Manual"),
+                IsActivityWithoutPhysicalLocal() ? "Referencia de actividad sin local físico" : "Contrato o propiedad del local", "Manual"),
             BuildRequirement(existing, "ccss", "CCSS", model.EstadoCcssChecklist, true,
-                "Constancia CCSS mock", "Mock"),
+                "Constancia CCSS", "Institucional"),
             BuildRequirement(existing, "fodesaf", "FODESAF", model.EstadoFodesafChecklist, true,
-                "Constancia FODESAF mock", "Mock"),
+                "Constancia FODESAF", "Institucional"),
             BuildRequirement(existing, "ins", "INS", model.EstadoInsChecklist, true,
-                "Póliza INS mock", "Mock"),
+                "Póliza INS", "Institucional"),
             BuildRequirement(existing, "declaracion-jurada", "Declaración jurada", model.EstadoDeclaracionJuradaChecklist, model.TieneDeclaracionJurada,
-                $"Declaración jurada mock · {model.ModalidadDeclaracionJurada}", "Manual"),
-            BuildRequirement(existing, "comprobante-pago", "Comprobante de pago mock", model.EstadoComprobantePago, true,
-                $"Recibo mock {model.NumeroSolicitud}", "Mock"),
+                $"Declaración jurada · {model.ModalidadDeclaracionJurada}", "Manual"),
+            BuildRequirement(existing, "comprobante-pago", "Comprobante de pago", model.EstadoComprobantePago, true,
+                $"Recibo {model.NumeroSolicitud}", "Institucional"),
             BuildRequirement(existing, "croquis", IsActivityWithoutPhysicalLocal() ? "Croquis o referencia de ubicación" : "Croquis o ubicación del local", model.EstadoCroquis, true,
-                IsActivityWithoutPhysicalLocal() ? "Ubicación referencial de actividad sin local físico" : "Croquis mock del local", "Manual"),
+                IsActivityWithoutPhysicalLocal() ? "Ubicación referencial de actividad sin local físico" : "Croquis del local", "Manual"),
             BuildRequirement(existing, "patente-anterior", "Patente anterior", ResolveRequirementState(existing, "patente-anterior", IsRenewalRequest() ? "Pendiente" : "No aplica"), IsRenewalRequest(),
-                "Patente anterior mock", "Mock"),
+                "Patente anterior", "Institucional"),
             BuildRequirement(existing, "exoneracion", "Documento de exoneración", ResolveRequirementState(existing, "exoneracion", IsExonerationRequest() ? "Pendiente" : "No aplica"), IsExonerationRequest(),
-                "Documento de exoneración mock", "Manual"),
+                "Documento de exoneración", "Manual"),
             BuildRequirement(existing, "concejo", "Autorización Concejo Municipal", ResolveRequirementState(existing, "concejo", RequiresConcejoAuthorization() ? "Pendiente" : "No aplica"), RequiresConcejoAuthorization(),
-                "Acuerdo mock de Concejo Municipal", "Plataforma de Servicios"),
+                "Acuerdo de Concejo Municipal", "Plataforma de Servicios"),
             BuildRequirement(existing, "mopt", "Autorización MOPT", ResolveRequirementState(existing, "mopt", RequiresMoptAuthorization() ? "Pendiente" : "No aplica"), RequiresMoptAuthorization(),
-                "Autorización MOPT mock", "Plataforma de Servicios"),
+                "Autorización MOPT", "Plataforma de Servicios"),
             BuildRequirement(existing, "especial", ResolveSpecialRequirementName(), ResolveRequirementState(existing, "especial", RequiresSpecialRequirement() ? "Pendiente" : "No aplica"), RequiresSpecialRequirement(),
                 ResolveSpecialRequirementPlaceholder(), "Manual")
         ];
@@ -174,7 +174,7 @@ public partial class PatenteCreateWizard
     {
         SyncRequirementsState();
         var severity = GetNonCompliantRequirementsCount() > 0 ? Severity.Warning : Severity.Success;
-        var message = $"Validación mock de requisitos: {GetCompletedRequirementsCount()} completos, {GetPendingRequirementsCount()} pendientes y {GetNonCompliantRequirementsCount()} no cumplidos.";
+        var message = $"Validación de requisitos: {GetCompletedRequirementsCount()} completos, {GetPendingRequirementsCount()} pendientes y {GetNonCompliantRequirementsCount()} no cumplidos.";
         Snackbar.Add(message, severity);
         await RefreshWizardStateAsync(persist: false);
     }
@@ -186,8 +186,8 @@ public partial class PatenteCreateWizard
         if (!model.EstadoFinalExpediente.Equals("Cancelado", StringComparison.OrdinalIgnoreCase) && !model.EstadoFinalExpediente.Equals("Completado", StringComparison.OrdinalIgnoreCase))
             model.EstadoFinalExpediente = GetNonCompliantRequirementsCount() > 0 ? "Requiere revisión" : "Pendiente validación";
 
-        model.Observaciones = $"Prevención mock generada por requisitos documentales el {DateTime.Now:dd/MM/yyyy HH:mm}.";
-        Snackbar.Add("Prevención mock generada para seguimiento documental del expediente.", Severity.Warning);
+        model.Observaciones = $"Prevención generada por requisitos documentales el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+        Snackbar.Add("Prevención generada para seguimiento documental del expediente.", Severity.Warning);
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -277,18 +277,18 @@ public partial class PatenteCreateWizard
     private string ResolveSpecialRequirementPlaceholder()
     {
         if (model.TipoLicencia.Equals("Temporal", StringComparison.OrdinalIgnoreCase) || model.TipoLicencia.Equals("Días festivos", StringComparison.OrdinalIgnoreCase))
-            return "Plan operativo temporal mock";
+            return "Plan operativo temporal";
 
         if (model.TipoLicencia.Equals("Licores", StringComparison.OrdinalIgnoreCase))
-            return "Constancia mock para licencia de licores";
+            return "Constancia para licencia de licores";
 
         if (model.TipoLicencia.Equals("Espectáculos públicos", StringComparison.OrdinalIgnoreCase))
-            return "Plan de seguridad mock del evento";
+            return "Plan de seguridad del evento";
 
         if (model.TipoLicencia.Equals("Extracción de materiales", StringComparison.OrdinalIgnoreCase))
-            return "Informe técnico mock de extracción";
+            return "Informe técnico de extracción";
 
-        return "Documento especial mock";
+        return "Documento especial";
     }
 
     private string GetRequirementState(string key, string fallback)
@@ -317,25 +317,25 @@ public partial class PatenteCreateWizard
     private string NormalizeRequirementOrigin(string? origen)
     {
         if (string.IsNullOrWhiteSpace(origen))
-            return "Mock";
+            return "Institucional";
 
         return origenesRequisito.Contains(origen, StringComparer.OrdinalIgnoreCase)
             ? origenesRequisito.First(x => x.Equals(origen, StringComparison.OrdinalIgnoreCase))
-            : "Mock";
+            : "Institucional";
     }
 
     private static string BuildDefaultRequirementObservation(string name, string estado)
     {
         if (estado.Equals("Cumple", StringComparison.OrdinalIgnoreCase))
-            return $"{name} validado en modo demo.";
+            return $"{name} validado.";
 
         if (estado.Equals("No cumple", StringComparison.OrdinalIgnoreCase))
-            return $"{name} observado en modo demo.";
+            return $"{name} observado.";
 
         if (estado.Equals("No aplica", StringComparison.OrdinalIgnoreCase))
             return "No aplica.";
 
-        return $"{name} pendiente de verificación mock.";
+        return $"{name} pendiente de verificación.";
     }
 
     private string GetDeclaracionJuradaDeadlineMessage()

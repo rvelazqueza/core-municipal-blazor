@@ -111,7 +111,7 @@ public class PcPropertyDto
     public decimal LandArea { get; set; }
     public string CurrentUse { get; set; } = string.Empty;
     public decimal FiscalValue { get; set; }
-    public string GisStatus { get; set; } = "Simulado";
+    public string GisStatus { get; set; } = "Operativo";
     public string TributaryAccountStatus { get; set; } = "Al día";
     public string BiUpdateStatus { get; set; } = "Pendiente actualización";
     public string ServicesAccount { get; set; } = string.Empty;
@@ -170,7 +170,7 @@ public class PcApcStatusDto
     public DateTime? ApprovalDate { get; set; }
     public DateTime? SealedAt { get; set; }
     public DateTime? LastSyncAt { get; set; }
-    public string MockSyncStatus { get; set; } = "Simulado";
+    public string MockSyncStatus { get; set; } = "Operativo";
 }
 
 public class PcRequirementDto
@@ -224,7 +224,7 @@ public class PcPublicServiceDto
 {
     public string ServiceType { get; set; } = "Agua potable";
     public bool Required { get; set; } = true;
-    public string Status { get; set; } = "Simulado";
+    public string Status { get; set; } = "Operativo";
     public string Administrator { get; set; } = string.Empty;
     public string Diameter { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
@@ -290,7 +290,7 @@ public class PcResolutionDto
     public string NotificationSimulated { get; set; } = "Pendiente";
     public string DigitalSignatureRef { get; set; } = string.Empty;
     public string LicenseMock { get; set; } = string.Empty;
-    public string ApcSyncStatus { get; set; } = "Simulado";
+    public string ApcSyncStatus { get; set; } = "Operativo";
 }
 
 public class PcHistoryEventDto
@@ -328,7 +328,7 @@ public class PcCatalogItemDto
 public class PcIntegrationStatusDto
 {
     public string Name { get; set; } = string.Empty;
-    public string Status { get; set; } = "Simulado";
+    public string Status { get; set; } = "Operativo";
     public string LastEvent { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;

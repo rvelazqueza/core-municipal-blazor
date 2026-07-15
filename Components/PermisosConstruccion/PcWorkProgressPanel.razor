@@ -14,16 +14,16 @@
                 <MudProgressLinear Value="@((double)CurrentProgress)" Color="Color.Primary" Class="mt-2" />
             </MudItem>
             <MudItem xs="12" md="4">
-                <MudText Typo="Typo.caption">Estado referencial</MudText>
+                <MudText Typo="Typo.caption">Estado</MudText>
                 <MudText Typo="Typo.subtitle1">@CurrentStatus</MudText>
                 <MudText Typo="Typo.caption" Class="d-block mt-2">Inspector: @CurrentInspector</MudText>
                 <MudText Typo="Typo.caption">Fecha último avance: @FormatDate(CurrentLastDate)</MudText>
             </MudItem>
             <MudItem xs="12" md="4">
-                <MudText Typo="Typo.caption">Multa / intereses referenciales</MudText>
+                <MudText Typo="Typo.caption">Multa / intereses estimados</MudText>
                 <MudText Typo="Typo.subtitle2">@($"{CurrentFine:N0} / {CurrentInterest:N0}")</MudText>
                 <MudAlert Severity="@(CurrentProgress >= 80 ? Severity.Warning : Severity.Info)" Variant="Variant.Outlined" Dense="true" Class="mt-2">
-                    @((CurrentProgress >= 80) ? "Al alcanzar 80% se crea una tarea referencial para Bienes Inmuebles." : "El avance opera solo como mock visual.")
+                    @((CurrentProgress >= 80) ? "Al alcanzar 80% se crea una tarea para Bienes Inmuebles." : "El avance se registra por inspección de fiscalización.")
                 </MudAlert>
             </MudItem>
         </MudGrid>
@@ -44,9 +44,9 @@
             <MudTd>
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
                     <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => RegisterProgress(context))">Registrar avance</MudButton>
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => SimulateEighty(context))">Simular avance 80%</MudButton>
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => CreateBiTask(context))">Generar tarea BI mock</MudButton>
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => FinishWork(context))">Marcar obra finalizada mock</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => SimulateEighty(context))">Registrar avance 80%</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => CreateBiTask(context))">Generar tarea BI</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => FinishWork(context))">Marcar obra finalizada</MudButton>
                 </MudStack>
             </MudTd>
         </RowTemplate>
@@ -85,7 +85,7 @@
         Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
         {
             Date = DateTime.Now,
-            User = "fiscalizacion.demo",
+            User = "fiscalizacion.municipal",
             Action = "Registrar avance",
             PreviousStatus = previousStatus,
             NewStatus = item.Status,
@@ -107,15 +107,15 @@
         Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
         {
             Date = DateTime.Now,
-            User = "fiscalizacion.demo",
-            Action = "Simular avance 80%",
+            User = "fiscalizacion.municipal",
+            Action = "Registrar avance 80%",
             PreviousStatus = "50%",
             NewStatus = "80%",
             Department = "Fiscalización",
             Comment = "Tarea BI generada",
             Origin = "Cobro"
         });
-        Snackbar.Add("Avance simulado al 80% y tarea BI generada.", Severity.Warning);
+        Snackbar.Add("Avance registrado al 80% y tarea BI generada.", Severity.Warning);
     }
 
     private void CreateBiTask(PcWorkProgressDto item)
@@ -125,7 +125,7 @@
         Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
         {
             Date = DateTime.Now,
-            User = "bienes.demo",
+            User = "bienes.municipal",
             Action = "Generar tarea BI",
             PreviousStatus = item.Status,
             NewStatus = "Pendiente actualización",
@@ -133,7 +133,7 @@
             Comment = "Generada desde avance de obra",
             Origin = "Bienes Inmuebles"
         });
-        Snackbar.Add("Tarea BI mock generada por avance de obra.", Severity.Info);
+        Snackbar.Add("Tarea BI generada por avance de obra.", Severity.Info);
     }
 
     private void FinishWork(PcWorkProgressDto item)
@@ -145,19 +145,19 @@
         item.LastProgressDate = DateTime.Today;
         Permit.ProgressPercent = 100;
         Permit.FinishedAt = DateTime.Today;
-        Permit.Property.BiUpdateStatus = "Actualizado mock";
+        Permit.Property.BiUpdateStatus = "Actualizado";
         Permit.HistoryEvents.Insert(0, new PcHistoryEventDto
         {
             Date = DateTime.Now,
-            User = "fiscalizacion.demo",
+            User = "fiscalizacion.municipal",
             Action = "Marcar obra finalizada",
             PreviousStatus = previousStatus,
             NewStatus = "Finalizada",
             Department = "Fiscalización",
-            Comment = "Obra cerrada en demo",
+            Comment = "Obra cerrada",
             Origin = "Cobro"
         });
-        Snackbar.Add("Obra finalizada en modo demo.", Severity.Success);
+        Snackbar.Add("Obra finalizada.", Severity.Success);
     }
 
     private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";

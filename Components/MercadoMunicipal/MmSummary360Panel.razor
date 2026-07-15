@@ -82,11 +82,11 @@ else
             }
             @if (hasPendingEmission)
             {
-                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Existe emisión pendiente en el flujo mock del expediente.</MudAlert>
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Existe emisión pendiente en el flujo del expediente.</MudAlert>
             }
             @if (hasMorosity)
             {
-                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Se detecta morosidad o saldo pendiente en la cuenta mock.</MudAlert>
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Se detecta morosidad o saldo pendiente en la cuenta.</MudAlert>
             }
             @if (resolvedLocalStatus.Equals("En remate", StringComparison.OrdinalIgnoreCase))
             {
@@ -102,15 +102,15 @@ else
             }
             @if (activeWarnings >= 2)
             {
-                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">El expediente acumula amonestaciones mock.</MudAlert>
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">El expediente acumula amonestaciones.</MudAlert>
             }
             @if (activeSanctions > 0)
             {
-                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Existe una sanción activa mock.</MudAlert>
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Existe una sanción activa.</MudAlert>
             }
             @if (nearExpiryCards > 0)
             {
-                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Hay carnés próximos a vencer o vencidos en el escenario mock.</MudAlert>
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Hay carnés próximos a vencer o vencidos.</MudAlert>
             }
             @if (hasPendingNotification)
             {
@@ -119,7 +119,7 @@ else
         </div>
 
         <MudPaper Outlined="true" Class="pa-4">
-            <MudText Typo="Typo.h6" Class="mb-3">Acciones rápidas mock</MudText>
+            <MudText Typo="Typo.h6" Class="mb-3">Acciones rápidas</MudText>
             <div class="d-flex flex-wrap gap-2">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EditAsync">Editar</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RenewContractAsync">Renovar contrato</MudButton>
@@ -127,7 +127,7 @@ else
                 <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="RegisterTransferAsync">Registrar traspaso</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="MergeLocalsAsync">Fusionar locales</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="GenerateEmissionAsync">Generar emisión</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="SimulatePaymentAsync">Simular pago</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="SimulatePaymentAsync">Registrar pago</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="SendToCollectionAsync">Enviar a cobro</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="RegisterWarningAsync">Registrar amonestación</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="RegisterSanctionAsync">Registrar sanción</MudButton>
@@ -193,7 +193,7 @@ else
 
     private Task EditAsync()
     {
-        Snackbar.Add("Edición controlada mock habilitada para el expediente.", Severity.Info);
+        Snackbar.Add("Edición controlada habilitada para el expediente.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -206,7 +206,7 @@ else
             resolvedContractStatus = Contract.Status;
         }
 
-        Snackbar.Add("Contrato renovado en modo mock.", Severity.Success);
+        Snackbar.Add("Contrato renovado operativo.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -221,20 +221,20 @@ else
 
     private Task RegisterTransferAsync()
     {
-        Snackbar.Add("Traspaso mock registrado como pendiente de Parte 8.2B.", Severity.Warning);
+        Snackbar.Add("Traspaso registrado como pendiente de Parte 8.2B.", Severity.Warning);
         return Task.CompletedTask;
     }
 
     private Task MergeLocalsAsync()
     {
-        Snackbar.Add("Fusión mock marcada para la siguiente iteración del módulo.", Severity.Warning);
+        Snackbar.Add("Fusión marcada para la siguiente iteración del módulo.", Severity.Warning);
         return Task.CompletedTask;
     }
 
     private Task GenerateEmissionAsync()
     {
         hasPendingEmission = false;
-        Snackbar.Add("Emisión mock generada correctamente.", Severity.Success);
+        Snackbar.Add("Emisión generada correctamente.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -249,7 +249,7 @@ else
             TaxAccount.LastPaymentDate = DateTime.Today;
         }
 
-        Snackbar.Add("Pago mock aplicado sobre la cuenta tributaria referencial.", Severity.Success);
+        Snackbar.Add("Pago aplicado sobre la cuenta tributaria.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -261,34 +261,34 @@ else
             TaxAccount.Status = resolvedTaxStatus;
         if (Collection is not null)
             Collection.Status = "En cobro administrativo";
-        Snackbar.Add("Expediente enviado a cobro mock.", Severity.Warning);
+        Snackbar.Add("Expediente enviado a cobro.", Severity.Warning);
         return Task.CompletedTask;
     }
 
     private Task RegisterWarningAsync()
     {
         activeWarnings += 1;
-        Snackbar.Add("Amonestación mock registrada.", Severity.Warning);
+        Snackbar.Add("Amonestación registrada.", Severity.Warning);
         return Task.CompletedTask;
     }
 
     private Task RegisterSanctionAsync()
     {
         activeSanctions += 1;
-        Snackbar.Add("Sanción mock registrada.", Severity.Error);
+        Snackbar.Add("Sanción registrada.", Severity.Error);
         return Task.CompletedTask;
     }
 
     private Task RegisterInspectionAsync()
     {
         pendingInspections += 1;
-        Snackbar.Add("Inspección mock agregada al expediente.", Severity.Info);
+        Snackbar.Add("Inspección agregada al expediente.", Severity.Info);
         return Task.CompletedTask;
     }
 
     private Task ViewAuditAsync()
     {
-        Snackbar.Add("Use el tab Auditoría para consultar la bitácora mock.", Severity.Info);
+        Snackbar.Add("Use el tab Auditoría para consultar la bitácora.", Severity.Info);
         return Task.CompletedTask;
     }
 

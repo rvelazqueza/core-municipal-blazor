@@ -27,14 +27,14 @@
         <MudItem xs="12" md="4"><MudText Typo="Typo.caption">Acto final</MudText><MudText>@Permit.TechnicalWork.RegularizationFinalAct</MudText></MudItem>
         <MudItem xs="12"><MudTextField T="string" @bind-Value="Permit.TechnicalWork.Observations" Label="Observaciones" Variant="Variant.Outlined" Margin="Margin.Dense" AutoGrow="true" /></MudItem>
     </MudGrid>
-    <MudButton Variant="Variant.Outlined" Class="mt-3" OnClick="SaveAsync">Guardar observaciones mock</MudButton>
+    <MudButton Variant="Variant.Outlined" Class="mt-3" OnClick="SaveAsync">Guardar observaciones</MudButton>
 </MudPaper>
 
 @code {
     [Parameter] public PcPermitDto Permit { get; set; } = new();
     private Task SaveAsync()
     {
-        Snackbar.Add("Datos técnicos actualizados en modo demo.", Severity.Success);
+        Snackbar.Add("Datos técnicos actualizados.", Severity.Success);
         return Task.CompletedTask;
     }
     private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";

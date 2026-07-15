@@ -25,7 +25,7 @@
                 <MudTh>Severidad</MudTh>
                 <MudTh>Estado</MudTh>
                 <MudTh>Origen</MudTh>
-                <MudTh>IP mock</MudTh>
+                <MudTh>IP</MudTh>
                 <MudTh>Resultado</MudTh>
                 <MudTh>Acciones</MudTh>
             </HeaderContent>
@@ -46,7 +46,7 @@
                     <MudChip T="string" Color="@GetStatusColor(context.Status)" Variant="Variant.Outlined" Size="Size.Small">@context.Status</MudChip>
                 </MudTd>
                 <MudTd DataLabel="Origen">@context.Source</MudTd>
-                <MudTd DataLabel="IP mock">@context.IpAddress</MudTd>
+                <MudTd DataLabel="IP">@context.IpAddress</MudTd>
                 <MudTd DataLabel="Resultado">@context.ResultMessage</MudTd>
                 <MudTd DataLabel="Acciones">
                     <MudStack Row="true" Spacing="0" Class="flex-wrap">
@@ -59,7 +59,7 @@
                         <MudTooltip Text="Ver expediente relacionado">
                             <MudIconButton Icon="@Icons.Material.Filled.Dashboard" Size="Size.Small" OnClick="@(() => OnExpedientRequested.InvokeAsync(context))" />
                         </MudTooltip>
-                        <MudTooltip Text="Copiar referencia mock">
+                        <MudTooltip Text="Copiar referencia">
                             <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="@(() => OnCopyRequested.InvokeAsync(context))" />
                         </MudTooltip>
                     </MudStack>

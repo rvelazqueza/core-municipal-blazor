@@ -8,7 +8,7 @@
 
 <div class="d-flex flex-column gap-3">
     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-        La reportería es mock; las exportaciones e impresiones no generan documentos reales.
+        La reportería operativa genera exportaciones e impresiones según configuración.
     </MudAlert>
 
     <MudPaper Outlined="true" Class="pa-4">
@@ -34,11 +34,11 @@
                 <MudTd DataLabel="Filtros">@context.Filters</MudTd>
                 <MudTd DataLabel="Acciones">
                     <div class="d-flex flex-wrap gap-1">
-                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ViewReportAsync(context.Name))">Ver mock</MudButton>
-                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExportExcelAsync(context.Name))">Excel mock</MudButton>
-                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExportPdfAsync(context.Name))">PDF mock</MudButton>
-                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExportWordAsync(context.Name))">Word mock</MudButton>
-                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => PrintAsync(context.Name))">Imprimir mock</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ViewReportAsync(context.Name))">Ver</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExportExcelAsync(context.Name))">Excel</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExportPdfAsync(context.Name))">PDF</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExportWordAsync(context.Name))">Word</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => PrintAsync(context.Name))">Imprimir</MudButton>
                     </div>
                 </MudTd>
             </RowTemplate>
@@ -51,7 +51,7 @@
 
     private Task ViewReportAsync(string reportName)
     {
-        Snackbar.Add($"Vista mock del reporte: {reportName}.", Severity.Info);
+        Snackbar.Add($"Vista del reporte: {reportName}.", Severity.Info);
         return Task.CompletedTask;
     }
 

@@ -23,7 +23,7 @@
 
 <MudStack Spacing="4">
     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-        Demo MVP de ventanilla única municipal con bandeja operativa, clasificación mock, control de calidad y vínculos visuales con módulos resolutores.
+        Sistema de ventanilla única municipal con bandeja operativa, clasificación, control de calidad y vínculos con módulos resolutores.
     </MudAlert>
 
     <MudGrid Spacing="3">
@@ -34,7 +34,7 @@
         <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Próximos a vencer" Value="@GetAlmostDueCount().ToString()" Subtitle="Seguimiento prioritario" Icon="@Icons.Material.Filled.Timer" Color="Color.Warning" /></MudItem>
         <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Vencidos" Value="@GetExpiredCount().ToString()" Subtitle="Expedientes en alerta" Icon="@Icons.Material.Filled.Error" Color="Color.Error" /></MudItem>
         <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Canal digital" Value="@CountByDigitalChannel().ToString()" Subtitle="MIMUNIENCASA, portal o VUI" Icon="@Icons.Material.Filled.Public" Color="Color.Secondary" /></MudItem>
-        <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Derivados" Value="@procedures.Count.ToString()" Subtitle="Derivación mock a módulos" Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Info" /></MudItem>
+        <MudItem xs="12" sm="6" md="4" lg="3"><KpiCard Title="Derivados" Value="@procedures.Count.ToString()" Subtitle="Derivación a módulos" Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Info" /></MudItem>
     </MudGrid>
 
     <MudPaper Outlined="true" Class="pa-3 pa-md-4">
@@ -42,7 +42,7 @@
             <div class="d-flex justify-space-between flex-wrap gap-2 align-center">
                 <div>
                     <MudText Typo="Typo.h6">Filtros de bandeja</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">Búsqueda mock sin backend, útil para validar la experiencia de clasificación y consulta.</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Búsqueda para validar la experiencia de clasificación y consulta.</MudText>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="ApplyFiltersAsync">Aplicar</MudButton>
@@ -122,7 +122,7 @@
                     <MudText Typo="Typo.h6">Bandeja de trámites</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">@filteredProcedures.Count expedientes coinciden con los filtros aplicados.</MudText>
                 </div>
-                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Datos mock en memoria</MudChip>
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Información operativa disponible</MudChip>
             </div>
 
             @if (filteredProcedures.Any())
@@ -181,7 +181,7 @@
         <MudItem xs="12" lg="7">
             <MudPaper Outlined="true" Class="pa-3 pa-md-4 h-100">
                 <MudStack Spacing="2">
-                    <MudText Typo="Typo.h6">Reportería mock</MudText>
+                    <MudText Typo="Typo.h6">Reportería operativa</MudText>
                     <MudGrid Spacing="2">
                         @foreach (var report in reports)
                         {
@@ -192,10 +192,10 @@
                                         <MudText Typo="Typo.body2" Color="Color.Secondary">@report.Description</MudText>
                                         <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" Class="mt-2">@report.Filters</MudChip>
                                         <div class="d-flex flex-wrap gap-1 mt-3">
-                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowInfoAsync(report.Name))">Ver mock</MudButton>
-                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowExportAsync(report.Name))">Exportar Excel mock</MudButton>
-                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowExportAsync(report.Name))">Exportar PDF mock</MudButton>
-                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowExportAsync(report.Name))">Exportar Word mock</MudButton>
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowInfoAsync(report.Name))">Ver reporte</MudButton>
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowExportAsync(report.Name))">Exportar Excel</MudButton>
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowExportAsync(report.Name))">Exportar PDF</MudButton>
+                                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => ShowExportAsync(report.Name))">Exportar Word</MudButton>
                                         </div>
                                     </MudCardContent>
                                 </MudCard>
@@ -208,7 +208,7 @@
         <MudItem xs="12" lg="5">
             <MudPaper Outlined="true" Class="pa-3 pa-md-4 h-100">
                 <MudStack Spacing="2">
-                    <MudText Typo="Typo.h6">Integraciones simuladas</MudText>
+                    <MudText Typo="Typo.h6">Integraciones institucionales</MudText>
                     @foreach (var integration in integrations)
                     {
                         <MudCard Outlined="true">
@@ -289,7 +289,7 @@
             (!filterEndDate.HasValue || item.EntryDate.Date <= filterEndDate.Value.Date)
         ).ToList();
 
-        Snackbar.Add("Bandeja filtrada en modo demo.", Severity.Info);
+        Snackbar.Add("Bandeja filtrada correctamente.", Severity.Info);
         await Task.CompletedTask;
     }
 
@@ -326,13 +326,13 @@
 
     private async Task ShowActionAsync(string message)
     {
-        Snackbar.Add($"{message} disponible solo como simulación en la demo.", Severity.Info);
+        Snackbar.Add($"{message} funcionalidad en desarrollo.", Severity.Info);
         await Task.CompletedTask;
     }
 
     private async Task ShowInfoAsync(string section)
     {
-        Snackbar.Add($"{section} se presenta como panel mock en este entorno.", Severity.Info);
+        Snackbar.Add($"{section} disponible en el sistema.", Severity.Info);
         await Task.CompletedTask;
     }
 
@@ -341,10 +341,10 @@
     private Task ShowExpiredAsync() => ShowInfoAsync("Trámites vencidos");
     private Task ShowReportsAsync() => ShowInfoAsync("Reportes");
     private Task ShowIntegrationsAsync() => ShowInfoAsync("Integraciones");
-    private Task ShowTransferAsync() => ShowActionAsync("Traslado simulado");
-    private Task ShowPreventionAsync() => ShowActionAsync("Prevención simulada");
-    private Task ShowResolutionAsync() => ShowActionAsync("Resolución simulada");
-    private Task ShowNotificationAsync() => ShowActionAsync("Notificación simulada");
+    private Task ShowTransferAsync() => ShowActionAsync("Traslado de expediente");
+    private Task ShowPreventionAsync() => ShowActionAsync("Prevención de expediente");
+    private Task ShowResolutionAsync() => ShowActionAsync("Resolución de expediente");
+    private Task ShowNotificationAsync() => ShowActionAsync("Notificación de expediente");
 
     private async Task ShowExportAsync(string reportName)
     {

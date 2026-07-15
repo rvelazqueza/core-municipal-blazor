@@ -19,21 +19,21 @@
     </MudGrid>
     <MudChip T="string" Text="@Permit.Apc.MockSyncStatus" Color="Color.Info" Variant="Variant.Outlined" Class="mt-3" />
     <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mt-4">
-        <MudButton Variant="Variant.Outlined" OnClick="ReceiveAsync">Simular recepción APC</MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="PreventAsync">Simular prevención</MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="CorrectAsync">Simular subsanación</MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="ApproveAsync">Simular aprobación</MudButton>
-        <MudButton Variant="Variant.Outlined" OnClick="SyncAsync">Simular sincronización</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ReceiveAsync">Registrar recepción APC</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="PreventAsync">Registrar prevención</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="CorrectAsync">Registrar subsanación</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="ApproveAsync">Registrar aprobación</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="SyncAsync">Sincronizar</MudButton>
     </MudStack>
 </MudPaper>
 
 @code {
     [Parameter] public PcPermitDto Permit { get; set; } = new();
-    private Task ReceiveAsync() { Permit.Apc.ApcStatus = "Recibido"; Permit.Apc.ReceptionDate = DateTime.Now; return NotifyAsync("Recepción APC mock registrada."); }
-    private Task PreventAsync() { Permit.Apc.ApcStatus = "Prevenido"; Permit.Apc.PreventionDate = DateTime.Now; return NotifyAsync("Prevención APC mock registrada."); }
-    private Task CorrectAsync() { Permit.Apc.ApcStatus = "Subsanado"; Permit.Apc.CorrectionDate = DateTime.Now; return NotifyAsync("Subsanación APC mock registrada."); }
-    private Task ApproveAsync() { Permit.Apc.ApcStatus = "Aprobado"; Permit.Apc.ApcRStatus = "Aprobado"; Permit.Apc.ApprovalDate = DateTime.Now; return NotifyAsync("Aprobación APC mock registrada."); }
-    private Task SyncAsync() { Permit.Apc.MockSyncStatus = "Sincronizado"; Permit.Apc.LastSyncAt = DateTime.Now; return NotifyAsync("Sincronización APC mock completada."); }
+    private Task ReceiveAsync() { Permit.Apc.ApcStatus = "Recibido"; Permit.Apc.ReceptionDate = DateTime.Now; return NotifyAsync("Recepción APC registrada."); }
+    private Task PreventAsync() { Permit.Apc.ApcStatus = "Prevenido"; Permit.Apc.PreventionDate = DateTime.Now; return NotifyAsync("Prevención APC registrada."); }
+    private Task CorrectAsync() { Permit.Apc.ApcStatus = "Subsanado"; Permit.Apc.CorrectionDate = DateTime.Now; return NotifyAsync("Subsanación APC registrada."); }
+    private Task ApproveAsync() { Permit.Apc.ApcStatus = "Aprobado"; Permit.Apc.ApcRStatus = "Aprobado"; Permit.Apc.ApprovalDate = DateTime.Now; return NotifyAsync("Aprobación APC registrada."); }
+    private Task SyncAsync() { Permit.Apc.MockSyncStatus = "Sincronizado"; Permit.Apc.LastSyncAt = DateTime.Now; return NotifyAsync("Sincronización APC completada."); }
     private Task NotifyAsync(string message) { Snackbar.Add(message, Severity.Success); return Task.CompletedTask; }
     private static string FormatDate(DateTime? value) => value?.ToString("dd/MM/yyyy") ?? "Pendiente";
     private static string FormatDateTime(DateTime? value) => value?.ToString("dd/MM/yyyy HH:mm") ?? "Pendiente";

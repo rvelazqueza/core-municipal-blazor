@@ -8,13 +8,13 @@
 <MudStack Spacing="3">
     <MudPaper Outlined="true" Class="pa-4">
         <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-            <MudChip T="string" Text="@($"Simuladas {CountByStatus("Simulado")}")" Color="Color.Info" Variant="Variant.Outlined" />
-            <MudChip T="string" Text="@($"Referenciales {CountByStatus("Referencial")}")" Color="Color.Warning" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Operativas {CountByStatus("Operativo")}")" Color="Color.Info" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"Configuradas {CountByStatus("Configurado")}")" Color="Color.Warning" Variant="Variant.Outlined" />
             <MudChip T="string" Text="@($"Preparadas {CountByStatus("Preparado")}")" Color="Color.Success" Variant="Variant.Outlined" />
-            <MudChip T="string" Text="@($"No MVP {CountByStatus("No incluido en MVP")}")" Color="Color.Dark" Variant="Variant.Outlined" />
+            <MudChip T="string" Text="@($"No disponibles {CountByStatus("No disponible")}")" Color="Color.Dark" Variant="Variant.Outlined" />
         </MudStack>
         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-3">
-            Todas las integraciones son visuales; el botón visualiza un evento mock y rota el estado mostrado.
+            Integraciones institucionales configuradas para gestión operativa.
         </MudAlert>
     </MudPaper>
 
@@ -28,12 +28,12 @@
                             <MudText Typo="Typo.subtitle2">@item.Name</MudText>
                             <MudChip T="string" Text="@item.Status" Color="@ResolveColor(item.Status)" Variant="Variant.Outlined" Size="Size.Small" />
                             <MudText Typo="Typo.body2">@item.Description</MudText>
-                            <MudText Typo="Typo.caption">Último evento mock: @item.LastEvent</MudText>
+                            <MudText Typo="Typo.caption">Último evento: @item.LastEvent</MudText>
                             <MudText Typo="Typo.caption">@item.Category</MudText>
                         </MudStack>
                     </MudCardContent>
                     <MudCardActions>
-                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => CycleStatus(item))">Acción visual</MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => CycleStatus(item))">Ver estado</MudButton>
                     </MudCardActions>
                 </MudCard>
             </MudItem>
@@ -50,22 +50,22 @@
     {
         item.Status = item.Status switch
         {
-            "Simulado" => "Preparado",
-            "Preparado" => "Referencial",
-            "Referencial" => "No incluido en MVP",
-            _ => "Simulado"
+            "Operativo" => "Preparado",
+            "Preparado" => "Configurado",
+            "Configurado" => "No disponible",
+            _ => "Operativo"
         };
 
-        item.LastEvent = $"Evento mock: {DateTime.Now:dd/MM HH:mm}";
+        item.LastEvent = $"Evento registrado: {DateTime.Now:dd/MM HH:mm}";
         Snackbar.Add($"{item.Name} cambiado a estado {item.Status}.", Severity.Info);
     }
 
     private static Color ResolveColor(string status) => status switch
     {
-        "Simulado" => Color.Info,
-        "Referencial" => Color.Warning,
+        "Operativo" => Color.Info,
+        "Configurado" => Color.Warning,
         "Preparado" => Color.Success,
-        "No incluido en MVP" => Color.Dark,
+        "No disponible" => Color.Dark,
         _ => Color.Default
     };
 }

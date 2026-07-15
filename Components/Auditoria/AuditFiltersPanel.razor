@@ -79,7 +79,7 @@
                 <MudTextField @bind-Value="Filter.EntityId" Label="ID entidad" Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12" md="4">
-                <MudTextField @bind-Value="Filter.IpAddress" Label="IP mock" Margin="Margin.Dense" />
+                <MudTextField @bind-Value="Filter.IpAddress" Label="Dirección IP" Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12" md="4">
                 <MudSelect T="string" @bind-Value="Filter.Channel" Label="Canal" Margin="Margin.Dense">
@@ -124,38 +124,38 @@
     [
         "Login", "Dashboard", "RUC", "Bienes Inmuebles", "Patentes", "Plataforma de Servicios",
         "Permisos de Construcción", "Mercado Municipal", "Configuración", "Seguridad", "Integraciones",
-        "Notificaciones", "Cobro mock", "Cuenta Tributaria mock", "Auditoría"
+        "Notificaciones", "Cobro", "Cuenta Tributaria", "Auditoría"
     ];
 
     private static readonly string[] Actions =
     [
         "Consulta de expediente", "Creación de registro", "Modificación de registro", "Guardado de borrador",
-        "Cambio de estado", "Validación de datos", "Finalización de trámite", "Simulación de integración",
-        "Generación de notificación mock", "Simulación de pago mock", "Inicio de sesión exitoso",
-        "Inicio de sesión fallido", "Cierre de sesión", "MFA simulado exitoso", "MFA simulado fallido",
-        "Firma digital simulada", "Cambio de contraseña", "Recuperación de contraseña", "Acceso a módulo",
-        "Intento de acceso no autorizado mock", "Exportación mock de auditoría solicitada"
+        "Cambio de estado", "Validación de datos", "Finalización de trámite", "Integración institucional",
+        "Generación de notificación", "Registro de pago", "Inicio de sesión exitoso",
+        "Inicio de sesión fallido", "Cierre de sesión", "MFA exitoso", "MFA fallido",
+        "Firma digital", "Cambio de contraseña", "Recuperación de contraseña", "Acceso a módulo",
+        "Intento de acceso no autorizado", "Exportación de auditoría solicitada"
     ];
 
     private static readonly string[] EventTypes =
     [
         "Consulta", "Creación", "Modificación", "Eliminación lógica", "Cambio de estado", "Validación", "Error",
-        "Seguridad", "Integración simulada", "Notificación simulada", "Exportación mock", "Configuración",
+        "Seguridad", "Integración", "Notificación", "Exportación", "Configuración",
         "Acceso", "Autenticación", "Borrador", "Finalización de proceso"
     ];
 
     private static readonly string[] Severities = ["Información", "Éxito", "Advertencia", "Error", "Crítico"];
-    private static readonly string[] Statuses = ["Exitoso", "Fallido", "Pendiente", "Observado", "Simulado", "Bloqueado"];
-    private static readonly string[] Channels = ["Web", "Backoffice", "API mock", "Móvil", "Plataforma digital"];
-    private static readonly string[] Sources = ["Formulario", "Flujo institucional", "Servicio mock", "Proceso batch", "Revisión manual"];
+    private static readonly string[] Statuses = ["Exitoso", "Fallido", "Pendiente", "Observado", "Procesado", "Bloqueado"];
+    private static readonly string[] Channels = ["Web", "Backoffice", "API", "Móvil", "Plataforma digital"];
+    private static readonly string[] Sources = ["Formulario", "Flujo institucional", "Servicio", "Proceso batch", "Revisión manual"];
     private static readonly string[] Results =
     [
-        "Acción con validación fallida simulada.",
+        "Acción con validación fallida.",
         "Evento observado para revisión posterior.",
         "Proceso pendiente de confirmación.",
-        "Evento bloqueado por validación mock.",
-        "Evento registrado correctamente en bitácora mock.",
-        "Notificación mock registrada.",
+        "Evento bloqueado por validación.",
+        "Evento registrado correctamente en bitácora.",
+        "Notificación registrada.",
         "Exportación disponible en implementación backend."
     ];
 

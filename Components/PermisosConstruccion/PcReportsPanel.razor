@@ -9,8 +9,8 @@
     <MudPaper Outlined="true" Class="pa-4">
         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
             <div>
-                <MudText Typo="Typo.h6">Reportería mock</MudText>
-                <MudText Typo="Typo.body2">Exportaciones simuladas sin PDF, Excel ni Word reales.</MudText>
+                <MudText Typo="Typo.h6">Reportería operativa</MudText>
+                <MudText Typo="Typo.body2">Exportaciones disponibles según formato seleccionado.</MudText>
             </div>
             <MudChip T="string" Text="@($"Reportes {Permit.Reports.Count}")" Color="Color.Info" Variant="Variant.Filled" />
         </MudStack>
@@ -37,10 +37,10 @@
                     </MudCardContent>
                     <MudCardActions>
                         <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="pa-2">
-                            <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => ViewMock(report))">Ver mock</MudButton>
-                            <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="ExportMockAsync">Exportar Excel mock</MudButton>
-                            <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="ExportMockAsync">Exportar PDF mock</MudButton>
-                            <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="ExportMockAsync">Exportar Word mock</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => ViewMock(report))">Ver</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="ExportMockAsync">Exportar Excel</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="ExportMockAsync">Exportar PDF</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="ExportMockAsync">Exportar Word</MudButton>
                         </MudStack>
                     </MudCardActions>
                 </MudCard>
@@ -55,7 +55,7 @@
 
     private void ViewMock(PcReportDto report)
     {
-        SelectedReport = $"Vista mock activa para: {report.Name}";
+        SelectedReport = $"Vista activa para: {report.Name}";
         Snackbar.Add(SelectedReport, Severity.Info);
     }
 

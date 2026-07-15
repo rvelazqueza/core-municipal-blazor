@@ -27,9 +27,9 @@ else
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="AddReceivableAsync">Agregar cuenta por cobrar mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ModifyLatestReceivableAsync">Modificar cuenta por cobrar mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="DeleteLatestReceivableAsync">Eliminar cuenta por cobrar mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="AddReceivableAsync">Agregar cuenta por cobrar</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ModifyLatestReceivableAsync">Modificar cuenta por cobrar</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="DeleteLatestReceivableAsync">Eliminar cuenta por cobrar</MudButton>
             </div>
         </MudPaper>
 
@@ -86,9 +86,9 @@ else
 
         var item = new MmReceivableDto
         {
-            Id = $"REC-MOCK-{Items.Count + 1:000}",
+            Id = $"REC-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
-            EmissionNumber = $"EM-MOCK-{DateTime.Now:HHmmss}",
+            EmissionNumber = $"EM-MUN-{DateTime.Now:HHmmss}",
             FiscalYear = DateTime.Today.Year,
             Month = DateTime.Today.Month,
             LocalAccount = Local.AccountNumber,
@@ -105,7 +105,7 @@ else
 
         Items.Insert(0, item);
         RegisterMockEvent("Agregar cuenta por cobrar", string.Empty, item.EmissionNumber, "Cuentas por cobrar", "Alta");
-        Snackbar.Add("Cuenta por cobrar mock agregada.", Severity.Success);
+        Snackbar.Add("Cuenta por cobrar agregada.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -118,9 +118,9 @@ else
         var previous = item.Amount;
         item.Amount += 250m;
         item.Status = "Pendiente";
-        item.SubTaxCode = "Modificación mock";
+        item.SubTaxCode = "Modificación";
         RegisterMockEvent("Modificar cuenta por cobrar", FormatCurrency(previous), FormatCurrency(item.Amount), "Cuentas por cobrar", "Media");
-        Snackbar.Add("Cuenta por cobrar mock modificada.", Severity.Info);
+        Snackbar.Add("Cuenta por cobrar modificada.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -131,8 +131,8 @@ else
             return Task.CompletedTask;
 
         Items.Remove(item);
-        RegisterMockEvent("Eliminar cuenta por cobrar", item.EmissionNumber, "Eliminada mock", "Cuentas por cobrar", "Alta");
-        Snackbar.Add("Cuenta por cobrar mock eliminada.", Severity.Warning);
+        RegisterMockEvent("Eliminar cuenta por cobrar", item.EmissionNumber, "Eliminada", "Cuentas por cobrar", "Alta");
+        Snackbar.Add("Cuenta por cobrar eliminada.", Severity.Warning);
         return Task.CompletedTask;
     }
 
@@ -143,7 +143,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -154,12 +154,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Pantalla de cuentas por cobrar",
             SourceProcess = process,
-            Comment = "Evento mock generado desde cuentas por cobrar."
+            Comment = "Evento generado desde cuentas por cobrar."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -169,7 +169,7 @@ else
             SourceDocument = "Panel cuentas por cobrar",
             Process = process,
             Severity = severity,
-            OutputReference = "Bitácora visual mock"
+            OutputReference = "Bitácora visual"
         });
     }
 

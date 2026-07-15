@@ -22,9 +22,9 @@ else
 
         <MudPaper Outlined="true" Class="pa-4">
             <div class="d-flex flex-wrap gap-2">
-                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="RegisterSanctionAsync">Registrar sanción mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="GenerateResolutionAsync">Generar resolución mock</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="NotifyAsync">Notificar mock</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="RegisterSanctionAsync">Registrar sanción</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="GenerateResolutionAsync">Generar resolución</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="NotifyAsync">Notificar</MudButton>
             </div>
         </MudPaper>
 
@@ -39,8 +39,8 @@ else
                     <MudTh>Plazo</MudTh>
                     <MudTh>Estado</MudTh>
                     <MudTh>Amonestación</MudTh>
-                    <MudTh>Documento mock</MudTh>
-                    <MudTh>Notificación mock</MudTh>
+                    <MudTh>Documento</MudTh>
+                    <MudTh>Notificación</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="Número">@context.SanctionNumber</MudTd>
@@ -51,8 +51,8 @@ else
                     <MudTd DataLabel="Plazo">@context.Deadline.ToString("dd/MM/yyyy")</MudTd>
                     <MudTd DataLabel="Estado">@context.Status</MudTd>
                     <MudTd DataLabel="Amonestación">@context.RelatedWarningNumber</MudTd>
-                    <MudTd DataLabel="Documento mock">@context.DocumentMock</MudTd>
-                    <MudTd DataLabel="Notificación mock">@context.NotificationMock</MudTd>
+                    <MudTd DataLabel="Documento">@context.DocumentMock</MudTd>
+                    <MudTd DataLabel="Notificación">@context.NotificationMock</MudTd>
                 </RowTemplate>
             </MudTable>
         </MudPaper>
@@ -73,24 +73,24 @@ else
 
         var item = new MmSanctionDto
         {
-            Id = $"SAN-MOCK-{Items.Count + 1:000}",
+            Id = $"SAN-MUN-{Items.Count + 1:000}",
             LocalId = Local.Id,
             TenantId = Tenant?.Id ?? string.Empty,
-            SanctionNumber = $"SNC-MOCK-{DateTime.Now:HHmmss}",
+            SanctionNumber = $"SNC-MUN-{DateTime.Now:HHmmss}",
             LocalNumber = Local.LocalNumber,
             TenantName = Tenant?.Name ?? "Sin asignar",
-            SanctionType = "Sanción administrativa mock",
+            SanctionType = "Sanción administrativa",
             AppliedDate = DateTime.Today,
             Deadline = DateTime.Today.AddDays(10),
             Status = "Registrada",
-            RelatedWarningNumber = "AMO-MOCK-REL",
+            RelatedWarningNumber = "AMO-MUN-REL",
             DocumentMock = "Pendiente de resolución",
             NotificationMock = "Pendiente de notificación"
         };
 
         Items.Insert(0, item);
         RegisterMockEvent("Registrar sanción", string.Empty, item.SanctionNumber, "Sanciones", "Alta");
-        Snackbar.Add("Sanción mock registrada.", Severity.Error);
+        Snackbar.Add("Sanción registrada.", Severity.Error);
         return Task.CompletedTask;
     }
 
@@ -101,9 +101,9 @@ else
             return Task.CompletedTask;
 
         item.DocumentMock = $"Resolucion_{item.SanctionNumber}.pdf";
-        item.Status = "Resuelta mock";
+        item.Status = "Resuelta";
         RegisterMockEvent("Generar resolución de sanción", "Pendiente", item.DocumentMock, "Sanciones", "Media");
-        Snackbar.Add("Resolución mock generada.", Severity.Info);
+        Snackbar.Add("Resolución generada.", Severity.Info);
         return Task.CompletedTask;
     }
 
@@ -113,9 +113,9 @@ else
         if (item is null)
             return Task.CompletedTask;
 
-        item.NotificationMock = "Notificada mock";
+        item.NotificationMock = "Notificada";
         RegisterMockEvent("Notificar sanción", "Pendiente", item.NotificationMock, "Sanciones", "Alta");
-        Snackbar.Add("Sanción mock notificada.", Severity.Success);
+        Snackbar.Add("Sanción notificada.", Severity.Success);
         return Task.CompletedTask;
     }
 
@@ -126,7 +126,7 @@ else
 
         HistoryItems.Insert(0, new MmHistoryEventDto
         {
-            Id = $"HIS-MOCK-{HistoryItems.Count + 1:000}",
+            Id = $"HIS-MUN-{HistoryItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -137,12 +137,12 @@ else
             NewValue = currentValue,
             SourceDocument = "Panel de sanciones",
             SourceProcess = process,
-            Comment = "Evento mock generado desde sanciones."
+            Comment = "Evento generado desde sanciones."
         });
 
         AuditItems.Insert(0, new MmAuditEventDto
         {
-            Id = $"AUD-MOCK-{AuditItems.Count + 1:000}",
+            Id = $"AUD-MUN-{AuditItems.Count + 1:000}",
             LocalId = Local.Id,
             Date = DateTime.Now,
             User = "Usuario Mercado",
@@ -152,7 +152,7 @@ else
             SourceDocument = "Panel de sanciones",
             Process = process,
             Severity = severity,
-            OutputReference = "Bitácora visual mock"
+            OutputReference = "Bitácora visual"
         });
     }
 }

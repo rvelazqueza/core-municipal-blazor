@@ -92,7 +92,7 @@ public class PermisosConstruccionMockService
                 PreviousStatus = "En proceso",
                 NewStatus = permit.PermitStatus,
                 Department = permit.UnitOwner,
-                Comment = "Permiso registrado en modo demo.",
+                Comment = "Permiso registrado.",
                 Origin = "Plataforma de Construcción"
             });
             permit.AuditEvents.Insert(0, new PcAuditEventDto
@@ -148,7 +148,7 @@ public class PermisosConstruccionMockService
                 ApcRCode = $"APCR-{DateTime.Now:yy}{i:0000}",
                 TypeCode = permitType.Code,
                 TypeName = permitType.Name,
-                Channel = i % 3 == 0 ? "Plataforma de Servicios" : i % 3 == 1 ? "APC/CFIA simulado" : "Presencial",
+                Channel = i % 3 == 0 ? "Plataforma de Servicios" : i % 3 == 1 ? "APC/CFIA" : "Presencial",
                 UnitOwner = permitType.ModuleResolver,
                 PermitStatus = i % 6 == 0 ? "Aprobado" : i % 5 == 0 ? "En prevención" : i % 4 == 0 ? "Pendiente inspección" : "En revisión técnica",
                 ApcStatus = i % 4 == 0 ? "Aprobado" : "Pendiente",
@@ -209,7 +209,7 @@ public class PermisosConstruccionMockService
                     ApprovalDate = i % 4 == 0 ? DateTime.Today.AddDays(-1) : null,
                     SealedAt = DateTime.Today.AddDays(-i),
                     LastSyncAt = DateTime.Today.AddHours(-i),
-                    MockSyncStatus = i % 4 == 0 ? "Sincronizado" : "Simulado"
+                    MockSyncStatus = i % 4 == 0 ? "Sincronizado" : "Operativo"
                 },
                 Requirements = GetRequirementTemplate(),
                 Documents = GetDocumentTemplate(),
@@ -222,7 +222,7 @@ public class PermisosConstruccionMockService
                     Responsible = "Ing. Urbanismo Demo",
                     Status = i % 3 == 0 ? "Aprobado" : "Pendiente",
                     Observations = i % 3 == 0 ? "Señalamiento conforme." : "Pendiente visita de campo.",
-                    ImagePlaceholder = "Alineamiento visual simulado"
+                    ImagePlaceholder = "Alineamiento visual"
                 },
                 LandUse = new PcLandUseDto
                 {
@@ -233,7 +233,7 @@ public class PermisosConstruccionMockService
                     Compatibility = i % 4 == 0 ? "Compatible" : "En estudio",
                     EmittedAt = i % 4 == 0 ? DateTime.Today.AddDays(-2) : null,
                     ValidUntil = DateTime.Today.AddMonths(6),
-                    Observations = i % 4 == 0 ? "Uso autorizado en modo demo." : "Pendiente validación urbanística."
+                    Observations = i % 4 == 0 ? "Uso autorizado." : "Pendiente validación urbanística."
                 },
                 PublicServices = BuildPublicServices(i),
                 Inspections = BuildInspections(i),
@@ -262,7 +262,7 @@ public class PermisosConstruccionMockService
                     DocumentsChecked = true,
                     ReturnReason = i % 5 == 0 ? "Revisar soporte documental complementario." : string.Empty,
                     RequiresInspection = true,
-                    Inspector = "Inspector demo",
+                    Inspector = "Inspector municipal",
                     InspectionStatus = i % 3 == 0 ? "Agendada" : "Pendiente",
                     InspectionResult = i % 4 == 0 ? "Aprobada" : "Pendiente"
                 },
@@ -325,7 +325,7 @@ public class PermisosConstruccionMockService
     [
         new() { Identification = "2-1111-1111", Name = "Terrenos del Norte S.A.", Relationship = "Propietario", OwnershipPercentage = 100, AuthorizationMock = "No aplica" },
         new() { Identification = "2-2222-2222", Name = "Fideicomiso Centro", Relationship = "Propietario", OwnershipPercentage = 100, AuthorizationMock = "No aplica" },
-        new() { Identification = "2-3333-3333", Name = "Grupo Horizonte S.A.", Relationship = "Copropietario", OwnershipPercentage = 75, AuthorizationMock = "Autorización mock registrada" },
+        new() { Identification = "2-3333-3333", Name = "Grupo Horizonte S.A.", Relationship = "Copropietario", OwnershipPercentage = 75, AuthorizationMock = "Autorización registrada" },
         new() { Identification = "2-4444-4444", Name = "Corporación Delta S.A.", Relationship = "Propietario", OwnershipPercentage = 100, AuthorizationMock = "No aplica" },
         new() { Identification = "2-5555-5555", Name = "Desarrollos Urbanos S.A.", Relationship = "Propietario", OwnershipPercentage = 100, AuthorizationMock = "No aplica" },
         new() { Identification = "2-6666-6666", Name = "Finca Beta S.A.", Relationship = "Propietario", OwnershipPercentage = 100, AuthorizationMock = "No aplica" },
@@ -396,24 +396,24 @@ public class PermisosConstruccionMockService
 
     private static List<PcInspectionDto> BuildInspections(int index) =>
     [
-        new() { Number = $"INS-{index:000}-01", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Solicitante demo", InspectionDate = DateTime.Today.AddDays(-4), AssignedDate = DateTime.Today.AddDays(-5), Inspector = "Inspector demo", InspectionType = "Inicial", Reason = "Verificación de campo", Purpose = "Control de expediente", Status = "Solicitada", Result = "Pendiente", ProgressPercent = 0, EvidencePlaceholder = "EVID-01", DocumentsPlaceholder = "DOC-01", Notes = "Pendiente asignación" },
-        new() { Number = $"INS-{index:000}-02", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Propietario demo", InspectionDate = DateTime.Today.AddDays(-3), AssignedDate = DateTime.Today.AddDays(-4), Inspector = "Inspector demo", InspectionType = "Seguimiento", Reason = "Avance de obra", Purpose = "Verificación parcial", Status = "Asignada", Result = "Pendiente", ProgressPercent = 25, EvidencePlaceholder = "EVID-02", DocumentsPlaceholder = "DOC-02", Notes = "Asignada en agenda" },
-        new() { Number = $"INS-{index:000}-03", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Solicitante demo", InspectionDate = DateTime.Today.AddDays(-2), AssignedDate = DateTime.Today.AddDays(-2), Inspector = "Inspector demo", InspectionType = "Técnica", Reason = "Revisión técnica", Purpose = "Inspección en campo", Status = "En campo", Result = "Observada", ProgressPercent = 50, EvidencePlaceholder = "EVID-03", DocumentsPlaceholder = "DOC-03", Notes = "Evidencia mock registrada" },
-        new() { Number = $"INS-{index:000}-04", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Propietario demo", InspectionDate = DateTime.Today.AddDays(-1), AssignedDate = DateTime.Today.AddDays(-1), Inspector = "Inspector demo", InspectionType = "Control", Reason = "Control de calidad", Purpose = "Verificación documental", Status = "Registrada", Result = "Conforme", ProgressPercent = 80, EvidencePlaceholder = "EVID-04", DocumentsPlaceholder = "DOC-04", Notes = "Lista para cierre" },
-        new() { Number = $"INS-{index:000}-05", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Contribuyente demo", InspectionDate = DateTime.Today, AssignedDate = DateTime.Today.AddDays(-1), Inspector = "Inspector demo", InspectionType = "Final", Reason = "Cierre de expediente", Purpose = "Finalización", Status = "Finalizada", Result = "Conforme", ProgressPercent = 100, EvidencePlaceholder = "EVID-05", DocumentsPlaceholder = "DOC-05", Notes = "Finalizada en modo demo" },
-        new() { Number = $"INS-{index:000}-06", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Solicitante demo", InspectionDate = DateTime.Today.AddDays(-6), AssignedDate = DateTime.Today.AddDays(-7), Inspector = "Inspector demo", InspectionType = "Prevención", Reason = "Seguimiento a prevención", Purpose = "Corregir observaciones", Status = "Solicitada", Result = "Requiere corrección", ProgressPercent = 15, EvidencePlaceholder = "EVID-06", DocumentsPlaceholder = "DOC-06", Notes = "Prevención referencial" },
-        new() { Number = $"INS-{index:000}-07", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Propietario demo", InspectionDate = DateTime.Today.AddDays(-8), AssignedDate = DateTime.Today.AddDays(-8), Inspector = "Inspector demo", InspectionType = "Especial", Reason = "Clausura referencial", Purpose = "Control especial", Status = "Registrada", Result = "Clausura", ProgressPercent = 95, EvidencePlaceholder = "EVID-07", DocumentsPlaceholder = "DOC-07", Notes = "Referencia de clausura" },
-        new() { Number = $"INS-{index:000}-08", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Solicitante demo", InspectionDate = DateTime.Today.AddDays(-9), AssignedDate = DateTime.Today.AddDays(-9), Inspector = "Inspector demo", InspectionType = "Reinspección", Reason = "Verificación de subsanación", Purpose = "Cierre mock", Status = "Finalizada", Result = "Conforme", ProgressPercent = 100, EvidencePlaceholder = "EVID-08", DocumentsPlaceholder = "DOC-08", Notes = "Subsanación confirmada" }
+        new() { Number = $"INS-{index:000}-01", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Solicitante", InspectionDate = DateTime.Today.AddDays(-4), AssignedDate = DateTime.Today.AddDays(-5), Inspector = "Inspector municipal", InspectionType = "Inicial", Reason = "Verificación de campo", Purpose = "Control de expediente", Status = "Solicitada", Result = "Pendiente", ProgressPercent = 0, EvidencePlaceholder = "EVID-01", DocumentsPlaceholder = "DOC-01", Notes = "Pendiente asignación" },
+        new() { Number = $"INS-{index:000}-02", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Propietario", InspectionDate = DateTime.Today.AddDays(-3), AssignedDate = DateTime.Today.AddDays(-4), Inspector = "Inspector municipal", InspectionType = "Seguimiento", Reason = "Avance de obra", Purpose = "Verificación parcial", Status = "Asignada", Result = "Pendiente", ProgressPercent = 25, EvidencePlaceholder = "EVID-02", DocumentsPlaceholder = "DOC-02", Notes = "Asignada en agenda" },
+        new() { Number = $"INS-{index:000}-03", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Solicitante", InspectionDate = DateTime.Today.AddDays(-2), AssignedDate = DateTime.Today.AddDays(-2), Inspector = "Inspector municipal", InspectionType = "Técnica", Reason = "Revisión técnica", Purpose = "Inspección en campo", Status = "En campo", Result = "Observada", ProgressPercent = 50, EvidencePlaceholder = "EVID-03", DocumentsPlaceholder = "DOC-03", Notes = "Evidencia registrada" },
+        new() { Number = $"INS-{index:000}-04", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Propietario", InspectionDate = DateTime.Today.AddDays(-1), AssignedDate = DateTime.Today.AddDays(-1), Inspector = "Inspector municipal", InspectionType = "Control", Reason = "Control de calidad", Purpose = "Verificación documental", Status = "Registrada", Result = "Conforme", ProgressPercent = 80, EvidencePlaceholder = "EVID-04", DocumentsPlaceholder = "DOC-04", Notes = "Lista para cierre" },
+        new() { Number = $"INS-{index:000}-05", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Contribuyente", InspectionDate = DateTime.Today, AssignedDate = DateTime.Today.AddDays(-1), Inspector = "Inspector municipal", InspectionType = "Final", Reason = "Cierre de expediente", Purpose = "Finalización", Status = "Finalizada", Result = "Conforme", ProgressPercent = 100, EvidencePlaceholder = "EVID-05", DocumentsPlaceholder = "DOC-05", Notes = "Finalizada" },
+        new() { Number = $"INS-{index:000}-06", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Solicitante", InspectionDate = DateTime.Today.AddDays(-6), AssignedDate = DateTime.Today.AddDays(-7), Inspector = "Inspector municipal", InspectionType = "Prevención", Reason = "Seguimiento a prevención", Purpose = "Corregir observaciones", Status = "Solicitada", Result = "Requiere corrección", ProgressPercent = 15, EvidencePlaceholder = "EVID-06", DocumentsPlaceholder = "DOC-06", Notes = "Prevención pendiente" },
+        new() { Number = $"INS-{index:000}-07", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Propietario", InspectionDate = DateTime.Today.AddDays(-8), AssignedDate = DateTime.Today.AddDays(-8), Inspector = "Inspector municipal", InspectionType = "Especial", Reason = "Clausura", Purpose = "Control especial", Status = "Registrada", Result = "Clausura", ProgressPercent = 95, EvidencePlaceholder = "EVID-07", DocumentsPlaceholder = "DOC-07", Notes = "Clausura registrada" },
+        new() { Number = $"INS-{index:000}-08", RelatedCaseNumber = BuildCaseNumber(index), RelatedProperty = $"FN-10{index:00}", RelatedPerson = "Solicitante", InspectionDate = DateTime.Today.AddDays(-9), AssignedDate = DateTime.Today.AddDays(-9), Inspector = "Inspector municipal", InspectionType = "Reinspección", Reason = "Verificación de subsanación", Purpose = "Cierre", Status = "Finalizada", Result = "Conforme", ProgressPercent = 100, EvidencePlaceholder = "EVID-08", DocumentsPlaceholder = "DOC-08", Notes = "Subsanación confirmada" }
     ];
 
     private static List<PcWorkProgressDto> BuildWorkProgress(int index) =>
     [
-        new() { ProgressPercent = 0, LastProgressDate = DateTime.Today.AddDays(-10), Inspector = "Inspector demo", Status = "Sin iniciar", FineReference = 0, InterestReference = 0, BiTaskStatus = "No generada", Notes = "Inicio pendiente" },
-        new() { ProgressPercent = 25, LastProgressDate = DateTime.Today.AddDays(-8), Inspector = "Inspector demo", Status = "25%", FineReference = 0, InterestReference = 250, BiTaskStatus = "No generada", Notes = "Avance inicial" },
-        new() { ProgressPercent = 50, LastProgressDate = DateTime.Today.AddDays(-6), Inspector = "Inspector demo", Status = "50%", FineReference = 500, InterestReference = 500, BiTaskStatus = "No generada", Notes = "Avance intermedio" },
-        new() { ProgressPercent = 80, LastProgressDate = DateTime.Today.AddDays(-4), Inspector = "Inspector demo", Status = "80%", FineReference = 1000, InterestReference = 750, BiTaskStatus = "Generar tarea BI", Notes = "Regla visual activa" },
-        new() { ProgressPercent = 95, LastProgressDate = DateTime.Today.AddDays(-2), Inspector = "Inspector demo", Status = "En ejecución", FineReference = 1500, InterestReference = 900, BiTaskStatus = "Generada", Notes = "Avance alto" },
-        new() { ProgressPercent = 100, LastProgressDate = DateTime.Today.AddDays(-1), Inspector = "Inspector demo", Status = "Finalizada", FineReference = 1800, InterestReference = 1000, BiTaskStatus = "Actualizada", Notes = "Obra finalizada" }
+        new() { ProgressPercent = 0, LastProgressDate = DateTime.Today.AddDays(-10), Inspector = "Inspector municipal", Status = "Sin iniciar", FineReference = 0, InterestReference = 0, BiTaskStatus = "No generada", Notes = "Inicio pendiente" },
+        new() { ProgressPercent = 25, LastProgressDate = DateTime.Today.AddDays(-8), Inspector = "Inspector municipal", Status = "25%", FineReference = 0, InterestReference = 250, BiTaskStatus = "No generada", Notes = "Avance inicial" },
+        new() { ProgressPercent = 50, LastProgressDate = DateTime.Today.AddDays(-6), Inspector = "Inspector municipal", Status = "50%", FineReference = 500, InterestReference = 500, BiTaskStatus = "No generada", Notes = "Avance intermedio" },
+        new() { ProgressPercent = 80, LastProgressDate = DateTime.Today.AddDays(-4), Inspector = "Inspector municipal", Status = "80%", FineReference = 1000, InterestReference = 750, BiTaskStatus = "Generar tarea BI", Notes = "Regla visual activa" },
+        new() { ProgressPercent = 95, LastProgressDate = DateTime.Today.AddDays(-2), Inspector = "Inspector municipal", Status = "En ejecución", FineReference = 1500, InterestReference = 900, BiTaskStatus = "Generada", Notes = "Avance alto" },
+        new() { ProgressPercent = 100, LastProgressDate = DateTime.Today.AddDays(-1), Inspector = "Inspector municipal", Status = "Finalizada", FineReference = 1800, InterestReference = 1000, BiTaskStatus = "Actualizada", Notes = "Obra finalizada" }
     ];
 
     private static List<PcBiUpdateDto> BuildBiUpdates(int index) =>
@@ -437,12 +437,12 @@ public class PermisosConstruccionMockService
 
     private static List<PcCorrespondenceDto> BuildCorrespondences(int index) =>
     [
-        new() { ManagementNumber = $"COR-{index:000}-01", Type = "Interna", Channel = "Plataforma de Servicios", Applicant = "Solicitante demo", DestinationDepartment = "Urbanismo", Status = "Registrada", ResolutionMock = "Pendiente revisión", DeadlineMock = DateTime.Today.AddDays(4), NotificationMock = "Pendiente", Notes = "Ingreso interno" },
-        new() { ManagementNumber = $"COR-{index:000}-02", Type = "Externa", Channel = "MIMUNIENCASA", Applicant = "Propietario demo", DestinationDepartment = "Inspecciones", Status = "En análisis", ResolutionMock = "En evaluación", DeadlineMock = DateTime.Today.AddDays(3), NotificationMock = "Pendiente", Notes = "Consulta externa" },
-        new() { ManagementNumber = $"COR-{index:000}-03", Type = "Interna", Channel = "Presencial", Applicant = "Contribuyente demo", DestinationDepartment = "Control de calidad", Status = "Reasignada", ResolutionMock = "Reasignada a calidad", DeadlineMock = DateTime.Today.AddDays(2), NotificationMock = "Enviada mock", Notes = "Derivación interna" },
-        new() { ManagementNumber = $"COR-{index:000}-04", Type = "Externa", Channel = "Correo", Applicant = "Solicitante demo", DestinationDepartment = "Tesorería", Status = "Atendida", ResolutionMock = "Atendida mock", DeadlineMock = DateTime.Today.AddDays(1), NotificationMock = "Enviada mock", Notes = "Respuesta por correo" },
-        new() { ManagementNumber = $"COR-{index:000}-05", Type = "Interna", Channel = "Plataforma de Servicios", Applicant = "Propietario demo", DestinationDepartment = "Urbanismo", Status = "Resuelta", ResolutionMock = "Resuelta mock", DeadlineMock = DateTime.Today.AddDays(5), NotificationMock = "Enviada mock", Notes = "Cierre referencial" },
-        new() { ManagementNumber = $"COR-{index:000}-06", Type = "Externa", Channel = "MIMUNIENCASA", Applicant = "Tercero demo", DestinationDepartment = "Archivo", Status = "Notificada", ResolutionMock = "Notificada mock", DeadlineMock = DateTime.Today.AddDays(6), NotificationMock = "Enviada mock", Notes = "Cierre notificado" }
+        new() { ManagementNumber = $"COR-{index:000}-01", Type = "Interna", Channel = "Plataforma de Servicios", Applicant = "Solicitante", DestinationDepartment = "Urbanismo", Status = "Registrada", ResolutionMock = "Pendiente revisión", DeadlineMock = DateTime.Today.AddDays(4), NotificationMock = "Pendiente", Notes = "Ingreso interno" },
+        new() { ManagementNumber = $"COR-{index:000}-02", Type = "Externa", Channel = "MIMUNIENCASA", Applicant = "Propietario", DestinationDepartment = "Inspecciones", Status = "En análisis", ResolutionMock = "En evaluación", DeadlineMock = DateTime.Today.AddDays(3), NotificationMock = "Pendiente", Notes = "Consulta externa" },
+        new() { ManagementNumber = $"COR-{index:000}-03", Type = "Interna", Channel = "Presencial", Applicant = "Contribuyente", DestinationDepartment = "Control de calidad", Status = "Reasignada", ResolutionMock = "Reasignada a calidad", DeadlineMock = DateTime.Today.AddDays(2), NotificationMock = "Enviada", Notes = "Derivación interna" },
+        new() { ManagementNumber = $"COR-{index:000}-04", Type = "Externa", Channel = "Correo", Applicant = "Solicitante", DestinationDepartment = "Tesorería", Status = "Atendida", ResolutionMock = "Atendida", DeadlineMock = DateTime.Today.AddDays(1), NotificationMock = "Enviada", Notes = "Respuesta por correo" },
+        new() { ManagementNumber = $"COR-{index:000}-05", Type = "Interna", Channel = "Plataforma de Servicios", Applicant = "Propietario", DestinationDepartment = "Urbanismo", Status = "Resuelta", ResolutionMock = "Resuelta", DeadlineMock = DateTime.Today.AddDays(5), NotificationMock = "Enviada", Notes = "Cierre administrativo" },
+        new() { ManagementNumber = $"COR-{index:000}-06", Type = "Externa", Channel = "MIMUNIENCASA", Applicant = "Tercero demo", DestinationDepartment = "Archivo", Status = "Notificada", ResolutionMock = "Notificada mock", DeadlineMock = DateTime.Today.AddDays(6), NotificationMock = "Enviada", Notes = "Cierre notificado" }
     ];
 
     private static List<PcReportDto> BuildReports(int index) =>
