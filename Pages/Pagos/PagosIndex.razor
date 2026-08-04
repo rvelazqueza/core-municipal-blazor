@@ -1,0 +1,151 @@
+@page "/pagos"
+@using BlazorApp.Models.Pagos
+@using BlazorApp.Services.Pagos
+@using BlazorApp.Shared
+@using BlazorApp.Helpers
+@using MudBlazor
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject PagosMockService DataService
+
+<PageTitleBar Title="Pagos" Subtitle="Gestión de pagos y obligaciones municipales" />
+
+<MudGrid Spacing="2" Class="mb-4">
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="2">
+            <MudCardContent>
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Receipt" Color="Color.Primary" Size="Size.Large" />
+                    <MudChip T="string" Color="Color.Primary" Size="Size.Small">Hoy</MudChip>
+                </div>
+                <MudText Typo="Typo.h4" Class="mb-1">@totalTransactions</MudText>
+                <MudText Typo="Typo.body2">Pagos procesados</MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="@GoToReceiptsAsync">Ver comprobantes</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="2">
+            <MudCardContent>
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Info" Size="Size.Large" />
+                    <MudChip T="string" Color="Color.Info" Size="Size.Small">Activas</MudChip>
+                </div>
+                <MudText Typo="Typo.h4" Class="mb-1">@activeAccounts</MudText>
+                <MudText Typo="Typo.body2">Cuentas activas</MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.Material.Filled.Link" OnClick="@GoToLinkAccountAsync">Vincular cuenta</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="2">
+            <MudCardContent>
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Large" />
+                    <MudChip T="string" Color="Color.Warning" Size="Size.Small">Vencido</MudChip>
+                </div>
+                <MudText Typo="Typo.h4" Class="mb-1">@CurrencyHelper.FormatColones(totalOverdueAmount)</MudText>
+                <MudText Typo="Typo.body2">Saldo vencido</MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Payment" OnClick="@GoToProcessPaymentAsync">Realizar pago</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="2">
+            <MudCardContent>
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.MonetizationOn" Color="Color.Success" Size="Size.Large" />
+                    <MudChip T="string" Color="Color.Success" Size="Size.Small">Total</MudChip>
+                </div>
+                <MudText Typo="Typo.h4" Class="mb-1">@CurrencyHelper.FormatColones(totalPendingAmount)</MudText>
+                <MudText Typo="Typo.body2">Saldo pendiente</MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.Material.Filled.Assessment" OnClick="@GoToAccountStatementAsync">Estado de cuenta</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Acceso rápido</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" StartIcon="@Icons.Material.Filled.Payment" OnClick="@GoToProcessPaymentAsync">
+                    Realizar pago
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true" StartIcon="@Icons.Material.Filled.AccountBalanceWallet" OnClick="@GoToAccountStatementAsync">
+                    Consultar estado de cuenta
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true" StartIcon="@Icons.Material.Filled.Receipt" OnClick="@GoToReceiptsAsync">
+                    Reimprimir comprobante
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private int totalTransactions;
+    private int activeAccounts;
+    private decimal totalPendingAmount;
+    private decimal totalOverdueAmount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardDataAsync();
+    }
+
+    private async Task LoadDashboardDataAsync()
+    {
+        var transactions = await DataService.GetTransactionsAsync();
+        var accounts = await DataService.GetAccountsAsync();
+
+        totalTransactions = transactions.Count(t => t.PaymentDate.Date == DateTime.Today);
+        activeAccounts = accounts.Count(a => a.AccountStatus == "Activa");
+        totalPendingAmount = accounts.Sum(a => a.PendingAmount);
+        totalOverdueAmount = accounts.Sum(a => a.OverdueAmount);
+    }
+
+    private Task GoToProcessPaymentAsync()
+    {
+        NavigationManager.NavigateTo("/pagos/realizar");
+        return Task.CompletedTask;
+    }
+
+    private Task GoToAccountStatementAsync()
+    {
+        NavigationManager.NavigateTo("/pagos/estado-cuenta");
+        return Task.CompletedTask;
+    }
+
+    private Task GoToReceiptsAsync()
+    {
+        NavigationManager.NavigateTo("/pagos/comprobantes");
+        return Task.CompletedTask;
+    }
+
+    private Task GoToLinkAccountAsync()
+    {
+        NavigationManager.NavigateTo("/pagos/agregar-cuenta");
+        return Task.CompletedTask;
+    }
+}

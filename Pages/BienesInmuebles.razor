@@ -28,14 +28,18 @@
                 <BienesDashboardPanel Items="bienes" />
             </MudTabPanel>
             <MudTabPanel Text="Consulta de fincas" Icon="@Icons.Material.Filled.ManageSearch">
-                <FincasFilterPanel NumeroFinca="numeroFincaFilter" NumeroFincaChanged="@(value => numeroFincaFilter = value)" IdPredial="idPredialFilter" IdPredialChanged="@(value => idPredialFilter = value)" Propietario="propietarioFilter" PropietarioChanged="@(value => propietarioFilter = value)" Distrito="distritoFilter" DistritoChanged="@(value => distritoFilter = value)" Estado="estadoFilter" EstadoChanged="@(value => estadoFilter = value)" ValorFiscalMinimo="valorFiscalMinimoFilter" ValorFiscalMinimoChanged="@(value => valorFiscalMinimoFilter = value)" Condicion="condicionFilter" CondicionChanged="@(value => condicionFilter = value)" OnSearch="LoadFilteredAsync" />
+                <FincasFilterPanel NumeroFinca="@numeroFincaFilter" NumeroFincaChanged="@(value => numeroFincaFilter = value)" IdPredial="@idPredialFilter" IdPredialChanged="@(value => idPredialFilter = value)" Propietario="@propietarioFilter" PropietarioChanged="@(value => propietarioFilter = value)" Distrito="@distritoFilter" DistritoChanged="@(value => distritoFilter = value)" Estado="@estadoFilter" EstadoChanged="@(value => estadoFilter = value)" ValorFiscalMinimo="@valorFiscalMinimoFilter" ValorFiscalMinimoChanged="@(value => valorFiscalMinimoFilter = value)" Condicion="@condicionFilter" CondicionChanged="@(value => condicionFilter = value)" OnSearch="LoadFilteredAsync" />
                 @if (filteredBienes.Any())
                 {
                     <FincasTable Items="filteredBienes" ViewRequested="OpenView" EditRequested="OpenEdit" />
                 }
+                else if (hasSearched)
+                {
+                    <EmptyState Title="Sin resultados" Description="No se encontraron fincas con los criterios indicados." Icon="@Icons.Material.Filled.FilterAltOff" />
+                }
                 else
                 {
-                    <EmptyState Title="Sin resultados" Description="No hay fincas que coincidan con los filtros aplicados." Icon="@Icons.Material.Filled.FilterAltOff" />
+                    <EmptyState Title="Consulta de fincas" Description="Utilice los filtros para consultar las fincas registradas." Icon="@Icons.Material.Filled.Search" />
                 }
             </MudTabPanel>
             <MudTabPanel Text="Expediente de finca" Icon="@Icons.Material.Filled.FolderShared">
@@ -60,6 +64,7 @@
     private BienInmuebleDto selectedBien = new();
     private int activePanelIndex = 0;
     private bool isCreatingNewBien;
+    private bool hasSearched = false;
 
     private string numeroFincaFilter = string.Empty;
     private string idPredialFilter = string.Empty;
@@ -72,17 +77,22 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadAllAsync();
-        selectedBien = bienes.FirstOrDefault() ?? new BienInmuebleDto();
     }
 
     private async Task LoadAllAsync()
     {
         bienes = await BienesInmueblesService.GetAllAsync();
-        filteredBienes = bienes.OrderByDescending(x => x.UltimaActualizacion).ToList();
     }
 
     private async Task LoadFilteredAsync()
     {
+        if (string.IsNullOrWhiteSpace(numeroFincaFilter) && string.IsNullOrWhiteSpace(idPredialFilter) && string.IsNullOrWhiteSpace(propietarioFilter) && string.IsNullOrWhiteSpace(distritoFilter) && string.IsNullOrWhiteSpace(estadoFilter) && string.IsNullOrWhiteSpace(valorFiscalMinimoFilter) && string.IsNullOrWhiteSpace(condicionFilter))
+        {
+            Snackbar.Add("Ingrese al menos un criterio para realizar la consulta.", Severity.Warning);
+            return;
+        }
+
+        hasSearched = true;
         decimal? valorMinimo = null;
         if (decimal.TryParse(valorFiscalMinimoFilter, out var parsed))
         {
@@ -90,7 +100,15 @@
         }
 
         filteredBienes = await BienesInmueblesService.SearchAsync(numeroFincaFilter, idPredialFilter, propietarioFilter, distritoFilter, estadoFilter, valorMinimo, condicionFilter);
-        Snackbar.Add("Consulta predial actualizada.", Severity.Normal);
+
+        if (filteredBienes.Any())
+        {
+            Snackbar.Add($"Se encontraron {filteredBienes.Count} finca(s).", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("No se encontraron fincas con los criterios indicados.", Severity.Info);
+        }
     }
 
     private void CreateNew()
@@ -148,7 +166,9 @@
     {
         isCreatingNewBien = false;
         await LoadAllAsync();
-        selectedBien = bienes.FirstOrDefault() ?? new BienInmuebleDto();
+        hasSearched = false;
+        filteredBienes.Clear();
+        selectedBien = new BienInmuebleDto();
         activePanelIndex = 1;
     }
 

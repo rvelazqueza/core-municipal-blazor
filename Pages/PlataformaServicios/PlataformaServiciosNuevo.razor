@@ -4,12 +4,17 @@
 @using System.Linq
 @using BlazorApp.Models
 @using BlazorApp.Models.PlataformaServicios
+@using BlazorApp.Models.PermisosConstruccion
 @using BlazorApp.Services
 @using BlazorApp.Services.PlataformaServicios
+@using BlazorApp.Services.PermisosConstruccion
 @using BlazorApp.Shared
 @using MudBlazor
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject PlataformaServiciosMockService DataService
+@inject IContribuyentesService ContribuyentesService
+@inject PermisosConstruccionMockService PermisosService
 
 <PageTitleBar Title="Nuevo trámite"
               Subtitle="Sistema para registrar un trámite de ventanilla única municipal con integración institucional.">
@@ -51,15 +56,37 @@
                 case 0:
                     <MudStack Spacing="3">
                         <MudGrid Spacing="2">
-                            <MudItem xs="12" md="4">
-                                <MudSelect T="string" Value="@selectedTypeCode" ValueChanged="OnTypeChangedAsync" Label="Tipo de trámite" Variant="Variant.Outlined" Dense="true">
-                                    <MudSelectItem Value="@string.Empty">Seleccione</MudSelectItem>
-                                    @foreach (var type in procedureTypes)
+                            <MudItem xs="12" md="6">
+                                <MudAutocomplete T="PsProcedureTypeDto" @bind-Value="selectedType" Label="Tipo de trámite" Variant="Variant.Outlined" Dense="true"
+                                                 SearchFunc="@SearchProcedureTypes" ToStringFunc="@(t => t?.Name ?? "")"
+                                                 AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary"
+                                                 Placeholder="Escriba para buscar">
+                                    <ItemTemplate Context="type">
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.body2">@type.Name</MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@type.Category</MudText>
+                                        </MudStack>
+                                    </ItemTemplate>
+                                </MudAutocomplete>
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudSelect T="string" @bind-Value="filterCategory" Label="Categoría" Variant="Variant.Outlined" Dense="true">
+                                    <MudSelectItem Value="@string.Empty">Todas</MudSelectItem>
+                                    @foreach (var cat in categories)
                                     {
-                                        <MudSelectItem Value="@type.Code">@type.Name</MudSelectItem>
+                                        <MudSelectItem Value="@cat">@cat</MudSelectItem>
                                     }
                                 </MudSelect>
                             </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudTextField T="string" Value="@(selectedType != null ? $"{selectedType.EstimatedDays} días" : "")" Label="Plazo estimado" Variant="Variant.Outlined" ReadOnly="true" Margin="Margin.Dense" />
+                            </MudItem>
+                            @if (selectedType != null && !string.IsNullOrWhiteSpace(selectedType.Description))
+                            {
+                                <MudItem xs="12">
+                                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">@selectedType.Description</MudAlert>
+                                </MudItem>
+                            }
                             <MudItem xs="12" md="4">
                                 <MudSelect T="string" @bind-Value="draft.Channel" Label="Canal de ingreso" Variant="Variant.Outlined" Dense="true">
                                     @foreach (var channel in channelOptions)
@@ -151,9 +178,11 @@
                         </MudStack>
 
                         <div class="d-flex flex-wrap gap-2">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="SearchRucAsync">Buscar en RUC</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Badge" OnClick="ViewRucAsync">Ver RUC</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="CreateApplicantAsync">Crear contribuyente</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="OpenRucSearchAsync">Buscar contribuyente</MudButton>
+                            @if (draft.Applicant.ExistsInRuc)
+                            {
+                                <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">Contribuyente vinculado</MudChip>
+                            }
                         </div>
                     </MudStack>
                     break;
@@ -189,6 +218,29 @@
                                 <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.Area" Label="Área" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                                 <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Object.MontoEstimado" Label="Monto estimado" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
                                 <MudItem xs="12" md="4"><MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.HomeWork" OnClick="ViewRelatedAsync">Ver permiso</MudButton></MudItem>
+                                @if (selectedType != null && selectedType.Code == "PAJA-CONST")
+                                {
+                                    <MudItem xs="12">
+                                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">Este trámite requiere vincular un permiso de construcción activo.</MudAlert>
+                                    </MudItem>
+                                    <MudItem xs="12" md="8">
+                                        <MudSelect T="string" Value="@draft.Object.PermisoVinculadoId" ValueChanged="@OnPermisoVinculadoChangedAsync" Label="Permiso de construcción asociado" Variant="Variant.Outlined" Dense="true" Placeholder="Seleccione el permiso">
+                                            @foreach (var permit in availablePermits)
+                                            {
+                                                <MudSelectItem Value="@permit.Id">@permit.CaseNumber - @permit.Property.PropertyNumber</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="12" md="4">
+                                        <MudTextField T="string" Value="@GetSelectedPermisoExpediente()" Label="Expediente" Variant="Variant.Outlined" ReadOnly="true" Margin="Margin.Dense" />
+                                    </MudItem>
+                                    @if (!string.IsNullOrWhiteSpace(draft.Object.PermisoVinculadoId))
+                                    {
+                                        <MudItem xs="12">
+                                            <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.Link">Permiso @draft.Object.PermisoVinculadoExpediente vinculado</MudChip>
+                                        </MudItem>
+                                    }
+                                }
                             </MudGrid>
                         }
                         @if (RequiresMarket())
@@ -272,9 +324,9 @@
                             <MudChip T="string" Color="@GetPriorityColor(draft.Classification.Priority)" Variant="Variant.Filled">@draft.Classification.Priority</MudChip>
                         </MudStack>
                         <div class="d-flex flex-wrap gap-2">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SwapHoriz" OnClick="TransferMockAsync">Trasladar a departamento</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.PersonSearch" OnClick="AssignResponsibleMockAsync">Asignar responsable</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.PriorityHigh" OnClick="ChangePriorityMockAsync">Cambiar prioridad</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SwapHoriz" OnClick="OpenTransferDialogAsync">Trasladar a departamento</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.PersonSearch" OnClick="OpenAssignDialogAsync">Asignar responsable</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.PriorityHigh" OnClick="OpenPriorityDialogAsync">Cambiar prioridad</MudButton>
                         </div>
                     </MudStack>
                     break;
@@ -360,19 +412,38 @@
 @code {
     private readonly WizardStateMockService wizardStateService = new();
     private readonly DraftMockService draftService = new();
-    private readonly PlataformaServiciosMockService dataService = new();
 
     private WizardStateDto wizardState = new();
     private DraftStateDto draftState = new();
     private PsProcedureDto draft = new();
     private List<PsProcedureTypeDto> procedureTypes = new();
     private List<ProcessSummaryItemDto> processSummaryItems = new();
-    private string selectedTypeCode = string.Empty;
+    private PsProcedureTypeDto? selectedType;
+    private string filterCategory = string.Empty;
+    private readonly string[] categories = [ "Facturación y cobros", "Agua potable y medidores", "Propiedad y titularidad" ];
     private string lastAuditEvent = "Aún no existen eventos";
     private string qualityStatus = "Pendiente";
     private string qualityObservation = "Revisión visual pendiente.";
     private string qualityReturnReason = string.Empty;
     private string qualityResponsible = "Control de calidad";
+
+    private List<PcPermitDto> availablePermits = new();
+
+    private List<ContribuyenteDto> rucSearchResults = new();
+    private string rucSearchText = string.Empty;
+    private bool showRucDialog = false;
+
+    private bool showTransferDialog = false;
+    private string transferDepartment = string.Empty;
+    private string transferReason = string.Empty;
+
+    private bool showAssignDialog = false;
+    private string assignResponsible = string.Empty;
+    private string assignObservation = string.Empty;
+
+    private bool showPriorityDialog = false;
+    private string newPriority = "Normal";
+    private string priorityJustification = string.Empty;
 
     private readonly string[] channelOptions = [ "Presencial", "MIMUNIENCASA", "Portal municipal", "VUI", "Correo", "Teléfono", "Gestión interna" ];
     private readonly string[] priorityOptions = [ "Normal", "Alta", "Urgente" ];
@@ -388,13 +459,257 @@
 
     protected override async Task OnInitializedAsync()
     {
-        procedureTypes = await dataService.GetProcedureTypesAsync();
-        draft = CreateDraft(procedureTypes.FirstOrDefault());
-        selectedTypeCode = draft.TypeCode;
+        procedureTypes = await DataService.GetProcedureTypesAsync();
+        await LoadAvailablePermitsAsync();
+
+        var existingDraft = await DataService.GetDraftAsync();
+        if (existingDraft != null)
+        {
+            draft = existingDraft;
+            selectedType = procedureTypes.FirstOrDefault(t => t.Code == draft.TypeCode);
+        }
+        else
+        {
+            draft = CreateDraft(procedureTypes.FirstOrDefault());
+            selectedType = procedureTypes.FirstOrDefault();
+        }
+
         BuildWizardState();
         draftState = await draftService.MarkDirtyAsync(wizardState);
         wizardState.DraftState = draftState;
         RefreshSummary();
+    }
+
+    private async Task LoadAvailablePermitsAsync()
+    {
+        var allPermits = await PermisosService.GetPermitsAsync();
+        availablePermits = allPermits
+            .Where(p => !string.IsNullOrWhiteSpace(p.CaseNumber) &&
+                       !string.IsNullOrWhiteSpace(p.Property?.PropertyNumber) &&
+                       p.PermitStatus != "Rechazado" &&
+                       p.PermitStatus != "Cancelado" &&
+                       p.PermitStatus != "Anulado")
+            .OrderByDescending(p => p.CreatedAt)
+            .ToList();
+    }
+
+    private string GetSelectedPermisoExpediente()
+    {
+        if (string.IsNullOrWhiteSpace(draft.Object.PermisoVinculadoId))
+        {
+            return string.Empty;
+        }
+
+        var selected = availablePermits.FirstOrDefault(p => p.Id == draft.Object.PermisoVinculadoId);
+        if (selected != null)
+        {
+            draft.Object.PermisoVinculadoExpediente = selected.CaseNumber;
+            return selected.CaseNumber;
+        }
+
+        return string.Empty;
+    }
+
+    private async Task OnPermisoVinculadoChangedAsync(string selectedPermisoId)
+    {
+        draft.Object.PermisoVinculadoId = selectedPermisoId;
+
+        if (!string.IsNullOrWhiteSpace(selectedPermisoId))
+        {
+            var selected = availablePermits.FirstOrDefault(p => p.Id == selectedPermisoId);
+            if (selected != null)
+            {
+                draft.Object.PermisoVinculadoExpediente = selected.CaseNumber;
+
+                draft.History.Insert(0, new PsHistoryEventDto
+                {
+                    Date = DateTime.Now,
+                    User = "system.user",
+                    Action = "Permiso de construcción vinculado",
+                    Comment = $"Vinculado con expediente {selected.CaseNumber}, finca {selected.Property?.PropertyNumber}.",
+                    Origin = "Plataforma de Servicios"
+                });
+
+                Snackbar.Add($"Permiso {selected.CaseNumber} vinculado correctamente.", Severity.Success);
+            }
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private Task<IEnumerable<PsProcedureTypeDto>> SearchProcedureTypes(string value, CancellationToken token)
+    {
+        var filtered = procedureTypes.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(filterCategory))
+        {
+            filtered = filtered.Where(t => t.Category == filterCategory);
+        }
+
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            filtered = filtered.Where(t => t.Name.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+                                          t.Description.Contains(value, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return Task.FromResult(filtered);
+    }
+
+    private async Task OpenRucSearchAsync()
+    {
+        rucSearchText = string.Empty;
+        rucSearchResults = new();
+        showRucDialog = true;
+        await Task.CompletedTask;
+    }
+
+    private async Task SearchRucContribuyentesAsync()
+    {
+        if (string.IsNullOrWhiteSpace(rucSearchText))
+        {
+            Snackbar.Add("Ingrese un criterio de búsqueda", Severity.Warning);
+            return;
+        }
+
+        rucSearchResults = await ContribuyentesService.SearchAsync(rucSearchText, rucSearchText, null, null, null, null);
+
+        if (!rucSearchResults.Any())
+        {
+            Snackbar.Add("No se encontró un contribuyente con los criterios indicados.", Severity.Warning);
+        }
+    }
+
+    private async Task SelectContribuyenteAsync(ContribuyenteDto contribuyente)
+    {
+        draft.Applicant.Identification = contribuyente.NumeroIdentificacion;
+        draft.Applicant.Name = contribuyente.NombreCompleto;
+        draft.Applicant.PersonType = contribuyente.TipoPersona;
+        draft.Applicant.Phone = contribuyente.Telefono ?? string.Empty;
+        draft.Applicant.Email = contribuyente.Correo ?? string.Empty;
+        draft.Applicant.FiscalAddress = $"{contribuyente.DireccionFiscal.Provincia}, {contribuyente.DireccionFiscal.Canton}";
+        draft.Applicant.ExistsInRuc = true;
+        draft.Applicant.RucStatus = "Validado";
+        draft.Applicant.RucQuality = "Completo";
+
+        showRucDialog = false;
+        Snackbar.Add($"Contribuyente {contribuyente.NombreCompleto} vinculado correctamente.", Severity.Success);
+
+        draft.History.Insert(0, new PsHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "system.user",
+            Action = "Contribuyente vinculado",
+            Comment = $"Vinculado con RUC: {contribuyente.NumeroIdentificacion}",
+            Origin = "Plataforma de Servicios"
+        });
+
+        await Task.CompletedTask;
+    }
+
+    private async Task OpenTransferDialogAsync()
+    {
+        transferDepartment = draft.Classification.DepartmentName;
+        transferReason = string.Empty;
+        showTransferDialog = true;
+        await Task.CompletedTask;
+    }
+
+    private async Task ConfirmTransferAsync()
+    {
+        if (string.IsNullOrWhiteSpace(transferDepartment) || string.IsNullOrWhiteSpace(transferReason))
+        {
+            Snackbar.Add("Complete el departamento y motivo del traslado.", Severity.Warning);
+            return;
+        }
+
+        var previousDept = draft.Classification.DepartmentName;
+        draft.Classification.DepartmentName = transferDepartment;
+        draft.Department = transferDepartment;
+
+        draft.History.Insert(0, new PsHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "system.user",
+            Action = "Traslado",
+            PreviousStatus = draft.Status,
+            NewStatus = "Trasladado",
+            Department = transferDepartment,
+            Comment = $"Trasladado de {previousDept} a {transferDepartment}. Motivo: {transferReason}",
+            Origin = "Plataforma de Servicios"
+        });
+
+        showTransferDialog = false;
+        Snackbar.Add("El trámite fue trasladado al departamento seleccionado.", Severity.Success);
+        await Task.CompletedTask;
+    }
+
+    private async Task OpenAssignDialogAsync()
+    {
+        assignResponsible = draft.Classification.Responsible;
+        assignObservation = string.Empty;
+        showAssignDialog = true;
+        await Task.CompletedTask;
+    }
+
+    private async Task ConfirmAssignAsync()
+    {
+        if (string.IsNullOrWhiteSpace(assignResponsible))
+        {
+            Snackbar.Add("Seleccione un responsable.", Severity.Warning);
+            return;
+        }
+
+        draft.Classification.Responsible = assignResponsible;
+        draft.Responsible = assignResponsible;
+
+        draft.History.Insert(0, new PsHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "system.user",
+            Action = "Asignación de responsable",
+            Department = draft.Department,
+            Comment = $"Asignado a: {assignResponsible}. {assignObservation}",
+            Origin = "Plataforma de Servicios"
+        });
+
+        showAssignDialog = false;
+        Snackbar.Add("El responsable fue asignado correctamente.", Severity.Success);
+        await Task.CompletedTask;
+    }
+
+    private async Task OpenPriorityDialogAsync()
+    {
+        newPriority = draft.Priority;
+        priorityJustification = string.Empty;
+        showPriorityDialog = true;
+        await Task.CompletedTask;
+    }
+
+    private async Task ConfirmPriorityAsync()
+    {
+        if (newPriority == "Urgente" && string.IsNullOrWhiteSpace(priorityJustification))
+        {
+            Snackbar.Add("La prioridad Urgente requiere justificación.", Severity.Warning);
+            return;
+        }
+
+        var previousPriority = draft.Priority;
+        draft.Priority = newPriority;
+        draft.Classification.Priority = newPriority;
+
+        draft.History.Insert(0, new PsHistoryEventDto
+        {
+            Date = DateTime.Now,
+            User = "system.user",
+            Action = "Cambio de prioridad",
+            Department = draft.Department,
+            Comment = $"Prioridad cambiada de {previousPriority} a {newPriority}. {priorityJustification}",
+            Origin = "Plataforma de Servicios"
+        });
+
+        showPriorityDialog = false;
+        Snackbar.Add("La prioridad fue actualizada correctamente.", Severity.Success);
+        await Task.CompletedTask;
     }
 
     private void BuildWizardState()
@@ -414,10 +729,10 @@
         wizardState.ProcessCode = draft.CaseNumber;
         wizardState.ProcessTitle = "Nuevo trámite";
         wizardState.ProcessName = "Trámite de ventanilla única";
-        wizardState.CreatedBy = "demo.user";
+        wizardState.CreatedBy = "system.user";
         wizardState.Status = "Borrador";
         wizardState.DraftState.Status = "Borrador";
-        wizardState.DraftState.SavedBy = "demo.user";
+        wizardState.DraftState.SavedBy = "system.user";
         wizardState.DraftState.Message = "Borrador preparado.";
         wizardState.ProcessSummaryItems = BuildProcessSummaryItems();
     }
@@ -440,16 +755,16 @@
             Channel = channelOptions.First(),
             Applicant = new PsApplicantDto
             {
-                Identification = "1-2345-6789",
-                Name = "Comercial Demo S.A.",
-                PersonType = "Jurídica",
-                Phone = "2222-1111",
-                Email = "demo@comercial.cr",
-                FiscalAddress = "San José centro",
+                Identification = string.Empty,
+                Name = string.Empty,
+                PersonType = "Física",
+                Phone = string.Empty,
+                Email = string.Empty,
+                FiscalAddress = string.Empty,
                 PreferredNotification = "Correo",
-                RucStatus = "Validado",
-                RucQuality = "Completo",
-                ExistsInRuc = true
+                RucStatus = "Pendiente validar",
+                RucQuality = "Información parcial",
+                ExistsInRuc = false
             },
             Object = new PsProcedureObjectDto { Kind = "General", Summary = "Objeto libre de trámite", OrigenSolicitud = "Presencial" },
             Requirements = BuildRequirements(selectedType),
@@ -457,20 +772,20 @@
             {
                 ModuleName = selectedType.ModuleName,
                 DepartmentName = selectedType.Department,
-                Responsible = "Funcionario demo",
-                Team = "Equipo demo",
+                Responsible = string.Empty,
+                Team = string.Empty,
                 Status = selectedType.InitialStatus,
                 EstimatedDeadline = $"{selectedType.DeadlineDays} días",
                 Priority = selectedType.Priority,
                 TimeStatus = "En tiempo"
             },
-            QualityControl = new PsQualityControlDto { Status = "Pendiente", Responsible = "Control de calidad demo", Observation = "Pendiente de revisión.", Action = "Recepción" },
-            Resolution = new PsResolutionDto { Type = "Borrador", Responsible = "Secretaría demo", Status = "Borrador" },
+            QualityControl = new PsQualityControlDto { Status = "Pendiente", Responsible = "Control de calidad", Observation = "Pendiente de revisión.", Action = "Recepción" },
+            Resolution = new PsResolutionDto { Type = "Borrador", Responsible = "Secretaría", Status = "Borrador" },
             Deadline = new PsDeadlineDto { StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(selectedType.DeadlineDays), DaysRemaining = selectedType.DeadlineDays, Status = "En tiempo" },
             Integrations = new List<PsIntegrationStatusDto>
             {
-                new() { Name = "RUC", Status = "Preparado", LastEvent = "Consulta mock", Description = "Referencia de contribuyente", ActionText = "Ver" },
-                new() { Name = "Auditoría", Status = "Preparado", LastEvent = "Evento registrado", Description = "Trazabilidad demo", ActionText = "Ver" }
+                new() { Name = "RUC", Status = "Operativo", LastEvent = "Consulta realizada", Description = "Referencia de contribuyente", ActionText = "Ver" },
+                new() { Name = "Auditoría", Status = "Operativo", LastEvent = "Evento registrado", Description = "Trazabilidad institucional", ActionText = "Ver" }
             },
             Notifications = new List<PsNotificationDto>(),
             History = new List<PsHistoryEventDto>(),
@@ -504,48 +819,27 @@
 
     private PsProcedureObjectDto GetObjectTemplate(PsProcedureTypeDto type)
     {
-        var obj = new PsProcedureObjectDto { Kind = "General", Summary = "Descripción libre del trámite." };
+        var obj = new PsProcedureObjectDto { Kind = "General", Summary = string.Empty };
 
         if (type.RequiresFinca)
         {
             obj.Kind = "Finca";
-            obj.IdPredial = "IDP-001";
-            obj.NumeroFinca = "5-123456";
-            obj.NumeroPlano = "PL-1020";
-            obj.Distrito = "Central";
-            obj.Propietario = "Contribuyente";
         }
         else if (type.RequiresPatent)
         {
             obj.Kind = "Patente";
-            obj.NumeroLicencia = "PAT-2024-001";
-            obj.NombreComercial = "Comercio demo";
-            obj.ActividadEconomica = "Restaurante";
-            obj.UsoSuelo = "Conforme";
         }
         else if (type.ModuleName.Contains("Construcción", StringComparison.OrdinalIgnoreCase))
         {
             obj.Kind = "Permiso de construcción";
-            obj.NumeroFinca = "5-123456";
-            obj.ProfesionalResponsable = "Ing. Demo";
-            obj.TipoObra = "Ampliación";
-            obj.Area = "120 m2";
-            obj.MontoEstimado = "₡45,000,000";
         }
         else if (type.ModuleName.Contains("Mercado", StringComparison.OrdinalIgnoreCase))
         {
             obj.Kind = "Mercado Municipal";
-            obj.NumeroLocal = "L-12";
-            obj.Arrendatario = "Arrendatario demo";
-            obj.Contrato = "CM-2025-011";
-            obj.EstadoCuentaMock = "Al día";
         }
         else if (type.ModuleName.Equals("RUC", StringComparison.OrdinalIgnoreCase))
         {
             obj.Kind = "RUC";
-            obj.TipoActualizacionRuc = "Cambio de dirección";
-            obj.DatosAModificar = "Dirección fiscal y teléfono";
-            obj.OrigenSolicitud = "Portal municipal";
         }
 
         return obj;
@@ -555,31 +849,30 @@
     {
         var items = new List<PsRequirementDto>
         {
-            new() { Name = "Formulario de ingreso", Status = "Presentado", DocumentPlaceholder = "DOC-001", Receiver = "Recepción", Origin = "Plataforma de Servicios", ReceivedAt = DateTime.Now.AddDays(-1) },
-            new() { Name = "Documento de identificación", Status = "Presentado", DocumentPlaceholder = "DOC-002", Receiver = "Recepción", Origin = "Presencial", ReceivedAt = DateTime.Now.AddDays(-1) },
-            new() { Name = "Anexo complementario", Status = type.RequiresDocuments ? "Pendiente" : "No aplica", DocumentPlaceholder = "DOC-003", Receiver = "Recepción", Origin = "MIMUNIENCASA", Observation = type.RequiresDocuments ? "Pendiente de adjunto" : "No requerido" }
+            new() { Name = "Formulario de ingreso", Status = "Pendiente", DocumentPlaceholder = string.Empty, Receiver = string.Empty, Origin = "Plataforma de Servicios" },
+            new() { Name = "Documento de identificación", Status = "Pendiente", DocumentPlaceholder = string.Empty, Receiver = string.Empty, Origin = "Presencial" },
+            new() { Name = "Anexo complementario", Status = type.RequiresDocuments ? "Pendiente" : "No aplica", DocumentPlaceholder = string.Empty, Receiver = string.Empty, Origin = "MIMUNIENCASA", Observation = type.RequiresDocuments ? "Pendiente de adjunto" : "No requerido" }
         };
 
         if (type.RequiresFinca)
         {
-            items.Add(new PsRequirementDto { Name = "Constancia predial", Status = "Presentado", DocumentPlaceholder = "DOC-004", Receiver = "Recepción", Origin = "VUI", ReceivedAt = DateTime.Now.AddDays(-1) });
+            items.Add(new PsRequirementDto { Name = "Constancia predial", Status = "Pendiente", DocumentPlaceholder = string.Empty, Receiver = string.Empty, Origin = "VUI" });
         }
 
         if (type.RequiresPatent)
         {
-            items.Add(new PsRequirementDto { Name = "Uso de suelo", Status = "Observado", DocumentPlaceholder = "DOC-005", Receiver = "Recepción", Origin = "Plataforma de Servicios", Observation = "Validación mock pendiente" });
+            items.Add(new PsRequirementDto { Name = "Uso de suelo", Status = "Pendiente", DocumentPlaceholder = string.Empty, Receiver = string.Empty, Origin = "Plataforma de Servicios", Observation = "Pendiente de validación" });
         }
 
         return items;
     }
 
-    private async Task OnTypeChangedAsync(string value)
+    private async Task OnTypeChangedAsync(PsProcedureTypeDto? value)
     {
-        selectedTypeCode = value;
-        var selected = procedureTypes.FirstOrDefault(item => item.Code == value) ?? procedureTypes.FirstOrDefault();
-        if (selected is not null)
+        selectedType = value;
+        if (selectedType != null)
         {
-            SyncProcedureByType(draft, selected);
+            SyncProcedureByType(draft, selectedType);
         }
 
         wizardState.ProcessCode = draft.CaseNumber;
@@ -616,12 +909,13 @@
     {
         wizardState.IsDirty = true;
         wizardState = await wizardStateService.SaveDraftAsync(wizardState);
-        draftState = await draftService.SaveDraftAsync(wizardState, draft);
+        await DataService.SaveDraftAsync(draft);
+
         draftState.Message = "Borrador de trámite guardado correctamente.";
-        draftState.SavedBy = "demo.user";
+        draftState.SavedBy = "system.user";
         draftState.HasUnsavedChanges = false;
         wizardState.DraftState = draftState;
-        wizardState.LastSavedAt = draftState.LastSavedAt;
+        wizardState.LastSavedAt = DateTime.Now;
         lastAuditEvent = $"Borrador guardado a las {DateTime.Now:HH:mm}.";
         RefreshSummary();
     }
@@ -661,17 +955,19 @@
         draft.History.Insert(0, new PsHistoryEventDto
         {
             Date = DateTime.Now,
-            User = "demo.user",
+            User = "system.user",
             Action = "Registro final",
             PreviousStatus = "Borrador",
             NewStatus = "Recibido",
             Department = draft.Department,
-            Comment = "Registro confirmado desde el wizard demo.",
+            Comment = "Registro confirmado desde el wizard institucional.",
             Origin = "Plataforma de Servicios"
         });
         draft.AuditEvents.Insert(0, new PsAuditEventDto { Action = "Registro final", Description = $"Expediente {draft.CaseNumber} creado desde Plataforma de Servicios.", Severity = "Success" });
 
-        var created = await dataService.RegisterProcedureAsync(draft);
+        var created = await DataService.RegisterProcedureAsync(draft);
+        await DataService.DeleteDraftAsync();
+
         wizardState = await wizardStateService.SetStatusAsync(wizardState, "Completado");
         lastAuditEvent = $"Expediente {created.CaseNumber} registrado correctamente.";
         NavigationManager.NavigateTo($"/plataforma-servicios/expediente/{created.Id}");
@@ -705,6 +1001,10 @@
             if (RequiresPatent())
             {
                 results.Add(BuildResult(stepId, "Patente", "Debe indicar la licencia comercial.", "Error", !string.IsNullOrWhiteSpace(draft.Object.NumeroLicencia), "PS-022"));
+            }
+            if (selectedType != null && selectedType.Code == "PAJA-CONST")
+            {
+                results.Add(BuildResult(stepId, "Permiso vinculado", "Seleccione un permiso de construcción vigente para continuar.", "Error", !string.IsNullOrWhiteSpace(draft.Object.PermisoVinculadoId), "PS-023"));
             }
         }
         else if (stepId == "requisitos")
@@ -776,18 +1076,17 @@
     private bool CanGoNext => wizardState.CurrentStepIndex < wizardState.Steps.Count - 1;
     private bool CanFinish => wizardState.CurrentStepIndex == wizardState.Steps.Count - 1;
 
-    private bool RequiresFinca() => procedureTypes.FirstOrDefault(item => item.Code == selectedTypeCode)?.RequiresFinca == true;
-    private bool RequiresPatent() => procedureTypes.FirstOrDefault(item => item.Code == selectedTypeCode)?.RequiresPatent == true;
-    private bool RequiresConstruction() => procedureTypes.FirstOrDefault(item => item.Code == selectedTypeCode)?.ModuleName.Contains("Construcción", StringComparison.OrdinalIgnoreCase) == true;
-    private bool RequiresMarket() => procedureTypes.FirstOrDefault(item => item.Code == selectedTypeCode)?.ModuleName.Contains("Mercado", StringComparison.OrdinalIgnoreCase) == true;
-    private bool RequiresRuc() => procedureTypes.FirstOrDefault(item => item.Code == selectedTypeCode)?.ModuleName.Equals("RUC", StringComparison.OrdinalIgnoreCase) == true;
+    private bool RequiresFinca() => selectedType?.RequiresFinca == true;
+    private bool RequiresPatent() => selectedType?.RequiresPatent == true;
+    private bool RequiresConstruction() => selectedType?.RequiresBuildingPermit == true;
+    private bool RequiresMarket() => selectedType?.ModuleName.Contains("Mercado", StringComparison.OrdinalIgnoreCase) == true;
+    private bool RequiresRuc() => selectedType?.ModuleName.Equals("RUC", StringComparison.OrdinalIgnoreCase) == true;
 
     private async Task SearchRucAsync() { lastAuditEvent = "Búsqueda RUC completada."; Snackbar.Add("Búsqueda RUC completada.", Severity.Info); await Task.CompletedTask; }
     private async Task ViewRucAsync() { Snackbar.Add("Vista RUC disponible desde el expediente.", Severity.Info); await Task.CompletedTask; }
-    private async Task CreateApplicantAsync() { Snackbar.Add("Creación de contribuyente solo como referencia visual.", Severity.Info); await Task.CompletedTask; }
     private async Task ViewRelatedAsync() { Snackbar.Add("Vínculo relacionado abierto.", Severity.Info); await Task.CompletedTask; }
-    private async Task OnRequirementStatusChangedAsync(PsRequirementDto requirement, string value) { requirement.Status = value; await Task.CompletedTask; }
-    private async Task UpdateRequirementAsync(PsRequirementDto requirement, string status) { requirement.Status = status; requirement.ReceivedAt = DateTime.Now; requirement.Receiver = "Recepción demo"; Snackbar.Add($"Requisito '{requirement.Name}' actualizado a {status}.", Severity.Info); await Task.CompletedTask; }
+    private async Task OnRequirementStatusChangedAsync(PsRequirementDto requirement, string value) { requirement.Status = value; requirement.ReceivedAt = DateTime.Now; await Task.CompletedTask; }
+    private async Task UpdateRequirementAsync(PsRequirementDto requirement, string status) { requirement.Status = status; requirement.ReceivedAt = DateTime.Now; requirement.Receiver = "Recepción"; Snackbar.Add($"Requisito '{requirement.Name}' actualizado a {status}.", Severity.Info); await Task.CompletedTask; }
     private async Task ViewDocumentAsync(PsRequirementDto requirement) { Snackbar.Add($"Documento: {requirement.DocumentPlaceholder}", Severity.Info); await Task.CompletedTask; }
     private Task MarkRequirementPresentedAsync(PsRequirementDto requirement) => UpdateRequirementAsync(requirement, "Presentado");
     private Task MarkRequirementPendingAsync(PsRequirementDto requirement) => UpdateRequirementAsync(requirement, "Pendiente");
@@ -851,4 +1150,104 @@
     private Color GetTimeColor(string status) => status == "Vencido" ? Color.Error : status == "Próximo a vencer" ? Color.Warning : Color.Success;
     private Color GetStatusColor(string status) => status == "Recibido" || status == "Resuelto" || status == "Archivado" ? Color.Success : status == "Prevenido" || status == "Borrador" ? Color.Warning : status == "Rechazado" ? Color.Error : Color.Info;
 
+    private readonly string[] responsibleOptions = [ "Ana García", "Carlos Ramírez", "María Fernández", "José Mora", "Laura Vega", "Pedro Sánchez" ];
 }
+
+<MudDialog @bind-Visible="showRucDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Buscar contribuyente en RUC</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudTextField T="string" @bind-Value="rucSearchText" Label="Identificación o nombre" Variant="Variant.Outlined" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search" OnAdornmentClick="SearchRucContribuyentesAsync" />
+            @if (rucSearchResults.Any())
+            {
+                <MudTable T="ContribuyenteDto" Items="@rucSearchResults" Hover="true" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Identificación</MudTh>
+                        <MudTh>Nombre</MudTh>
+                        <MudTh>Tipo</MudTh>
+                        <MudTh>Acción</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Identificación">@context.NumeroIdentificacion</MudTd>
+                        <MudTd DataLabel="Nombre">@context.NombreCompleto</MudTd>
+                        <MudTd DataLabel="Tipo">@context.TipoPersona</MudTd>
+                        <MudTd DataLabel="Acción">
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => SelectContribuyenteAsync(context))">Seleccionar</MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => showRucDialog = false)">Cerrar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog @bind-Visible="showTransferDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Trasladar a departamento</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudSelect T="string" @bind-Value="transferDepartment" Label="Departamento destino" Variant="Variant.Outlined">
+                @foreach (var dept in departmentOptions)
+                {
+                    <MudSelectItem Value="@dept">@dept</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField T="string" @bind-Value="transferReason" Label="Motivo" Variant="Variant.Outlined" Lines="3" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => showTransferDialog = false)">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConfirmTransferAsync">Confirmar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog @bind-Visible="showAssignDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Asignar responsable</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudSelect T="string" @bind-Value="assignResponsible" Label="Funcionario" Variant="Variant.Outlined">
+                @foreach (var func in responsibleOptions)
+                {
+                    <MudSelectItem Value="@func">@func</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField T="string" @bind-Value="assignObservation" Label="Observación" Variant="Variant.Outlined" Lines="2" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => showAssignDialog = false)">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConfirmAssignAsync">Confirmar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog @bind-Visible="showPriorityDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Cambiar prioridad</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudSelect T="string" @bind-Value="newPriority" Label="Nueva prioridad" Variant="Variant.Outlined">
+                @foreach (var p in priorityOptions)
+                {
+                    <MudSelectItem Value="@p">@p</MudSelectItem>
+                }
+            </MudSelect>
+            @if (newPriority == "Urgente")
+            {
+                <MudTextField T="string" @bind-Value="priorityJustification" Label="Justificación (obligatoria para Urgente)" Variant="Variant.Outlined" Lines="3" />
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => showPriorityDialog = false)">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConfirmPriorityAsync">Confirmar</MudButton>
+    </DialogActions>
+</MudDialog>

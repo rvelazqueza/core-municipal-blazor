@@ -1,11 +1,13 @@
 @using System.ComponentModel.DataAnnotations
 @using BlazorApp.Models
 @using BlazorApp.Services
+@using BlazorApp.Helpers
 @using MudBlazor
 @inject IMaestroDatosService MaestroDatosService
 @inject IContribuyentesService ContribuyentesService
 @inject IAuditoriaService AuditoriaService
 @inject ISnackbar Snackbar
+@inject DocumentExportHelper DocumentExportHelper
 
 <MudPaper Class="pa-4">
     <ValidationSummaryPanel Errors="validationErrors" />
@@ -49,9 +51,15 @@
                 {
                     <MudItem xs="12" md="8"><MudTextField T="string" @bind-Value="Model.RazonSocial" Label="Razón social" Variant="Variant.Outlined" Required="true" RequiredError="La razón social es obligatoria" /></MudItem>
                 }
-                <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.Nacionalidad" Label="Nacionalidad" Variant="Variant.Outlined" /></MudItem>
-                <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.Telefono" Label="Teléfono" Variant="Variant.Outlined" /></MudItem>
-                <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="Model.Correo" Label="Correo" Variant="Variant.Outlined" /></MudItem>
+                <MudItem xs="12" md="4">
+                    <MudAutocomplete T="string" @bind-Value="Model.Nacionalidad" Label="Nacionalidad" Variant="Variant.Outlined" SearchFunc="SearchNacionalidadAsync" Clearable="true" CoerceValue="true" Placeholder="Costarricense" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField T="string" @bind-Value="Model.Telefono" @bind-Value:after="FormatearTelefono" Label="Teléfono" Variant="Variant.Outlined" Placeholder="8888-8888" Validation="@(new Func<string, string?>(ValidarTelefono))" Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField T="string" @bind-Value="Model.Correo" Label="Correo" Variant="Variant.Outlined" Placeholder="correo@dominio.com" Validation="@(new Func<string, string?>(ValidarCorreo))" Immediate="true" InputType="InputType.Email" />
+                </MudItem>
                 <MudItem xs="12" md="4">
                     <MudSelect T="string" @bind-Value="Model.EstadoContribuyente" Label="Estado del contribuyente" Variant="Variant.Outlined">
                         @foreach (var item in estadosContribuyente)
@@ -101,8 +109,12 @@
                 {
                     <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.RepresentanteLegal.NombreCompleto" Label="Representante legal" Variant="Variant.Outlined" /></MudItem>
                     <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Identificacion" Label="Identificación representante" Variant="Variant.Outlined" /></MudItem>
-                    <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Telefono" Label="Teléfono representante" Variant="Variant.Outlined" /></MudItem>
-                    <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Correo" Label="Correo representante" Variant="Variant.Outlined" /></MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Telefono" @bind-Value:after="FormatearTelefonoRepresentante" Label="Teléfono representante" Variant="Variant.Outlined" Placeholder="8888-8888" Validation="@(new Func<string, string?>(ValidarTelefono))" Immediate="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Correo" Label="Correo representante" Variant="Variant.Outlined" Placeholder="correo@dominio.com" Validation="@(new Func<string, string?>(ValidarCorreo))" Immediate="true" InputType="InputType.Email" />
+                    </MudItem>
                 }
                 <MudItem xs="12" md="6">
                     <MudSelect T="string" @bind-Value="Model.ActividadEconomica" Label="Actividad económica" Variant="Variant.Outlined">
@@ -190,6 +202,9 @@
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">Guardar contribuyente</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="SyncTseAsync">Sincronizar TSE</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="SyncRegistroAsync">Sincronizar Registro Nacional</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="ExportPdfAsync" Size="Size.Small">PDF</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintDocumentAsync" Size="Size.Small">Imprimir</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportHtmlAsync" Size="Size.Small">HTML</MudButton>
     </div>
 </MudPaper>
 
@@ -206,6 +221,7 @@
     private List<string> provincias = new();
     private List<string> cantones = new();
     private List<string> estadosCiviles = new();
+    private List<string> nacionalidades = new();
     private List<string> validationErrors = new();
     private List<AuditoriaCambioDto> Historial = new();
 
@@ -219,6 +235,7 @@
         provincias = await MaestroDatosService.GetProvinciasAsync();
         cantones = await MaestroDatosService.GetCantonesAsync();
         estadosCiviles = await MaestroDatosService.GetEstadosCivilesAsync();
+        nacionalidades = await MaestroDatosService.GetNacionalidadesAsync();
         Historial = await AuditoriaService.GetByContribuyenteAsync(Model.Id);
     }
 
@@ -295,10 +312,10 @@
             errors.Add("La razón social es obligatoria.");
         if (Model.TipoPersona == "Fisica" && string.IsNullOrWhiteSpace(Model.Nombre))
             errors.Add("El nombre es obligatorio.");
-        if (!string.IsNullOrWhiteSpace(Model.Correo) && !new EmailAddressAttribute().IsValid(Model.Correo))
-            errors.Add("El correo no tiene un formato válido.");
-        if (!string.IsNullOrWhiteSpace(Model.Telefono) && !System.Text.RegularExpressions.Regex.IsMatch(Model.Telefono, @"^[0-9]{4}-?[0-9]{4}$"))
-            errors.Add("El teléfono debe tener 8 dígitos.");
+        if (!ValidationHelper.ValidarCorreo(Model.Correo, out var correoError) && !string.IsNullOrWhiteSpace(correoError))
+            errors.Add(correoError);
+        if (!ValidationHelper.ValidarTelefono(Model.Telefono, out var telefonoError) && !string.IsNullOrWhiteSpace(telefonoError))
+            errors.Add(telefonoError);
         if (string.IsNullOrWhiteSpace(Model.DireccionFiscal.DireccionExacta))
             errors.Add("La dirección fiscal es obligatoria.");
         if (Model.TipoPersona == "Juridica" && string.IsNullOrWhiteSpace(Model.RepresentanteLegal.NombreCompleto))
@@ -306,5 +323,215 @@
         if (!estadosContribuyente.Contains(Model.EstadoContribuyente))
             errors.Add("El estado del contribuyente no es permitido.");
         return errors;
+    }
+
+    private string? ValidarTelefono(string value)
+    {
+        ValidationHelper.ValidarTelefono(value, out var error);
+        return error;
+    }
+
+    private string? ValidarCorreo(string value)
+    {
+        ValidationHelper.ValidarCorreo(value, out var error);
+        return error;
+    }
+
+    private void FormatearTelefono()
+    {
+        if (!string.IsNullOrWhiteSpace(Model.Telefono))
+            Model.Telefono = ValidationHelper.FormatearTelefono(Model.Telefono);
+    }
+
+    private void FormatearTelefonoRepresentante()
+    {
+        if (!string.IsNullOrWhiteSpace(Model.RepresentanteLegal.Telefono))
+            Model.RepresentanteLegal.Telefono = ValidationHelper.FormatearTelefono(Model.RepresentanteLegal.Telefono);
+    }
+
+    private Task<IEnumerable<string>> SearchNacionalidadAsync(string value, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(nacionalidades.AsEnumerable());
+
+        var normalized = value.Trim().ToLowerInvariant();
+        var results = nacionalidades
+            .Where(n => n.ToLowerInvariant().Contains(normalized))
+            .AsEnumerable();
+
+        return Task.FromResult(results);
+    }
+
+    private async Task ExportHtmlAsync()
+    {
+        var content = BuildContribuyenteDocument();
+        var fileName = $"Contribuyente_{Helpers.DocumentExportHelper.SanitizeFileName(Model.NumeroIdentificacion)}.html";
+        await DocumentExportHelper.ExportAsHtmlAsync(content, fileName);
+    }
+
+    private async Task PrintDocumentAsync()
+    {
+        var content = BuildContribuyenteDocument();
+        await DocumentExportHelper.PrintHtmlAsync(content);
+    }
+
+    private async Task ExportPdfAsync()
+    {
+        var content = BuildContribuyenteDocument();
+        var fileName = $"Contribuyente_{Helpers.DocumentExportHelper.SanitizeFileName(Model.NumeroIdentificacion)}.pdf";
+        await DocumentExportHelper.ExportAsPdfAsync(content, fileName);
+    }
+
+    private string BuildContribuyenteDocument()
+    {
+        var sb = new System.Text.StringBuilder();
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Información General</div>");
+        sb.AppendFormat("<div class='field'><span class='field-label'>Tipo de persona:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.TipoPersona));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Tipo de identificación:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.TipoIdentificacion));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Número de identificación:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.NumeroIdentificacion));
+
+        if (Model.TipoPersona == "Fisica")
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Nombre:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.Nombre));
+            if (!string.IsNullOrWhiteSpace(Model.Apellidos))
+            {
+                sb.AppendFormat("<div class='field'><span class='field-label'>Apellidos:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.Apellidos));
+            }
+            if (!string.IsNullOrWhiteSpace(Model.EstadoCivil))
+            {
+                sb.AppendFormat("<div class='field'><span class='field-label'>Estado civil:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.EstadoCivil));
+            }
+        }
+        else
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Razón social:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.RazonSocial));
+        }
+
+        if (!string.IsNullOrWhiteSpace(Model.Nacionalidad))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Nacionalidad:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.Nacionalidad));
+        }
+        if (!string.IsNullOrWhiteSpace(Model.Telefono))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Teléfono:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.Telefono));
+        }
+        if (!string.IsNullOrWhiteSpace(Model.Correo))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Correo:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.Correo));
+        }
+        sb.AppendFormat("<div class='field'><span class='field-label'>Estado:</span><span class='field-value'><span class='badge badge-info'>{0}</span></span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.EstadoContribuyente));
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Dirección Fiscal</div>");
+        if (!string.IsNullOrWhiteSpace(Model.DireccionFiscal.Provincia))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Provincia:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.DireccionFiscal.Provincia));
+        }
+        if (!string.IsNullOrWhiteSpace(Model.DireccionFiscal.Canton))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Cantón:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.DireccionFiscal.Canton));
+        }
+        if (!string.IsNullOrWhiteSpace(Model.DireccionFiscal.Distrito))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Distrito:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.DireccionFiscal.Distrito));
+        }
+        if (!string.IsNullOrWhiteSpace(Model.DireccionFiscal.DireccionExacta))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Dirección exacta:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.DireccionFiscal.DireccionExacta));
+        }
+        sb.Append("</div>");
+
+        if (Model.TipoPersona == "Juridica" && !string.IsNullOrWhiteSpace(Model.RepresentanteLegal.NombreCompleto))
+        {
+            sb.Append("<div class='section'>");
+            sb.Append("<div class='section-title'>Representante Legal</div>");
+            sb.AppendFormat("<div class='field'><span class='field-label'>Nombre:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.RepresentanteLegal.NombreCompleto));
+            if (!string.IsNullOrWhiteSpace(Model.RepresentanteLegal.Identificacion))
+            {
+                sb.AppendFormat("<div class='field'><span class='field-label'>Identificación:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.RepresentanteLegal.Identificacion));
+            }
+            if (!string.IsNullOrWhiteSpace(Model.RepresentanteLegal.Telefono))
+            {
+                sb.AppendFormat("<div class='field'><span class='field-label'>Teléfono:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.RepresentanteLegal.Telefono));
+            }
+            if (!string.IsNullOrWhiteSpace(Model.RepresentanteLegal.Correo))
+            {
+                sb.AppendFormat("<div class='field'><span class='field-label'>Correo:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.RepresentanteLegal.Correo));
+            }
+            sb.Append("</div>");
+        }
+
+        if (!string.IsNullOrWhiteSpace(Model.ActividadEconomica))
+        {
+            sb.Append("<div class='section'>");
+            sb.Append("<div class='section-title'>Actividad Económica</div>");
+            sb.AppendFormat("<div class='field'><span class='field-label'>Actividad:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(Model.ActividadEconomica));
+            sb.Append("</div>");
+        }
+
+        if (Model.TributosVinculados.Any())
+        {
+            sb.Append("<div class='section'>");
+            sb.Append("<div class='section-title'>Tributos Vinculados</div>");
+            sb.Append("<table>");
+            sb.Append("<thead><tr><th>Código</th><th>Nombre</th><th>Estado</th></tr></thead>");
+            sb.Append("<tbody>");
+            foreach (var tributo in Model.TributosVinculados)
+            {
+                sb.Append("<tr>");
+                sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(tributo.Codigo));
+                sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(tributo.Nombre));
+                sb.AppendFormat("<td><span class='badge badge-info'>{0}</span></td>", Helpers.DocumentExportHelper.HtmlEncode(tributo.Estado));
+                sb.Append("</tr>");
+            }
+            sb.Append("</tbody></table>");
+            sb.Append("</div>");
+        }
+
+        if (Model.BienesInmueblesVinculados.Any())
+        {
+            sb.Append("<div class='section'>");
+            sb.Append("<div class='section-title'>Bienes Inmuebles Vinculados</div>");
+            sb.Append("<table>");
+            sb.Append("<thead><tr><th>Finca</th><th>Distrito</th><th>Uso</th><th>Estado</th></tr></thead>");
+            sb.Append("<tbody>");
+            foreach (var bien in Model.BienesInmueblesVinculados)
+            {
+                sb.Append("<tr>");
+                sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(bien.FincaNumero));
+                sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(bien.Distrito));
+                sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(bien.Uso));
+                sb.AppendFormat("<td><span class='badge badge-info'>{0}</span></td>", Helpers.DocumentExportHelper.HtmlEncode(bien.Estado));
+                sb.Append("</tr>");
+            }
+            sb.Append("</tbody></table>");
+            sb.Append("</div>");
+        }
+
+        if (Historial.Any())
+        {
+            sb.Append("<div class='section'>");
+            sb.Append("<div class='section-title'>Historial de Cambios</div>");
+            sb.Append("<table>");
+            sb.Append("<thead><tr><th>Usuario</th><th>Fecha</th><th>Campo</th><th>Valor anterior</th><th>Valor nuevo</th></tr></thead>");
+            sb.Append("<tbody>");
+            foreach (var hist in Historial.OrderByDescending(h => h.FechaHora))
+            {
+                sb.Append("<tr>");
+                sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(hist.Usuario));
+                sb.AppendFormat("<td>{0}</td>", hist.FechaHora.ToString("dd/MM/yyyy HH:mm"));
+                sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(hist.CampoModificado));
+                sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(hist.ValorAnterior));
+                sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(hist.ValorNuevo));
+                sb.Append("</tr>");
+            }
+            sb.Append("</tbody></table>");
+            sb.Append("</div>");
+        }
+
+        return Helpers.DocumentExportHelper.BuildMunicipalDocument("Expediente de Contribuyente", Model.NumeroIdentificacion, sb.ToString());
     }
 }

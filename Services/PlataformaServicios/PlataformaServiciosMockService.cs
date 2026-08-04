@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BlazorApp.Helpers;
 using BlazorApp.Models.PlataformaServicios;
 
 namespace BlazorApp.Services.PlataformaServicios;
@@ -15,27 +16,43 @@ public class PlataformaServiciosMockService
     private static List<PsReportDto> reports = new();
     private static List<PsCatalogItemDto> integrations = new();
 
-    public PlataformaServiciosMockService()
+    private readonly LocalStorageHelper _localStorage;
+    private const string PROCEDURES_KEY = "coremunicipal.plataforma.tramites";
+    private const string DRAFT_KEY = "coremunicipal.plataforma.borrador";
+
+    public PlataformaServiciosMockService(LocalStorageHelper localStorage)
     {
+        _localStorage = localStorage;
         EnsureSeeded();
     }
 
     public Task<List<PsProcedureTypeDto>> GetProcedureTypesAsync() => Task.FromResult(procedureTypes.ToList());
 
-    public Task<List<PsProcedureDto>> GetProceduresAsync() => Task.FromResult(procedures.OrderByDescending(item => item.EntryDate).ToList());
-
-    public Task<PsProcedureDto?> GetProcedureAsync(string id)
+    public async Task<List<PsProcedureDto>> GetProceduresAsync()
     {
+        var stored = await _localStorage.GetItemAsync<List<PsProcedureDto>>(PROCEDURES_KEY);
+        if (stored != null && stored.Any())
+        {
+            procedures = stored;
+        }
+        return procedures.OrderByDescending(item => item.EntryDate).ToList();
+    }
+
+    public async Task<PsProcedureDto?> GetProcedureAsync(string id)
+    {
+        await GetProceduresAsync();
         var procedure = procedures.FirstOrDefault(item => string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase) || string.Equals(item.CaseNumber, id, StringComparison.OrdinalIgnoreCase));
-        return Task.FromResult(procedure);
+        return procedure;
     }
 
     public Task<List<PsReportDto>> GetReportsAsync() => Task.FromResult(reports.ToList());
 
     public Task<List<PsCatalogItemDto>> GetIntegrationsAsync() => Task.FromResult(integrations.ToList());
 
-    public Task<PsProcedureDto> RegisterProcedureAsync(PsProcedureDto procedure)
+    public async Task<PsProcedureDto> RegisterProcedureAsync(PsProcedureDto procedure)
     {
+        await GetProceduresAsync();
+
         lock (Gate)
         {
             if (string.IsNullOrWhiteSpace(procedure.Id))
@@ -59,7 +76,7 @@ public class PlataformaServiciosMockService
             procedure.History.Insert(0, new PsHistoryEventDto
             {
                 Date = DateTime.Now,
-                User = "demo.user",
+                User = "system.user",
                 Action = "Registro final",
                 PreviousStatus = "Borrador",
                 NewStatus = procedure.Status,
@@ -85,7 +102,44 @@ public class PlataformaServiciosMockService
                 procedures.Insert(0, procedure);
             }
 
-            return Task.FromResult(procedure);
+            _ = _localStorage.SetItemAsync(PROCEDURES_KEY, procedures);
+            return procedure;
+        }
+    }
+
+    public async Task<PsProcedureDto?> GetDraftAsync()
+    {
+        return await _localStorage.GetItemAsync<PsProcedureDto>(DRAFT_KEY);
+    }
+
+    public async Task SaveDraftAsync(PsProcedureDto draft)
+    {
+        await _localStorage.SetItemAsync(DRAFT_KEY, draft);
+    }
+
+    public async Task DeleteDraftAsync()
+    {
+        await _localStorage.RemoveItemAsync(DRAFT_KEY);
+    }
+
+    public async Task<PsProcedureDto> UpdateProcedureAsync(PsProcedureDto procedure)
+    {
+        await GetProceduresAsync();
+
+        lock (Gate)
+        {
+            var existingIndex = procedures.FindIndex(item => string.Equals(item.Id, procedure.Id, StringComparison.OrdinalIgnoreCase));
+            if (existingIndex >= 0)
+            {
+                procedures[existingIndex] = procedure;
+            }
+            else
+            {
+                procedures.Insert(0, procedure);
+            }
+
+            _ = _localStorage.SetItemAsync(PROCEDURES_KEY, procedures);
+            return procedure;
         }
     }
 
@@ -105,21 +159,39 @@ public class PlataformaServiciosMockService
 
             procedureTypes = new List<PsProcedureTypeDto>
             {
-                new() { Code = "RUC-UPD", Name = "Actualización de datos RUC", ModuleName = "RUC", Department = "Atención RUC", RequiresRuc = true, DeadlineDays = 2, InitialStatus = "Recibido", Priority = "Alta" },
-                new() { Code = "RUC-ADD", Name = "Inclusión de contribuyente", ModuleName = "RUC", Department = "Atención RUC", RequiresRuc = true, DeadlineDays = 3, InitialStatus = "Recibido", Priority = "Normal" },
-                new() { Code = "RUC-MOD", Name = "Modificación de contribuyente", ModuleName = "RUC", Department = "Atención RUC", RequiresRuc = true, DeadlineDays = 3, InitialStatus = "Recibido", Priority = "Normal" },
-                new() { Code = "BI-DECL", Name = "Declaración de Bienes Inmuebles", ModuleName = "Bienes Inmuebles", Department = "Catastro", RequiresFinca = true, DeadlineDays = 5, InitialStatus = "En clasificación", Priority = "Normal" },
-                new() { Code = "BI-EXO", Name = "Solicitud de exoneración de Bienes Inmuebles", ModuleName = "Bienes Inmuebles", Department = "Catastro", RequiresFinca = true, DeadlineDays = 8, InitialStatus = "En clasificación", Priority = "Alta" },
-                new() { Code = "PAT-NEW", Name = "Solicitud de patente comercial", ModuleName = "Patentes", Department = "Plataforma de Servicios", RequiresPatent = true, RequiresDocuments = true, DeadlineDays = 7, InitialStatus = "Recibido", Priority = "Alta" },
-                new() { Code = "CONST-PER", Name = "Solicitud de permiso de construcción", ModuleName = "Permisos de Construcción", Department = "Ingeniería", RequiresFinca = true, DeadlineDays = 10, InitialStatus = "Recibido", Priority = "Alta" },
-                new() { Code = "MERC-LOC", Name = "Solicitud relacionada con Mercado Municipal", ModuleName = "Mercado Municipal", Department = "Mercado", DeadlineDays = 4, InitialStatus = "Recibido", Priority = "Normal" },
-                new() { Code = "CERT-REQ", Name = "Solicitud de certificación", ModuleName = "Plataforma de Servicios", Department = "Secretaría", DeadlineDays = 2, InitialStatus = "Recibido", Priority = "Normal" },
-                new() { Code = "CORR-REC", Name = "Recepción de documentos y correspondencia", ModuleName = "Plataforma de Servicios", Department = "Correspondencia", DeadlineDays = 1, InitialStatus = "Recibido", Priority = "Normal" },
-                new() { Code = "REV-REV", Name = "Recurso de revocatoria", ModuleName = "Plataforma de Servicios", Department = "Secretaría", DeadlineDays = 5, InitialStatus = "En clasificación", Priority = "Alta" },
-                new() { Code = "REV-APL", Name = "Recurso de apelación", ModuleName = "Plataforma de Servicios", Department = "Secretaría", DeadlineDays = 5, InitialStatus = "En clasificación", Priority = "Alta" },
-                new() { Code = "REV-SUB", Name = "Recurso de revocatoria con apelación en subsidio", ModuleName = "Plataforma de Servicios", Department = "Secretaría", DeadlineDays = 6, InitialStatus = "En clasificación", Priority = "Urgente" },
-                new() { Code = "COMP-REF", Name = "Solicitud de compensación", ModuleName = "Plataforma de Servicios", Department = "Tesorería", DeadlineDays = 4, InitialStatus = "Recibido", Priority = "Normal" },
-                new() { Code = "DEV-REF", Name = "Solicitud de devolución", ModuleName = "Plataforma de Servicios", Department = "Tesorería", DeadlineDays = 4, InitialStatus = "Recibido", Priority = "Normal" }
+                // Facturación y cobros
+                new() { Id = "1", Code = "ALTO-ALC", Name = "Alto Monto Alcantarillado Sanitario o Reclamo por Cobro Tanque Séptico", Description = "Estudio solicitado cuando el contribuyente presenta dudas sobre el cobro del servicio de alcantarillado sanitario o tanque séptico.", Category = "Facturación y cobros", RequiresServiceAccount = true, TargetDepartment = "Acueductos", EstimatedDays = 5, Active = true },
+                new() { Id = "2", Code = "ALTO-AGUA", Name = "Alto monto agua", Description = "Inspección para analizar dudas sobre el consumo facturado cuando la lectura presenta una desviación significativa sobre el límite superior o promedio del abonado.", Category = "Facturación y cobros", RequiresServiceAccount = true, RequiresInspection = true, RequiresMeter = true, TargetDepartment = "Acueductos", EstimatedDays = 5, Active = true },
+                new() { Id = "3", Code = "ALTO-BASURA", Name = "Alto Monto de Basura", Description = "Estudio para verificar el uso de la propiedad o las unidades servidas según la actividad económica utilizada para calcular recolección y tratamiento de residuos.", Category = "Facturación y cobros", RequiresProperty = true, RequiresInspection = true, TargetDepartment = "Catastro", EstimatedDays = 7, Active = true },
+                new() { Id = "4", Code = "ALTO-VIAS", Name = "Alto monto limpieza de vías", Description = "Verificación del valor imponible del inmueble utilizado para determinar el cobro del servicio de limpieza de vías.", Category = "Facturación y cobros", RequiresProperty = true, TargetDepartment = "Catastro", EstimatedDays = 5, Active = true },
+                new() { Id = "5", Code = "ALTO-PARQUES", Name = "Alto monto mantenimiento de parques", Description = "Verificación del valor imponible del inmueble utilizado para determinar el cobro del servicio de mantenimiento de parques.", Category = "Facturación y cobros", RequiresProperty = true, TargetDepartment = "Catastro", EstimatedDays = 5, Active = true },
+                new() { Id = "6", Code = "CTA-DUP", Name = "Cuentas duplicadas", Description = "Estudio solicitado cuando el contribuyente considera que existe duplicidad en el cobro de servicios.", Category = "Facturación y cobros", RequiresServiceAccount = true, TargetDepartment = "Acueductos", EstimatedDays = 5, Active = true },
+                new() { Id = "7", Code = "REC-TANQUE", Name = "Reclamo tanque séptico", Description = "Consulta sobre el origen y fundamento del cobro por tanque séptico.", Category = "Facturación y cobros", RequiresServiceAccount = true, TargetDepartment = "Acueductos", EstimatedDays = 3, Active = true },
+                new() { Id = "8", Code = "REC-SERV", Name = "Reclamo por no prestación de servicio", Description = "Estudio solicitado cuando el contribuyente considera que uno o varios servicios cobrados no se están brindando.", Category = "Facturación y cobros", RequiresServiceAccount = true, TargetDepartment = "Tesorería", EstimatedDays = 5, Active = true },
+                new() { Id = "9", Code = "SEG-RUBROS", Name = "Segregación de rubros", Description = "Separación de los diferentes rubros o servicios que integran la factura municipal.", Category = "Facturación y cobros", RequiresServiceAccount = true, TargetDepartment = "Tesorería", EstimatedDays = 4, Active = true },
+                new() { Id = "10", Code = "VER-MEDIDAS", Name = "Verificación de medidas", Description = "Verificación de las medidas utilizadas para determinar el cobro del servicio de limpieza de vías.", Category = "Facturación y cobros", RequiresProperty = true, RequiresInspection = true, TargetDepartment = "Catastro", EstimatedDays = 7, Active = true },
+                // Agua potable y medidores
+                new() { Id = "11", Code = "AMP-PLAZO", Name = "Ampliación de plazo de reparación de fuga", Description = "Solicitud de un plazo adicional al otorgado por la administración para reparar una fuga interna.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresMeter = true, TargetDepartment = "Acueductos", EstimatedDays = 2, Active = true },
+                new() { Id = "12", Code = "CAM-CAT", Name = "Cambio de categoría", Description = "Cambio de categoría de los servicios según el uso de suelo autorizado en el Plan Regulador.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresProperty = true, TargetDepartment = "Acueductos", EstimatedDays = 5, Active = true },
+                new() { Id = "13", Code = "CAM-MED", Name = "Cambio de medidor", Description = "Sustitución del hidrómetro utilizado para medir el consumo de agua potable.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresMeter = true, RequiresInspection = true, TargetDepartment = "Acueductos", EstimatedDays = 10, Active = true },
+                new() { Id = "14", Code = "FIJO-MED", Name = "Cambio de tipo de fijo a medido", Description = "Instalación de medidor en una cuenta que actualmente se factura mediante tarifa fija.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresInspection = true, TargetDepartment = "Acueductos", EstimatedDays = 10, Active = true },
+                new() { Id = "15", Code = "DESCON", Name = "Desconexión del servicio", Description = "Eliminación total de la conexión del servicio de agua de la red municipal.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresAccountUpToDate = true, RequiresInspection = true, Requirements = new List<string> { "Cuenta al día", "Documento de identidad del titular" }, TargetDepartment = "Acueductos", EstimatedDays = 5, Active = true },
+                new() { Id = "16", Code = "ELIM-PEND", Name = "Eliminación del pendiente", Description = "Solicitud para eliminar un cobro de agua aplicado a construcciones nuevas o independizaciones donde el servicio no ha sido instalado.", Category = "Agua potable y medidores", RequiresServiceAccount = true, TargetDepartment = "Acueductos", EstimatedDays = 5, Active = true },
+                new() { Id = "17", Code = "FUGA-MED", Name = "Fuga en medidor", Description = "Inspección para determinar una salida o escape accidental en el conducto por donde circula el agua.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresMeter = true, RequiresInspection = true, TargetDepartment = "Acueductos", EstimatedDays = 5, Active = true },
+                new() { Id = "18", Code = "INDEP-PAJA", Name = "Independización de paja de agua", Description = "Solicitud de una conexión adicional para separar el servicio.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresProperty = true, RequiresInspection = true, TargetDepartment = "Acueductos", EstimatedDays = 15, Active = true },
+                new() { Id = "19", Code = "LOC-MED", Name = "Localizar medidor", Description = "Solicitud para determinar la ubicación física del medidor.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresMeter = true, RequiresInspection = true, TargetDepartment = "Acueductos", EstimatedDays = 3, Active = true },
+                new() { Id = "20", Code = "MED-INV", Name = "Medidor invertido", Description = "Inspección para determinar una posible confusión entre cuentas y medidores en propiedades que poseen más de un servicio de agua autorizado.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresMeter = true, RequiresInspection = true, TargetDepartment = "Acueductos", EstimatedDays = 5, Active = true },
+                new() { Id = "21", Code = "PAJA-CONST", Name = "Paja de agua adicional con permiso de construcción", Description = "Solicitud de conexión adicional asociada a un permiso de construcción vigente.", Category = "Agua potable y medidores", RequiresBuildingPermit = true, RequiresProperty = true, RequiresInspection = true, TargetDepartment = "Acueductos", EstimatedDays = 10, Active = true },
+                new() { Id = "22", Code = "MED-NIVEL", Name = "Poner medidor a nivel", Description = "Solicitud para colocar la caja del medidor al nivel de la acera.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresMeter = true, RequiresInspection = true, TargetDepartment = "Acueductos", EstimatedDays = 10, Active = true },
+                new() { Id = "23", Code = "TOMA-LECT", Name = "Toma de lectura", Description = "Inspección para realizar una nueva lectura y validar si la lectura registrada por la municipalidad es correcta.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresMeter = true, RequiresInspection = true, TargetDepartment = "Acueductos", EstimatedDays = 3, Active = true },
+                new() { Id = "24", Code = "TRASL-SERV", Name = "Traslado o reubicación del servicio", Description = "Reubicación de la caja y el medidor de un lugar a otro.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresMeter = true, RequiresInspection = true, TargetDepartment = "Acueductos", EstimatedDays = 15, Active = true },
+                new() { Id = "25", Code = "VER-FUGA", Name = "Verificación de fuga interna reparada", Description = "Reinspección para confirmar que el suscriptor reparó una fuga interna previamente detectada.", Category = "Agua potable y medidores", RequiresServiceAccount = true, RequiresMeter = true, RequiresInspection = true, TargetDepartment = "Acueductos", EstimatedDays = 5, Active = true },
+                // Propiedad y titularidad
+                new() { Id = "26", Code = "CAM-TIT", Name = "Cambio de nombre del titular de la cuenta", Description = "Actualización del titular cuando la propiedad ha sido traspasada en el Registro Nacional.", Category = "Propiedad y titularidad", RequiresServiceAccount = true, Requirements = new List<string> { "Documento de identidad", "Cuando existan varios derechos, autorización expresa", "Nombre, identificación y firma de propietarios", "Copias de documentos de identificación vigentes" }, TargetDepartment = "Tesorería", EstimatedDays = 3, Active = true },
+                new() { Id = "27", Code = "DEMOL", Name = "Demolición", Description = "Inspección para determinar la eliminación física parcial o total de un inmueble.", Category = "Propiedad y titularidad", RequiresProperty = true, RequiresInspection = true, TargetDepartment = "Catastro", EstimatedDays = 5, Active = true },
+                new() { Id = "28", Code = "INM-DESH", Name = "Inmueble sin uso, deshabitado o inhabitable", Description = "Inspección para determinar que el inmueble no está siendo utilizado.", Category = "Propiedad y titularidad", RequiresProperty = true, RequiresInspection = true, TargetDepartment = "Catastro", EstimatedDays = 5, Active = true },
+                new() { Id = "29", Code = "LOTE-BALD", Name = "Lote baldío", Description = "Inspección para determinar que la propiedad no cuenta con edificación o construcción.", Category = "Propiedad y titularidad", RequiresProperty = true, RequiresInspection = true, TargetDepartment = "Catastro", EstimatedDays = 5, Active = true },
+                new() { Id = "30", Code = "SEG-PROP", Name = "Segregación de propiedad", Description = "Verificación de conexiones en una finca segregada para identificar la relación entre la finca original y la nueva finca.", Category = "Propiedad y titularidad", RequiresProperty = true, RequiresInspection = true, TargetDepartment = "Catastro", EstimatedDays = 7, Active = true }
             };
 
             var applicantPool = new[]
@@ -127,7 +199,7 @@ public class PlataformaServiciosMockService
                 new PsApplicantDto { Identification = "1-2345-6789", Name = "Comercial El Parque S.A.", PersonType = "Jurídica", Phone = "2222-1111", Email = "contacto@elparque.cr", FiscalAddress = "San José, Barrio Escalante", PreferredNotification = "Correo", RucStatus = "Validado", RucQuality = "Completo", ExistsInRuc = true },
                 new PsApplicantDto { Identification = "2-1111-2222", Name = "María Pérez López", PersonType = "Física", Phone = "8888-4444", Email = "maria.perez@mail.cr", FiscalAddress = "Heredia centro", PreferredNotification = "Plataforma digital", RucStatus = "Pendiente validar RUC", RucQuality = "Parcial", ExistsInRuc = false },
                 new PsApplicantDto { Identification = "3-3333-4444", Name = "Constructora del Norte S.R.L.", PersonType = "Jurídica", Phone = "2277-3344", Email = "info@cnorte.cr", FiscalAddress = "Alajuela, Grecia", PreferredNotification = "SMS", RucStatus = "Validado", RucQuality = "Completo", ExistsInRuc = true },
-                new PsApplicantDto { Identification = "4-5555-6666", Name = "Inversiones del Valle S.A.", PersonType = "Jurídica", Phone = "2299-1010", Email = "valle@demo.cr", FiscalAddress = "Cartago, Centro", PreferredNotification = "Correo", RucStatus = "Validado", RucQuality = "Completo", ExistsInRuc = true },
+                new PsApplicantDto { Identification = "4-5555-6666", Name = "Inversiones del Valle S.A.", PersonType = "Jurídica", Phone = "2299-1010", Email = "contacto@inversionesvalle.cr", FiscalAddress = "Cartago, Centro", PreferredNotification = "Correo", RucStatus = "Validado", RucQuality = "Completo", ExistsInRuc = true },
                 new PsApplicantDto { Identification = "5-7777-8888", Name = "Juan Carlos Ramírez", PersonType = "Física", Phone = "8877-6655", Email = "juan.ramirez@mail.cr", FiscalAddress = "Puntarenas centro", PreferredNotification = "SMS", RucStatus = "Pendiente validar RUC", RucQuality = "Parcial", ExistsInRuc = false },
                 new PsApplicantDto { Identification = "6-9999-0000", Name = "Mercados del Pacífico S.A.", PersonType = "Jurídica", Phone = "2211-3344", Email = "contacto@mercados.cr", FiscalAddress = "Puntarenas, Barranca", PreferredNotification = "Plataforma digital", RucStatus = "Validado", RucQuality = "Completo", ExistsInRuc = true },
                 new PsApplicantDto { Identification = "7-1212-3434", Name = "Servicios Urbanos del Este", PersonType = "Jurídica", Phone = "2288-9988", Email = "servicios@este.cr", FiscalAddress = "Limón centro", PreferredNotification = "Correo", RucStatus = "Validado", RucQuality = "Completo", ExistsInRuc = true },

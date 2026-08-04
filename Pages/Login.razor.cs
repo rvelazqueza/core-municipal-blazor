@@ -16,7 +16,6 @@ public partial class Login
     [Inject] private ILoginSettingsService LoginSettingsService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
-    [Inject] private IJSRuntime JS { get; set; } = default!;
 
     private LoginSettingsDto settings = new();
     private LoginRequestDto loginRequest = new();
@@ -31,15 +30,10 @@ public partial class Login
     private string heroTitle = string.Empty;
     private string heroSubtitle = string.Empty;
     private string heroModulesSummary = string.Empty;
+    private string twoFactorHelperText = string.Empty;
     private string heroBackgroundStyle = "min-height:100vh;";
     private string heroImagePanelStyle = string.Empty;
     private bool hasHeroImage;
-    private string demoUser = string.Empty;
-    private string demoPassword = string.Empty;
-    private string demoTwoFactorCode = string.Empty;
-    private string demoHelperText = string.Empty;
-    private string twoFactorHelperText = string.Empty;
-    private string demoCredentialsClipboard = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -60,10 +54,6 @@ public partial class Login
         {
             currentInitials = currentUser.Iniciales;
         }
-        else
-        {
-            UpdateInitials(demoUser);
-        }
     }
 
     private void ConfigureDisplayContent()
@@ -72,12 +62,7 @@ public partial class Login
         heroSubtitle = GetPreferredText(settings.HeroSubtitle, settings.Subtitulo, "Gestión tributaria municipal segura, trazable y digital.");
         heroModulesSummary = GetPreferredText(settings.HeroModulesSummary, settings.MensajeInformativo, "RUC, Bienes Inmuebles y Patentes integrados en una plataforma moderna para la operación municipal.");
 
-        demoUser = GetPreferredText(settings.DemoUser, "admin@municipal.go.cr");
-        demoPassword = GetPreferredText(settings.DemoPassword, "Admin123!Demo");
-        demoTwoFactorCode = GetPreferredText(settings.DemoTwoFactorCode, "123456");
-        demoHelperText = GetPreferredText(settings.DemoHelperText, "Use estas credenciales para acceso de prueba del sistema.");
-        twoFactorHelperText = $"Use el código {demoTwoFactorCode} para validar esta pantalla.";
-        demoCredentialsClipboard = $"Usuario: {demoUser}{Environment.NewLine}Contraseña: {demoPassword}{Environment.NewLine}Código 2FA: {demoTwoFactorCode}";
+        twoFactorHelperText = settings.HabilitarTwoFactor ? "Código de verificación de dos factores requerido para este acceso." : string.Empty;
         heroBenefits = BuildHeroBenefits();
         hasHeroImage = !string.IsNullOrWhiteSpace(GetPreferredText(settings.HeroImageUrl, settings.ImagenBienvenidaUrl));
         heroBackgroundStyle = BuildHeroBackgroundStyle();
@@ -88,7 +73,7 @@ public partial class Login
     {
         if (isLocked)
         {
-            SetFeedback("El acceso se encuentra bloqueado visualmente por seguridad.", Severity.Error);
+            SetFeedback("El acceso se encuentra bloqueado por seguridad.", Severity.Error);
             return;
         }
 
@@ -156,29 +141,23 @@ public partial class Login
         SetFeedback(response.Message, response.IsLocked ? Severity.Error : Severity.Warning);
     }
 
-    private void ApplyDemoCredentials()
+    private void SetFeedback(string message, Severity severity)
     {
-        loginRequest.UsuarioOCorreo = demoUser;
-        loginRequest.Contrasena = demoPassword;
-        loginRequest.Recordarme = true;
-        loginRequest.SolicitarTwoFactor = settings.HabilitarTwoFactor;
-        twoFactorRequest.Codigo = settings.HabilitarTwoFactor ? demoTwoFactorCode : string.Empty;
-        twoFactorRequest.UsuarioOCorreo = demoUser;
-        UpdateInitials(demoUser);
-        SetFeedback("Se cargaron las credenciales para acceso de prueba del sistema.", Severity.Info);
+        feedbackMessage = message;
+        feedbackSeverity = severity;
     }
 
-    private async Task CopyDemoCredentialsAsync()
+    private string GetPreferredText(params string[] values)
     {
-        try
+        foreach (var value in values)
         {
-            await JS.InvokeVoidAsync("navigator.clipboard.writeText", demoCredentialsClipboard);
-            Snackbar.Add("Credenciales copiadas al portapapeles.", Severity.Success, _ => { }, "login-demo-copy");
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
         }
-        catch
-        {
-            Snackbar.Add("No fue posible copiar automáticamente. Use la tarjeta de credenciales visible en pantalla.", Severity.Warning, _ => { }, "login-demo-copy-fallback");
-        }
+
+        return string.Empty;
     }
 
     private List<LoginHeroBenefitModel> BuildHeroBenefits()
@@ -224,41 +203,5 @@ public partial class Login
         }
 
         return $"background-image: linear-gradient(180deg, rgba(4, 15, 32, 0.18), rgba(4, 15, 32, 0.58)), url('{configuredImage}'); background-size: cover; background-position: center;";
-    }
-
-    private static string GetPreferredText(params string[] values)
-    {
-        foreach (var value in values)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                return value.Trim();
-            }
-        }
-
-        return string.Empty;
-    }
-
-    private void UpdateInitials(string value)
-    {
-        var normalized = value?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            currentInitials = "CM";
-            return;
-        }
-
-        var source = normalized.Contains("@", StringComparison.Ordinal)
-            ? normalized.Split('@', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? normalized
-            : normalized;
-
-        var initials = new string(source.Where(char.IsLetterOrDigit).Take(2).ToArray()).ToUpperInvariant();
-        currentInitials = string.IsNullOrWhiteSpace(initials) ? "CM" : initials;
-    }
-
-    private void SetFeedback(string message, Severity severity)
-    {
-        feedbackMessage = message;
-        feedbackSeverity = severity;
     }
 }

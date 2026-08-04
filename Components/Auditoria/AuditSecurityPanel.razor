@@ -1,46 +1,205 @@
 @using BlazorApp.Models.Auditoria
+@using BlazorApp.Helpers
+@using MudBlazor
+@inject DocumentExportHelper DocumentExportHelper
 
 <MudPaper Outlined="true" Class="pa-4">
-    <MudStack Spacing="2">
+    <MudStack Spacing="3">
         <div class="d-flex flex-wrap justify-space-between align-center gap-2">
             <div>
                 <MudText Typo="Typo.h6">Auditoría de seguridad</MudText>
                 <MudText Typo="Typo.body2" Class="mud-text-secondary">Eventos de autenticación, acceso y protección institucional.</MudText>
             </div>
-            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{Events.Count()} eventos")</MudChip>
+            <MudStack Row="true" Spacing="1">
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{filteredEvents.Count()} de {Events.Count()} eventos")</MudChip>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="ExportPdfAsync" Size="Size.Small" Disabled="@(filteredEvents.Count() == 0)">PDF</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintDocumentAsync" Size="Size.Small" Disabled="@(filteredEvents.Count() == 0)">Imprimir</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportHtmlAsync" Size="Size.Small" Disabled="@(filteredEvents.Count() == 0)">HTML</MudButton>
+            </MudStack>
         </div>
 
-        <MudTable T="AuditSecurityEventDto" Items="@Events" Hover="true" Breakpoint="Breakpoint.Sm">
-            <HeaderContent>
-                <MudTh>Usuario</MudTh>
-                <MudTh>Fecha</MudTh>
-                <MudTh>IP</MudTh>
-                <MudTh>Dispositivo</MudTh>
-                <MudTh>Navegador</MudTh>
-                <MudTh>Acción</MudTh>
-                <MudTh>Resultado</MudTh>
-                <MudTh>Acción tomada</MudTh>
-                <MudTh>Severidad</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Usuario">@context.UserName</MudTd>
-                <MudTd DataLabel="Fecha">@context.EventDate.ToString("dd/MM/yyyy HH:mm")</MudTd>
-                <MudTd DataLabel="IP">@context.IpAddress</MudTd>
-                <MudTd DataLabel="Dispositivo">@context.Device</MudTd>
-                <MudTd DataLabel="Navegador">@context.Browser</MudTd>
-                <MudTd DataLabel="Acción">@context.Action</MudTd>
-                <MudTd DataLabel="Resultado">@context.ResultMessage</MudTd>
-                <MudTd DataLabel="Acción tomada">@context.SecurityActionTaken</MudTd>
-                <MudTd DataLabel="Severidad">
-                    <MudChip T="string" Color="@GetSeverityColor(context.Severity)" Variant="Variant.Outlined" Size="Size.Small">@context.Severity</MudChip>
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
+        @if (!string.IsNullOrWhiteSpace(dateRangeError))
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true">@dateRangeError</MudAlert>
+        }
+
+        <MudExpansionPanels>
+            <MudExpansionPanel Text="Filtros de búsqueda">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField T="string" @bind-Value="filterUser" Label="Usuario" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect T="string" @bind-Value="filterAction" Label="Tipo de evento" Variant="Variant.Outlined" Dense="true" Clearable="true">
+                            @foreach (var action in eventActions)
+                            {
+                                <MudSelectItem Value="@action">@action</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect T="string" @bind-Value="filterSeverity" Label="Severidad" Variant="Variant.Outlined" Dense="true" Clearable="true">
+                            @foreach (var severity in severityOptions)
+                            {
+                                <MudSelectItem Value="@severity">@severity</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect T="string" @bind-Value="filterResult" Label="Resultado" Variant="Variant.Outlined" Dense="true" Clearable="true">
+                            @foreach (var result in resultOptions)
+                            {
+                                <MudSelectItem Value="@result">@result</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField T="string" @bind-Value="filterIpAddress" Label="Dirección IP" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudDatePicker Label="Fecha desde" @bind-Date="filterDateFrom" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudDatePicker Label="Fecha hasta" @bind-Date="filterDateTo" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3" Class="d-flex align-center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="ApplyFiltersAsync" FullWidth="true">Buscar</MudButton>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3" Class="d-flex align-center">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Clear" OnClick="ClearFiltersAsync" FullWidth="true">Limpiar</MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+
+        @if (filteredEvents.Any())
+        {
+            <MudTable T="AuditSecurityEventDto" Items="@filteredEvents" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
+                <HeaderContent>
+                    <MudTh>Usuario</MudTh>
+                    <MudTh>Fecha</MudTh>
+                    <MudTh>IP</MudTh>
+                    <MudTh>Dispositivo</MudTh>
+                    <MudTh>Navegador</MudTh>
+                    <MudTh>Acción</MudTh>
+                    <MudTh>Resultado</MudTh>
+                    <MudTh>Acción tomada</MudTh>
+                    <MudTh>Severidad</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Usuario">@context.UserName</MudTd>
+                    <MudTd DataLabel="Fecha">@context.EventDate.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                    <MudTd DataLabel="IP">@context.IpAddress</MudTd>
+                    <MudTd DataLabel="Dispositivo">@context.Device</MudTd>
+                    <MudTd DataLabel="Navegador">@context.Browser</MudTd>
+                    <MudTd DataLabel="Acción">@context.Action</MudTd>
+                    <MudTd DataLabel="Resultado">@context.ResultMessage</MudTd>
+                    <MudTd DataLabel="Acción tomada">@context.SecurityActionTaken</MudTd>
+                    <MudTd DataLabel="Severidad">
+                        <MudChip T="string" Color="@GetSeverityColor(context.Severity)" Variant="Variant.Outlined" Size="Size.Small">@context.Severity</MudChip>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                No se encontraron eventos con los criterios seleccionados.
+            </MudAlert>
+        }
     </MudStack>
 </MudPaper>
 
 @code {
     [Parameter, EditorRequired] public IEnumerable<AuditSecurityEventDto> Events { get; set; } = Array.Empty<AuditSecurityEventDto>();
+
+    private IEnumerable<AuditSecurityEventDto> filteredEvents = Array.Empty<AuditSecurityEventDto>();
+    private string? filterUser;
+    private string? filterAction;
+    private string? filterSeverity;
+    private string? filterResult;
+    private string? filterIpAddress;
+    private DateTime? filterDateFrom;
+    private DateTime? filterDateTo;
+    private string? dateRangeError;
+
+    private readonly string[] eventActions = { "Inicio de sesión", "Cierre de sesión", "Validación de segundo factor", "Acceso denegado", "Cuenta bloqueada", "Cambio de contraseña", "Permiso insuficiente" };
+    private readonly string[] severityOptions = { "Crítico", "Error", "Advertencia", "Éxito", "Info" };
+    private readonly string[] resultOptions = { "Exitoso", "Fallido", "Bloqueado", "Rechazado" };
+
+    protected override void OnParametersSet()
+    {
+        ApplyFilters();
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        if (filterDateFrom.HasValue && filterDateTo.HasValue && filterDateFrom.Value > filterDateTo.Value)
+        {
+            dateRangeError = "La fecha inicial no puede ser posterior a la fecha final.";
+            return;
+        }
+
+        dateRangeError = null;
+        ApplyFilters();
+        await Task.CompletedTask;
+    }
+
+    private void ApplyFilters()
+    {
+        var result = Events.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(filterUser))
+        {
+            result = result.Where(e => e.UserName.Contains(filterUser, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterAction))
+        {
+            result = result.Where(e => e.Action.Equals(filterAction, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterSeverity))
+        {
+            result = result.Where(e => e.Severity.Equals(filterSeverity, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterResult))
+        {
+            result = result.Where(e => e.ResultMessage.Contains(filterResult, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterIpAddress))
+        {
+            result = result.Where(e => e.IpAddress.Contains(filterIpAddress, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (filterDateFrom.HasValue)
+        {
+            result = result.Where(e => e.EventDate >= filterDateFrom.Value.Date);
+        }
+
+        if (filterDateTo.HasValue)
+        {
+            result = result.Where(e => e.EventDate <= filterDateTo.Value.Date.AddDays(1).AddSeconds(-1));
+        }
+
+        filteredEvents = result.OrderByDescending(e => e.EventDate).ToList();
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        filterUser = null;
+        filterAction = null;
+        filterSeverity = null;
+        filterResult = null;
+        filterIpAddress = null;
+        filterDateFrom = null;
+        filterDateTo = null;
+        dateRangeError = null;
+        ApplyFilters();
+        await Task.CompletedTask;
+    }
 
     private static Color GetSeverityColor(string severity) => severity switch
     {
@@ -50,4 +209,78 @@
         "Éxito" => Color.Success,
         _ => Color.Info
     };
+
+    private async Task ExportHtmlAsync()
+    {
+        var content = BuildSecurityDocument();
+        var fileName = $"Auditoria_Seguridad_{DateTime.Today:yyyy-MM-dd}.html";
+        await DocumentExportHelper.ExportAsHtmlAsync(content, fileName);
+    }
+
+    private async Task PrintDocumentAsync()
+    {
+        var content = BuildSecurityDocument();
+        await DocumentExportHelper.PrintHtmlAsync(content);
+    }
+
+    private async Task ExportPdfAsync()
+    {
+        var content = BuildSecurityDocument();
+        var fileName = $"Auditoria_Seguridad_{DateTime.Today:yyyy-MM-dd}.pdf";
+        await DocumentExportHelper.ExportAsPdfAsync(content, fileName);
+    }
+
+    private string BuildSecurityDocument()
+    {
+        var sb = new System.Text.StringBuilder();
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Filtros aplicados</div>");
+        if (!string.IsNullOrWhiteSpace(filterUser))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Usuario:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(filterUser));
+        }
+        if (!string.IsNullOrWhiteSpace(filterAction))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Tipo de evento:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(filterAction));
+        }
+        if (!string.IsNullOrWhiteSpace(filterSeverity))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Severidad:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(filterSeverity));
+        }
+        if (filterDateFrom.HasValue)
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Fecha desde:</span><span class='field-value'>{0}</span></div>", filterDateFrom.Value.ToString("dd/MM/yyyy"));
+        }
+        if (filterDateTo.HasValue)
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Fecha hasta:</span><span class='field-value'>{0}</span></div>", filterDateTo.Value.ToString("dd/MM/yyyy"));
+        }
+        sb.AppendFormat("<div class='field'><span class='field-label'>Total eventos:</span><span class='field-value'>{0}</span></div>", filteredEvents.Count());
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Eventos de Seguridad</div>");
+        sb.Append("<table>");
+        sb.Append("<thead><tr><th>Usuario</th><th>Fecha</th><th>IP</th><th>Dispositivo</th><th>Acción</th><th>Resultado</th><th>Severidad</th></tr></thead>");
+        sb.Append("<tbody>");
+        foreach (var evt in filteredEvents)
+        {
+            sb.Append("<tr>");
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.UserName));
+            sb.AppendFormat("<td>{0}</td>", evt.EventDate.ToString("dd/MM/yyyy HH:mm"));
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.IpAddress));
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.Device));
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.Action));
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.ResultMessage));
+            sb.AppendFormat("<td><span class='badge badge-{0}'>{1}</span></td>",
+                evt.Severity == "Éxito" ? "success" : evt.Severity == "Advertencia" ? "warning" : evt.Severity == "Crítico" || evt.Severity == "Error" ? "error" : "info",
+                Helpers.DocumentExportHelper.HtmlEncode(evt.Severity));
+            sb.Append("</tr>");
+        }
+        sb.Append("</tbody></table>");
+        sb.Append("</div>");
+
+        return Helpers.DocumentExportHelper.BuildMunicipalDocument("Auditoría de Seguridad", $"Reporte {DateTime.Today:dd/MM/yyyy}", sb.ToString());
+    }
 }

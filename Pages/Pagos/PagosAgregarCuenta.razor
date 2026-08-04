@@ -1,0 +1,268 @@
+@page "/pagos/agregar-cuenta"
+@using BlazorApp.Models.Pagos
+@using BlazorApp.Services.Pagos
+@using BlazorApp.Shared
+@using BlazorApp.Helpers
+@using MudBlazor
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject PagosMockService DataService
+
+<PageTitleBar Title="Vincular cuenta" Subtitle="Agregue una cuenta municipal para consultas y pagos rápidos" />
+
+<MudGrid Spacing="2">
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="2" Class="mb-3">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Consulta de cuenta</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6">
+                        <MudSelect T="string" @bind-Value="searchType" Label="Buscar por" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            <MudSelectItem Value="@("numero")">Número de cuenta</MudSelectItem>
+                            <MudSelectItem Value="@("cedula")">Cédula del contribuyente</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField T="string" @bind-Value="searchValue" Label="Identificador" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="@SearchAccountAsync">Buscar</MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        @if (selectedAccount != null)
+        {
+            <MudCard Elevation="2" Class="mb-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Datos de la cuenta</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2">Cuenta:</MudText>
+                            <MudText Typo="Typo.body1">@selectedAccount.AccountNumber</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2">Estado:</MudText>
+                            <MudChip T="string" Color="@(selectedAccount.AccountStatus == "Activa" ? Color.Success : Color.Default)" Size="Size.Small">@selectedAccount.AccountStatus</MudChip>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2">Contribuyente:</MudText>
+                            <MudText Typo="Typo.body1">@selectedAccount.ContributorName</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2">Cédula:</MudText>
+                            <MudText Typo="Typo.body1">@selectedAccount.ContributorId</MudText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.body2">Dirección:</MudText>
+                            <MudText Typo="Typo.body1">@selectedAccount.PropertyAddress</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2">Finca:</MudText>
+                            <MudText Typo="Typo.body1">@selectedAccount.FincaNumber</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2">Saldo pendiente:</MudText>
+                            <MudText Typo="Typo.body1">@CurrencyHelper.FormatColones(selectedAccount.PendingAmount)</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Opciones de vinculación</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudCheckBox T="bool" @bind-Value="isDefault" Color="Color.Primary">
+                        Establecer como cuenta predeterminada
+                    </MudCheckBox>
+                    <MudText Typo="Typo.caption" Class="mt-2">
+                        La cuenta predeterminada se mostrará automáticamente al acceder al módulo de pagos.
+                    </MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Link" OnClick="@LinkAccountAsync" Disabled="@isProcessing">Vincular cuenta</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Clear" OnClick="@ClearAsync">Cancelar</MudButton>
+                </MudCardActions>
+            </MudCard>
+        }
+    </MudItem>
+
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Cuentas vinculadas</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (linkedAccounts.Any())
+                {
+                    <MudList T="string" Dense="true">
+                        @foreach (var account in linkedAccounts)
+                        {
+                            <MudListItem>
+                                <div class="d-flex flex-column">
+                                    <div class="d-flex justify-space-between align-center">
+                                        <MudText Typo="Typo.body1">@account.AccountNumber</MudText>
+                                        @if (account.IsDefault)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Primary">Predeterminada</MudChip>
+                                        }
+                                    </div>
+                                    <MudText Typo="Typo.caption">@account.ContributorName</MudText>
+                                    <div class="d-flex gap-1 mt-1">
+                                        <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Delete" OnClick="@(() => UnlinkAccountAsync(account.AccountNumber))">Desvincular</MudButton>
+                                    </div>
+                                </div>
+                            </MudListItem>
+                            <MudDivider />
+                        }
+                    </MudList>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Align="Align.Center" Class="py-4">
+                        No hay cuentas vinculadas
+                    </MudText>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string searchType = "numero";
+    private string searchValue = string.Empty;
+    private MunicipalAccountDto? selectedAccount;
+    private bool isDefault = false;
+    private bool isProcessing = false;
+    private List<LinkedAccountDto> linkedAccounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLinkedAccountsAsync();
+    }
+
+    private async Task LoadLinkedAccountsAsync()
+    {
+        linkedAccounts = await DataService.GetLinkedAccountsAsync();
+    }
+
+    private async Task SearchAccountAsync()
+    {
+        if (string.IsNullOrWhiteSpace(searchValue))
+        {
+            Snackbar.Add("Ingrese un identificador válido.", Severity.Warning);
+            return;
+        }
+
+        MunicipalAccountDto? account = null;
+
+        if (searchType == "numero")
+        {
+            account = await DataService.GetAccountByNumberAsync(searchValue);
+        }
+        else
+        {
+            account = await DataService.GetAccountByContributorIdAsync(searchValue);
+        }
+
+        if (account == null)
+        {
+            Snackbar.Add("No se encontró ninguna cuenta con el identificador proporcionado.", Severity.Warning);
+            selectedAccount = null;
+            return;
+        }
+
+        if (linkedAccounts.Any(la => la.AccountNumber == account.AccountNumber))
+        {
+            Snackbar.Add("Esta cuenta ya está vinculada.", Severity.Warning);
+            selectedAccount = null;
+            return;
+        }
+
+        selectedAccount = account;
+        isDefault = !linkedAccounts.Any();
+        Snackbar.Add("Cuenta consultada correctamente.", Severity.Success);
+    }
+
+    private async Task LinkAccountAsync()
+    {
+        if (selectedAccount == null)
+        {
+            Snackbar.Add("Seleccione una cuenta válida.", Severity.Warning);
+            return;
+        }
+
+        isProcessing = true;
+
+        try
+        {
+            var linkedAccount = new LinkedAccountDto
+            {
+                AccountNumber = selectedAccount.AccountNumber,
+                ContributorId = selectedAccount.ContributorId,
+                ContributorName = selectedAccount.ContributorName,
+                PropertyId = selectedAccount.PropertyId,
+                PropertyAddress = selectedAccount.PropertyAddress,
+                FincaNumber = selectedAccount.FincaNumber,
+                CurrentBalance = selectedAccount.CurrentBalance,
+                LastPaymentDate = selectedAccount.LastPaymentDate,
+                LinkedDate = DateTime.Now,
+                IsDefault = isDefault
+            };
+
+            await DataService.LinkAccountAsync(linkedAccount);
+
+            Snackbar.Add("Cuenta vinculada correctamente.", Severity.Success);
+
+            await LoadLinkedAccountsAsync();
+            await ClearAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al vincular la cuenta: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task UnlinkAccountAsync(string accountNumber)
+    {
+        var removed = await DataService.UnlinkAccountAsync(accountNumber);
+
+        if (removed)
+        {
+            Snackbar.Add("Cuenta desvinculada correctamente.", Severity.Success);
+            await LoadLinkedAccountsAsync();
+        }
+        else
+        {
+            Snackbar.Add("No se pudo desvincular la cuenta.", Severity.Error);
+        }
+    }
+
+    private Task ClearAsync()
+    {
+        selectedAccount = null;
+        searchValue = string.Empty;
+        isDefault = false;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

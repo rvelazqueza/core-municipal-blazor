@@ -18,5 +18,37 @@
 
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script>
+        window.downloadHtml = function(content, fileName) {
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        window.printHtml = function(content) {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(content);
+            printWindow.document.close();
+            printWindow.onload = function() {
+                printWindow.print();
+            };
+        };
+
+        window.printToPdf = function(content, fileName) {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(content);
+            printWindow.document.close();
+            printWindow.onload = function() {
+                printWindow.document.title = fileName.replace('.pdf', '');
+                printWindow.print();
+            };
+        };
+    </script>
 </body>
 </html>

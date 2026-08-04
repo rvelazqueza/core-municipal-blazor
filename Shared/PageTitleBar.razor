@@ -19,6 +19,11 @@
             {
                 <MudText Typo="Typo.body2" Class="cm-page-subtitle mt-1">@Subtitle</MudText>
             }
+
+            @if (!string.IsNullOrWhiteSpace(Description))
+            {
+                <MudText Typo="Typo.body2" Class="cm-page-description mt-2">@Description</MudText>
+            }
         </div>
 
         @if (Actions is not null)
@@ -33,6 +38,7 @@
 @code {
     [Parameter] public string Title { get; set; } = string.Empty;
     [Parameter] public string Subtitle { get; set; } = string.Empty;
+    [Parameter] public string Description { get; set; } = string.Empty;
     [Parameter] public List<BreadcrumbItem> Breadcrumbs { get; set; } = new();
     [Parameter] public RenderFragment? Actions { get; set; }
 }

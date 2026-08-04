@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using BlazorApp.Models;
 using BlazorApp.Services;
+using BlazorApp.Helpers;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -42,6 +43,7 @@ public partial class ContribuyenteCreateWizard
     private List<string> provincias = new();
     private List<string> cantones = new();
     private List<string> estadosCiviles = new();
+    private List<string> nacionalidades = new();
     private readonly List<string> estadosRelacion = ["Activo", "Pendiente", "Seguimiento"];
     private int currentStepIndex;
     private string currentStatus = "Borrador";
@@ -62,6 +64,7 @@ public partial class ContribuyenteCreateWizard
         provincias = await MaestroDatosService.GetProvinciasAsync();
         cantones = await MaestroDatosService.GetCantonesAsync();
         estadosCiviles = await MaestroDatosService.GetEstadosCivilesAsync();
+        nacionalidades = await MaestroDatosService.GetNacionalidadesAsync();
 
         Model.DireccionFiscal ??= new DireccionFiscalDto();
         Model.RepresentanteLegal ??= new RepresentanteLegalDto();
@@ -313,12 +316,12 @@ public partial class ContribuyenteCreateWizard
                     messages.Add("La dirección exacta es obligatoria.");
                 if (string.IsNullOrWhiteSpace(Model.Telefono))
                     messages.Add("El teléfono es obligatorio.");
-                else if (!Regex.IsMatch(Model.Telefono, @"^[0-9]{4}-?[0-9]{4}$"))
-                    messages.Add("El teléfono debe tener 8 dígitos.");
+                else if (!ValidationHelper.ValidarTelefono(Model.Telefono, out var telefonoError))
+                    messages.Add(telefonoError!);
                 if (string.IsNullOrWhiteSpace(Model.Correo))
                     messages.Add("El correo es obligatorio.");
-                else if (!new EmailAddressAttribute().IsValid(Model.Correo))
-                    messages.Add("El correo no tiene un formato válido.");
+                else if (!ValidationHelper.ValidarCorreo(Model.Correo, out var correoError))
+                    messages.Add(correoError!);
                 break;
             case 3:
                 if (Model.TipoPersona == "Juridica")
@@ -327,8 +330,8 @@ public partial class ContribuyenteCreateWizard
                         messages.Add("El representante legal es obligatorio para persona jurídica.");
                     if (string.IsNullOrWhiteSpace(Model.RepresentanteLegal.Identificacion))
                         messages.Add("La identificación del representante es obligatoria.");
-                    if (!string.IsNullOrWhiteSpace(Model.RepresentanteLegal.Correo) && !new EmailAddressAttribute().IsValid(Model.RepresentanteLegal.Correo))
-                        messages.Add("El correo del representante no tiene un formato válido.");
+                    if (!ValidationHelper.ValidarCorreo(Model.RepresentanteLegal.Correo, out var correoRepError) && !string.IsNullOrWhiteSpace(correoRepError))
+                        messages.Add(correoRepError);
                 }
                 if (string.IsNullOrWhiteSpace(Model.ActividadEconomica))
                     messages.Add("Seleccione la actividad económica.");
@@ -378,5 +381,18 @@ public partial class ContribuyenteCreateWizard
             items.Add($"Observaciones: {Model.Observaciones}");
 
         return items.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+    }
+
+    private Task<IEnumerable<string>> SearchNacionalidadAsync(string value, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(nacionalidades.AsEnumerable());
+
+        var normalized = value.Trim().ToLowerInvariant();
+        var results = nacionalidades
+            .Where(n => n.ToLowerInvariant().Contains(normalized))
+            .AsEnumerable();
+
+        return Task.FromResult(results);
     }
 }

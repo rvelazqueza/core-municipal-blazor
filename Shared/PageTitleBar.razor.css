@@ -9,11 +9,21 @@
     color: #0b1f3a;
     font-weight: 700;
     line-height: 1.15;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
 }
 
 .cm-page-subtitle {
     color: #5b6475;
     max-width: 880px;
+    line-height: 1.4;
+}
+
+.cm-page-description {
+    color: #64748b;
+    max-width: 920px;
+    line-height: 1.5;
 }
 
 ::deep .cm-page-breadcrumbs {

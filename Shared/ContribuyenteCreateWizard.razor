@@ -68,7 +68,7 @@
                         </MudItem>
                     }
                     <MudItem xs="12" md="6">
-                        <MudTextField T="string" @bind-Value="Model.Nacionalidad" Label="Nacionalidad" Variant="Variant.Outlined" />
+                        <MudAutocomplete T="string" @bind-Value="Model.Nacionalidad" Label="Nacionalidad" Variant="Variant.Outlined" SearchFunc="SearchNacionalidadAsync" Clearable="true" CoerceValue="true" Required="true" RequiredError="La nacionalidad es obligatoria" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudSelect T="string" @bind-Value="Model.EstadoContribuyente" Label="Estado del contribuyente" Variant="Variant.Outlined">
@@ -110,10 +110,10 @@
                         <MudTextField T="string" @bind-Value="Model.DireccionFiscal.DireccionExacta" Label="Dirección exacta" Variant="Variant.Outlined" Required="true" RequiredError="La dirección exacta es obligatoria" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudTextField T="string" @bind-Value="Model.Telefono" Label="Teléfono" Variant="Variant.Outlined" />
+                        <MudTextField T="string" @bind-Value="Model.Telefono" Label="Teléfono" Variant="Variant.Outlined" Placeholder="8888-8888" Required="true" RequiredError="El teléfono es obligatorio" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudTextField T="string" @bind-Value="Model.Correo" Label="Correo" Variant="Variant.Outlined" />
+                        <MudTextField T="string" @bind-Value="Model.Correo" Label="Correo" Variant="Variant.Outlined" Placeholder="correo@dominio.com" Required="true" RequiredError="El correo es obligatorio" InputType="InputType.Email" />
                     </MudItem>
                 </MudGrid>
                 break;
@@ -128,10 +128,10 @@
                             <MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Identificacion" Label="Identificación representante" Variant="Variant.Outlined" />
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Telefono" Label="Teléfono representante" Variant="Variant.Outlined" />
+                            <MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Telefono" Label="Teléfono representante" Variant="Variant.Outlined" Placeholder="8888-8888" />
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Correo" Label="Correo representante" Variant="Variant.Outlined" />
+                            <MudTextField T="string" @bind-Value="Model.RepresentanteLegal.Correo" Label="Correo representante" Variant="Variant.Outlined" Placeholder="correo@dominio.com" InputType="InputType.Email" />
                         </MudItem>
                     }
                     <MudItem xs="12" md="6">

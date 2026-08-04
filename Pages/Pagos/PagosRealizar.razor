@@ -1,0 +1,589 @@
+@page "/pagos/realizar"
+@using BlazorApp.Models.Pagos
+@using BlazorApp.Services.Pagos
+@using BlazorApp.Shared
+@using BlazorApp.Helpers
+@using MudBlazor
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject PagosMockService DataService
+@inject DocumentExportHelper ExportHelper
+
+<PageTitleBar Title="Realizar pago" Subtitle="Procese pagos de obligaciones municipales" />
+
+<MudGrid Spacing="2">
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="2" Class="mb-3">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Consulta de cuenta</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6">
+                        <MudSelect T="string" @bind-Value="searchType" Label="Buscar por" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            <MudSelectItem Value="@("numero")">Número de cuenta</MudSelectItem>
+                            <MudSelectItem Value="@("cedula")">Cédula del contribuyente</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField T="string" @bind-Value="searchValue" Label="Identificador" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="@SearchAccountAsync">Buscar</MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        @if (selectedAccount != null)
+        {
+            <MudCard Elevation="2" Class="mb-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Datos de la cuenta</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="1">
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2">Cuenta:</MudText>
+                            <MudText Typo="Typo.body1">@selectedAccount.AccountNumber</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2">Contribuyente:</MudText>
+                            <MudText Typo="Typo.body1">@selectedAccount.ContributorName</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2">Cédula:</MudText>
+                            <MudText Typo="Typo.body1">@selectedAccount.ContributorId</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2">Dirección:</MudText>
+                            <MudText Typo="Typo.body1">@selectedAccount.PropertyAddress</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+
+            <MudCard Elevation="2" Class="mb-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Obligaciones pendientes</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTable T="AccountObligationDto" Items="@selectedAccount.Obligations.Where(o => o.Status != @"Pagado")" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+                        <HeaderContent>
+                            <MudTh>Tipo</MudTh>
+                            <MudTh>Período</MudTh>
+                            <MudTh Style="text-align: right;">Monto</MudTh>
+                            <MudTh Style="text-align: right;">Pendiente</MudTh>
+                            <MudTh>Vencimiento</MudTh>
+                            <MudTh>Seleccionar</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Tipo">
+                                @context.PaymentTypeName
+                                @if (context.IsOverdue)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Text">Vencido</MudChip>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Período">@context.Period</MudTd>
+                            <MudTd DataLabel="Monto" Style="text-align: right;">@CurrencyHelper.FormatColones(context.TotalAmount)</MudTd>
+                            <MudTd DataLabel="Pendiente" Style="text-align: right;">@CurrencyHelper.FormatColones(context.PendingAmount)</MudTd>
+                            <MudTd DataLabel="Vencimiento">@context.DueDate.ToString("dd/MM/yyyy")</MudTd>
+                            <MudTd DataLabel="Seleccionar">
+                                <MudCheckBox T="bool" Value="@selectedObligations.Contains(context.Id)" ValueChanged="@((bool val) => ToggleObligation(context, val))" Color="Color.Primary" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+
+            @if (selectedObligations.Any())
+            {
+                <MudCard Elevation="2" Class="mb-3">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Método de pago</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudRadioGroup T="string" @bind-Value="paymentMethod">
+                            <MudRadio T="string" Value="@("Tarjeta")" Color="Color.Primary">Tarjeta de crédito/débito</MudRadio>
+                            <MudRadio T="string" Value="@("Transferencia bancaria")" Color="Color.Primary">Transferencia bancaria</MudRadio>
+                            <MudRadio T="string" Value="@("SINPE Móvil")" Color="Color.Primary">SINPE Móvil</MudRadio>
+                            <MudRadio T="string" Value="@("Efectivo")" Color="Color.Primary">Efectivo</MudRadio>
+                        </MudRadioGroup>
+
+                        @if (paymentMethod == "Tarjeta")
+                        {
+                            <MudGrid Spacing="2" Class="mt-3">
+                                <MudItem xs="12">
+                                    <MudTextField T="string" @bind-Value="cardNumber" Label="Número de tarjeta" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="19" Placeholder="#### #### #### ####" Error="@(!string.IsNullOrEmpty(cardNumberError))" ErrorText="@cardNumberError" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" @bind-Value="cardHolder" Label="Nombre del titular" Variant="Variant.Outlined" Margin="Margin.Dense" Error="@(!string.IsNullOrEmpty(cardHolderError))" ErrorText="@cardHolderError" />
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudTextField T="string" @bind-Value="cardExpiry" Label="Expiración (MM/AA)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="5" Placeholder="MM/AA" Error="@(!string.IsNullOrEmpty(cardExpiryError))" ErrorText="@cardExpiryError" />
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudTextField T="string" @bind-Value="cardCvv" Label="CVV" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="4" Placeholder="###" Error="@(!string.IsNullOrEmpty(cardCvvError))" ErrorText="@cardCvvError" InputType="InputType.Password" />
+                                </MudItem>
+                            </MudGrid>
+                        }
+                        else if (paymentMethod == "Transferencia bancaria")
+                        {
+                            <MudGrid Spacing="2" Class="mt-3">
+                                <MudItem xs="12">
+                                    <MudSelect T="string" @bind-Value="transferBank" Label="Banco" Variant="Variant.Outlined" Margin="Margin.Dense" Error="@(!string.IsNullOrEmpty(transferBankError))" ErrorText="@transferBankError">
+                                        <MudSelectItem Value="@("")">Seleccione un banco</MudSelectItem>
+                                        <MudSelectItem Value="@("Banco Nacional")">Banco Nacional</MudSelectItem>
+                                        <MudSelectItem Value="@("Banco de Costa Rica")">Banco de Costa Rica</MudSelectItem>
+                                        <MudSelectItem Value="@("Banco Popular")">Banco Popular</MudSelectItem>
+                                        <MudSelectItem Value="@("BAC")">BAC</MudSelectItem>
+                                        <MudSelectItem Value="@("Davivienda")">Davivienda</MudSelectItem>
+                                        <MudSelectItem Value="@("Scotiabank")">Scotiabank</MudSelectItem>
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" @bind-Value="transferReference" Label="Número de referencia" Variant="Variant.Outlined" Margin="Margin.Dense" Error="@(!string.IsNullOrEmpty(transferReferenceError))" ErrorText="@transferReferenceError" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudDatePicker @bind-Date="transferDate" Label="Fecha de transferencia" Variant="Variant.Outlined" Margin="Margin.Dense" Error="@(!string.IsNullOrEmpty(transferDateError))" ErrorText="@transferDateError" MaxDate="DateTime.Today" />
+                                </MudItem>
+                            </MudGrid>
+                        }
+                        else if (paymentMethod == "SINPE Móvil")
+                        {
+                            <MudGrid Spacing="2" Class="mt-3">
+                                <MudItem xs="12">
+                                    <MudTextField T="string" @bind-Value="sinpePhone" Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="9" Placeholder="####-####" Error="@(!string.IsNullOrEmpty(sinpePhoneError))" ErrorText="@sinpePhoneError" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" @bind-Value="sinpeReference" Label="Número de referencia" Variant="Variant.Outlined" Margin="Margin.Dense" Error="@(!string.IsNullOrEmpty(sinpeReferenceError))" ErrorText="@sinpeReferenceError" />
+                                </MudItem>
+                            </MudGrid>
+                        }
+                    </MudCardContent>
+                </MudCard>
+
+                <div class="d-flex gap-2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Payment" OnClick="@ProcessPaymentAsync" Disabled="@isProcessing">Procesar pago</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Clear" OnClick="@ClearSelectionAsync">Limpiar</MudButton>
+                </div>
+            }
+        }
+    </MudItem>
+
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="2" Outlined="true">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Resumen de pago</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (selectedObligations.Any() && selectedAccount != null)
+                {
+                    var selected = selectedAccount.Obligations.Where(o => selectedObligations.Contains(o.Id)).ToList();
+                    <MudList T="string" Dense="true">
+                        @foreach (var obl in selected)
+                        {
+                            <MudListItem>
+                                <div class="d-flex justify-space-between">
+                                    <MudText Typo="Typo.body2">@obl.PaymentTypeName</MudText>
+                                    <MudText Typo="Typo.body2">@CurrencyHelper.FormatColones(obl.PendingAmount)</MudText>
+                                </div>
+                            </MudListItem>
+                        }
+                    </MudList>
+                    <MudDivider Class="my-2" />
+                    <div class="d-flex justify-space-between">
+                        <MudText Typo="Typo.h6">Total:</MudText>
+                        <MudText Typo="Typo.h6">@CurrencyHelper.FormatColones(selected.Sum(o => o.PendingAmount))</MudText>
+                    </div>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2">Seleccione las obligaciones a pagar</MudText>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string searchType = "numero";
+    private string searchValue = string.Empty;
+    private MunicipalAccountDto? selectedAccount;
+    private HashSet<string> selectedObligations = new();
+    private string paymentMethod = "Tarjeta";
+    private bool isProcessing = false;
+
+    private string cardNumber = string.Empty;
+    private string cardHolder = string.Empty;
+    private string cardExpiry = string.Empty;
+    private string cardCvv = string.Empty;
+    private string cardNumberError = string.Empty;
+    private string cardHolderError = string.Empty;
+    private string cardExpiryError = string.Empty;
+    private string cardCvvError = string.Empty;
+
+    private string transferBank = string.Empty;
+    private string transferReference = string.Empty;
+    private DateTime? transferDate = DateTime.Today;
+    private string transferBankError = string.Empty;
+    private string transferReferenceError = string.Empty;
+    private string transferDateError = string.Empty;
+
+    private string sinpePhone = string.Empty;
+    private string sinpeReference = string.Empty;
+    private string sinpePhoneError = string.Empty;
+    private string sinpeReferenceError = string.Empty;
+
+    private async Task SearchAccountAsync()
+    {
+        if (string.IsNullOrWhiteSpace(searchValue))
+        {
+            Snackbar.Add("Ingrese un identificador válido.", Severity.Warning);
+            return;
+        }
+
+        MunicipalAccountDto? account = null;
+
+        if (searchType == "numero")
+        {
+            account = await DataService.GetAccountByNumberAsync(searchValue);
+            
+            if (account == null)
+            {
+                Snackbar.Add("No se encontró ninguna cuenta con el número proporcionado.", Severity.Warning);
+                selectedAccount = null;
+                selectedObligations.Clear();
+                return;
+            }
+        }
+        else
+        {
+            var (existsInRuc, contributorName, municipalAccount) = await DataService.SearchByIdentificationAsync(searchValue);
+
+            if (municipalAccount != null)
+            {
+                account = municipalAccount;
+            }
+            else if (existsInRuc && !string.IsNullOrEmpty(contributorName))
+            {
+                Snackbar.Add($"El contribuyente {contributorName} existe, pero no tiene cuentas municipales con obligaciones disponibles para pago.", Severity.Info);
+                selectedAccount = null;
+                selectedObligations.Clear();
+                return;
+            }
+            else
+            {
+                Snackbar.Add("No se encontró ninguna cuenta con la identificación proporcionada.", Severity.Warning);
+                selectedAccount = null;
+                selectedObligations.Clear();
+                return;
+            }
+        }
+
+        selectedAccount = account;
+        selectedObligations.Clear();
+        Snackbar.Add("Cuenta consultada correctamente.", Severity.Success);
+    }
+
+    private void ToggleObligation(AccountObligationDto obligation, bool selected)
+    {
+        if (selected)
+        {
+            selectedObligations.Add(obligation.Id);
+        }
+        else
+        {
+            selectedObligations.Remove(obligation.Id);
+        }
+    }
+
+    private async Task ProcessPaymentAsync()
+    {
+        if (selectedAccount == null || !selectedObligations.Any())
+        {
+            Snackbar.Add("Seleccione al menos una obligación a pagar.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(paymentMethod))
+        {
+            Snackbar.Add("Seleccione un método de pago.", Severity.Warning);
+            return;
+        }
+
+        if (!ValidatePaymentMethod())
+        {
+            return;
+        }
+
+        isProcessing = true;
+
+        try
+        {
+            var transaction = new PaymentTransactionDto
+            {
+                AccountNumber = selectedAccount.AccountNumber,
+                ContributorId = selectedAccount.ContributorId,
+                ContributorName = selectedAccount.ContributorName,
+                PaymentDate = DateTime.Now,
+                PaymentMethod = paymentMethod,
+                Status = "Completado",
+                PaymentMethodData = BuildPaymentMethodData(),
+                Items = new List<PaymentItemDto>()
+            };
+
+            foreach (var oblId in selectedObligations)
+            {
+                var obl = selectedAccount.Obligations.First(o => o.Id == oblId);
+                transaction.Items.Add(new PaymentItemDto
+                {
+                    ObligationId = obl.Id,
+                    PaymentType = obl.PaymentType,
+                    PaymentTypeName = obl.PaymentTypeName,
+                    Period = obl.Period,
+                    Amount = obl.PendingAmount,
+                    Reference = obl.Reference
+                });
+            }
+
+            transaction.TotalAmount = transaction.Items.Sum(i => i.Amount);
+
+            var registered = await DataService.RegisterPaymentAsync(transaction);
+
+            Snackbar.Add($"Pago procesado correctamente. Comprobante: {registered.ReceiptNumber}", Severity.Success);
+
+            await Task.Delay(500);
+            NavigationManager.NavigateTo($"/pagos/comprobante/{registered.ReceiptNumber}");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al procesar el pago: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private bool ValidatePaymentMethod()
+    {
+        ClearErrors();
+
+        if (paymentMethod == "Tarjeta")
+        {
+            var hasErrors = false;
+
+            var cleanCardNumber = new string(cardNumber.Where(char.IsDigit).ToArray());
+            if (string.IsNullOrWhiteSpace(cleanCardNumber))
+            {
+                cardNumberError = "El número de tarjeta es obligatorio.";
+                hasErrors = true;
+            }
+            else if (cleanCardNumber.Length != 16)
+            {
+                cardNumberError = "El número de tarjeta debe contener 16 dígitos.";
+                hasErrors = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(cardHolder))
+            {
+                cardHolderError = "El nombre del titular es obligatorio.";
+                hasErrors = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(cardExpiry))
+            {
+                cardExpiryError = "La fecha de expiración es obligatoria.";
+                hasErrors = true;
+            }
+            else if (!ValidateCardExpiry(cardExpiry))
+            {
+                cardExpiryError = "La fecha de expiración no es válida o está vencida.";
+                hasErrors = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(cardCvv))
+            {
+                cardCvvError = "El código de seguridad es obligatorio.";
+                hasErrors = true;
+            }
+            else if (cardCvv.Length < 3 || cardCvv.Length > 4 || !cardCvv.All(char.IsDigit))
+            {
+                cardCvvError = "El código de seguridad debe contener 3 o 4 dígitos.";
+                hasErrors = true;
+            }
+
+            if (hasErrors)
+            {
+                StateHasChanged();
+                return false;
+            }
+        }
+        else if (paymentMethod == "Transferencia bancaria")
+        {
+            var hasErrors = false;
+
+            if (string.IsNullOrWhiteSpace(transferBank))
+            {
+                transferBankError = "Seleccione un banco.";
+                hasErrors = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(transferReference))
+            {
+                transferReferenceError = "El número de referencia es obligatorio.";
+                hasErrors = true;
+            }
+
+            if (transferDate == null)
+            {
+                transferDateError = "La fecha de transferencia es obligatoria.";
+                hasErrors = true;
+            }
+            else if (transferDate.Value > DateTime.Today)
+            {
+                transferDateError = "La fecha de transferencia no puede ser futura.";
+                hasErrors = true;
+            }
+
+            if (hasErrors)
+            {
+                StateHasChanged();
+                return false;
+            }
+        }
+        else if (paymentMethod == "SINPE Móvil")
+        {
+            var hasErrors = false;
+
+            var cleanPhone = new string(sinpePhone.Where(char.IsDigit).ToArray());
+            if (string.IsNullOrWhiteSpace(cleanPhone))
+            {
+                sinpePhoneError = "El teléfono es obligatorio.";
+                hasErrors = true;
+            }
+            else if (cleanPhone.Length != 8)
+            {
+                sinpePhoneError = "El teléfono debe contener 8 dígitos.";
+                hasErrors = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(sinpeReference))
+            {
+                sinpeReferenceError = "El número de referencia es obligatorio.";
+                hasErrors = true;
+            }
+
+            if (hasErrors)
+            {
+                StateHasChanged();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool ValidateCardExpiry(string expiry)
+    {
+        var parts = expiry.Split('/');
+        if (parts.Length != 2) return false;
+
+        if (!int.TryParse(parts[0], out var month) || month < 1 || month > 12) return false;
+        if (!int.TryParse(parts[1], out var year)) return false;
+
+        var fullYear = year < 100 ? 2000 + year : year;
+        var expiryDate = new DateTime(fullYear, month, 1).AddMonths(1).AddDays(-1);
+
+        return expiryDate >= DateTime.Today;
+    }
+
+    private PaymentMethodDataDto BuildPaymentMethodData()
+    {
+        var methodData = new PaymentMethodDataDto
+        {
+            Method = paymentMethod
+        };
+
+        if (paymentMethod == "Tarjeta")
+        {
+            var cleanCardNumber = new string(cardNumber.Where(char.IsDigit).ToArray());
+            methodData.CardLastFour = cleanCardNumber.Length >= 4 ? cleanCardNumber.Substring(cleanCardNumber.Length - 4) : string.Empty;
+            methodData.CardBrand = DetectCardBrand(cleanCardNumber);
+            methodData.Reference = $"TRJ-{DateTime.Now:yyyyMMddHHmmss}";
+        }
+        else if (paymentMethod == "Transferencia bancaria")
+        {
+            methodData.Bank = transferBank;
+            methodData.Reference = transferReference;
+            methodData.PaymentDate = transferDate;
+        }
+        else if (paymentMethod == "SINPE Móvil")
+        {
+            var cleanPhone = new string(sinpePhone.Where(char.IsDigit).ToArray());
+            methodData.SinpePhone = cleanPhone.Length == 8 ? $"{cleanPhone.Substring(0, 4)}-{cleanPhone.Substring(4)}" : cleanPhone;
+            methodData.Reference = sinpeReference;
+        }
+        else if (paymentMethod == "Efectivo")
+        {
+            methodData.Reference = $"EFE-{DateTime.Now:yyyyMMddHHmmss}";
+        }
+
+        return methodData;
+    }
+
+    private string DetectCardBrand(string cardNumber)
+    {
+        if (string.IsNullOrEmpty(cardNumber) || cardNumber.Length < 2) return "Otra";
+
+        if (cardNumber.StartsWith("4")) return "Visa";
+        
+        var firstTwo = int.Parse(cardNumber.Substring(0, 2));
+        if (firstTwo >= 51 && firstTwo <= 55) return "Mastercard";
+        if (firstTwo == 22 || (firstTwo >= 27 && firstTwo <= 27)) return "Mastercard";
+
+        return "Otra";
+    }
+
+    private void ClearErrors()
+    {
+        cardNumberError = string.Empty;
+        cardHolderError = string.Empty;
+        cardExpiryError = string.Empty;
+        cardCvvError = string.Empty;
+        transferBankError = string.Empty;
+        transferReferenceError = string.Empty;
+        transferDateError = string.Empty;
+        sinpePhoneError = string.Empty;
+        sinpeReferenceError = string.Empty;
+    }
+
+    private Task ClearSelectionAsync()
+    {
+        selectedObligations.Clear();
+        ClearErrors();
+        cardNumber = string.Empty;
+        cardHolder = string.Empty;
+        cardExpiry = string.Empty;
+        cardCvv = string.Empty;
+        transferBank = string.Empty;
+        transferReference = string.Empty;
+        transferDate = DateTime.Today;
+        sinpePhone = string.Empty;
+        sinpeReference = string.Empty;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

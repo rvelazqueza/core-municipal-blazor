@@ -1,0 +1,531 @@
+@page "/pagos/comprobantes"
+@page "/pagos/comprobante/{receiptNumber}"
+@using BlazorApp.Models.Pagos
+@using BlazorApp.Services.Pagos
+@using BlazorApp.Shared
+@using BlazorApp.Helpers
+@using MudBlazor
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject PagosMockService DataService
+@inject DocumentExportHelper ExportHelper
+
+<PageTitleBar Title="Comprobantes de pago" Subtitle="Consulte y reimprima comprobantes de pago" />
+
+<MudCard Elevation="2" Class="mb-3">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Filtros de consulta</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="filterReceiptNumber" Label="Número de comprobante" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Ingrese el número de comprobante" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="filterContributorId" Label="Identificación" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Ingrese la identificación" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="filterContributorName" Label="Contribuyente" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Ingrese el nombre" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="filterAccountNumber" Label="Número de cuenta" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Ingrese el número de cuenta" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="string" @bind-Value="filterPaymentMethod" Label="Método de pago" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Placeholder="Seleccione el método">
+                    <MudSelectItem T="string" Value="@("Efectivo")">Efectivo</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Tarjeta")">Tarjeta</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Transferencia bancaria")">Transferencia bancaria</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("SINPE Móvil")">SINPE Móvil</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker @bind-Date="filterDateFrom" Label="Fecha desde" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Seleccione fecha" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker @bind-Date="filterDateTo" Label="Fecha hasta" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Seleccione fecha" />
+            </MudItem>
+            <MudItem xs="12" Class="d-flex gap-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="@ApplyFiltersAsync">Buscar</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ClearAll" OnClick="@ClearFiltersAsync">Limpiar</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudCardContent>
+</MudCard>
+
+@if (filteredReceipts.Any())
+{
+    <MudCard Elevation="2" Class="mb-3">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">Comprobantes registrados</MudText>
+                <MudText Typo="Typo.body2">@($"{filteredReceipts.Count} comprobante(s) encontrado(s)")</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudTable T="PaymentTransactionDto" Items="@filteredReceipts" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>Fecha</MudTh>
+                    <MudTh>Comprobante</MudTh>
+                    <MudTh>Contribuyente</MudTh>
+                    <MudTh>Identificación</MudTh>
+                    <MudTh>Cuenta</MudTh>
+                    <MudTh>Método</MudTh>
+                    <MudTh Style="text-align: right;">Monto</MudTh>
+                    <MudTh Style="text-align: center;">Reimpr.</MudTh>
+                    <MudTh>Acciones</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Fecha">@context.PaymentDate.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                    <MudTd DataLabel="Comprobante">@context.ReceiptNumber</MudTd>
+                    <MudTd DataLabel="Contribuyente">@context.ContributorName</MudTd>
+                    <MudTd DataLabel="Identificación">@context.ContributorId</MudTd>
+                    <MudTd DataLabel="Cuenta">@context.AccountNumber</MudTd>
+                    <MudTd DataLabel="Método">@context.PaymentMethod</MudTd>
+                    <MudTd DataLabel="Monto" Style="text-align: right;">@CurrencyHelper.FormatColones(context.TotalAmount)</MudTd>
+                    <MudTd DataLabel="Reimpr." Style="text-align: center;">@context.ReprintCount</MudTd>
+                    <MudTd DataLabel="Acciones">
+                        <div class="d-flex gap-1">
+                            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewReceiptAsync(context))">Ver</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Download" OnClick="@(() => ExportHtmlAsync(context))">HTML</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.Material.Filled.Print" OnClick="@(() => PrintAsync(context))">Imprimir</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="@(() => ExportPdfAsync(context))">PDF</MudButton>
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 10, 20, 50 }" />
+                </PagerContent>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+}
+else if (hasLoadedInitialData)
+{
+    <EmptyState Title="Sin comprobantes" Description="No se encontraron comprobantes con los criterios indicados." Icon="@Icons.Material.Filled.ReceiptLong" />
+}
+else
+{
+    <EmptyState Title="Sin comprobantes" Description="No hay comprobantes registrados." Icon="@Icons.Material.Filled.ReceiptLong" />
+}
+
+
+@if (selectedReceipt != null && showDetail)
+{
+    <MudCard Elevation="2" Class="mt-3">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">Detalle del comprobante</MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Default" OnClick="@CloseDetail" />
+            </CardHeaderActions>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6" md="4">
+                    <MudText Typo="Typo.body2">Comprobante:</MudText>
+                    <MudText Typo="Typo.body1">@selectedReceipt.ReceiptNumber</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudText Typo="Typo.body2">Fecha:</MudText>
+                    <MudText Typo="Typo.body1">@selectedReceipt.PaymentDate.ToString("dd/MM/yyyy HH:mm")</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudText Typo="Typo.body2">Método de pago:</MudText>
+                    <MudText Typo="Typo.body1">@selectedReceipt.PaymentMethod</MudText>
+                </MudItem>
+                @if (selectedReceipt.PaymentMethodData != null)
+                {
+                    @if (selectedReceipt.PaymentMethod == "Tarjeta" && !string.IsNullOrEmpty(selectedReceipt.PaymentMethodData.CardBrand))
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudText Typo="Typo.body2">Tarjeta:</MudText>
+                            <MudText Typo="Typo.body1">@selectedReceipt.PaymentMethodData.CardBrand ****@selectedReceipt.PaymentMethodData.CardLastFour</MudText>
+                        </MudItem>
+                    }
+                    @if (selectedReceipt.PaymentMethod == "Transferencia bancaria" && !string.IsNullOrEmpty(selectedReceipt.PaymentMethodData.Bank))
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudText Typo="Typo.body2">Banco:</MudText>
+                            <MudText Typo="Typo.body1">@selectedReceipt.PaymentMethodData.Bank</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudText Typo="Typo.body2">Referencia bancaria:</MudText>
+                            <MudText Typo="Typo.body1">@selectedReceipt.PaymentMethodData.Reference</MudText>
+                        </MudItem>
+                    }
+                    @if (selectedReceipt.PaymentMethod == "SINPE Móvil" && !string.IsNullOrEmpty(selectedReceipt.PaymentMethodData.SinpePhone))
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudText Typo="Typo.body2">Teléfono SINPE:</MudText>
+                            <MudText Typo="Typo.body1">@selectedReceipt.PaymentMethodData.SinpePhone</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudText Typo="Typo.body2">Referencia SINPE:</MudText>
+                            <MudText Typo="Typo.body1">@selectedReceipt.PaymentMethodData.Reference</MudText>
+                        </MudItem>
+                    }
+                }
+                <MudItem xs="12" sm="6" md="4">
+                    <MudText Typo="Typo.body2">Cuenta:</MudText>
+                    <MudText Typo="Typo.body1">@selectedReceipt.AccountNumber</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudText Typo="Typo.body2">Contribuyente:</MudText>
+                    <MudText Typo="Typo.body1">@selectedReceipt.ContributorName</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudText Typo="Typo.body2">Cédula:</MudText>
+                    <MudText Typo="Typo.body1">@selectedReceipt.ContributorId</MudText>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.body2">Dirección:</MudText>
+                    <MudText Typo="Typo.body1">@selectedReceipt.PropertyAddress</MudText>
+                </MudItem>
+                @if (selectedReceipt.ReprintCount > 0)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.body2">Reimpresiones:</MudText>
+                        <MudText Typo="Typo.body1">@selectedReceipt.ReprintCount</MudText>
+                    </MudItem>
+                }
+                @if (selectedReceipt.LastReprintedAt.HasValue)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.body2">Última reimpresión:</MudText>
+                        <MudText Typo="Typo.body1">@selectedReceipt.LastReprintedAt.Value.ToString("dd/MM/yyyy HH:mm")</MudText>
+                    </MudItem>
+                }
+            </MudGrid>
+
+            <MudDivider Class="my-4" />
+
+            <MudText Typo="Typo.h6" Class="mb-3">Detalle de pago</MudText>
+
+            <MudTable T="PaymentItemDto" Items="@selectedReceipt.Items" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>Tipo</MudTh>
+                    <MudTh>Período</MudTh>
+                    <MudTh>Referencia</MudTh>
+                    <MudTh Style="text-align: right;">Monto</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Tipo">@context.PaymentTypeName</MudTd>
+                    <MudTd DataLabel="Período">@context.Period</MudTd>
+                    <MudTd DataLabel="Referencia">@context.Reference</MudTd>
+                    <MudTd DataLabel="Monto" Style="text-align: right;">@CurrencyHelper.FormatColones(context.Amount)</MudTd>
+                </RowTemplate>
+                <FooterContent>
+                    <MudTh colspan="3" Style="text-align: right;"><strong>Total pagado:</strong></MudTh>
+                    <MudTh Style="text-align: right;"><strong>@CurrencyHelper.FormatColones(selectedReceipt.TotalAmount)</strong></MudTh>
+                </FooterContent>
+            </MudTable>
+
+            <MudDivider Class="my-4" />
+
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2">Recibido por:</MudText>
+                    <MudText Typo="Typo.body1">@selectedReceipt.CollectorUser</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2">Caja:</MudText>
+                    <MudText Typo="Typo.body1">@selectedReceipt.CashierStation</MudText>
+                </MudItem>
+                @if (!string.IsNullOrWhiteSpace(selectedReceipt.Notes))
+                {
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.body2">Observaciones:</MudText>
+                        <MudText Typo="Typo.body1">@selectedReceipt.Notes</MudText>
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    [Parameter]
+    public string? ReceiptNumber { get; set; }
+
+    private List<PaymentTransactionDto> allReceipts = new();
+    private List<PaymentTransactionDto> filteredReceipts = new();
+    private PaymentReceiptDto? selectedReceipt;
+    private bool showDetail = false;
+    private bool hasLoadedInitialData = false;
+
+    private string filterReceiptNumber = string.Empty;
+    private string filterContributorId = string.Empty;
+    private string filterContributorName = string.Empty;
+    private string filterAccountNumber = string.Empty;
+    private string filterPaymentMethod = string.Empty;
+    private DateTime? filterDateFrom = null;
+    private DateTime? filterDateTo = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllReceiptsAsync();
+
+        if (!string.IsNullOrWhiteSpace(ReceiptNumber))
+        {
+            filterReceiptNumber = ReceiptNumber;
+            await ApplyFiltersAsync();
+            
+            var match = filteredReceipts.FirstOrDefault(x => x.ReceiptNumber.Equals(ReceiptNumber, StringComparison.OrdinalIgnoreCase));
+            if (match != null)
+            {
+                await ViewReceiptAsync(match);
+            }
+        }
+    }
+
+    private async Task LoadAllReceiptsAsync()
+    {
+        allReceipts = await DataService.GetTransactionsAsync();
+        allReceipts = allReceipts.OrderByDescending(x => x.PaymentDate).ToList();
+        filteredReceipts = allReceipts.ToList();
+        hasLoadedInitialData = allReceipts.Any();
+    }
+
+    private Task ApplyFiltersAsync()
+    {
+        IEnumerable<PaymentTransactionDto> query = allReceipts;
+
+        if (!string.IsNullOrWhiteSpace(filterReceiptNumber))
+        {
+            query = query.Where(x => x.ReceiptNumber.Contains(filterReceiptNumber.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterContributorId))
+        {
+            var normalized = IdentificationHelper.NormalizeIdentification(filterContributorId);
+            query = query.Where(x => IdentificationHelper.NormalizeIdentification(x.ContributorId).Contains(normalized, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterContributorName))
+        {
+            query = query.Where(x => x.ContributorName.Contains(filterContributorName.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterAccountNumber))
+        {
+            var normalized = IdentificationHelper.NormalizeAccountNumber(filterAccountNumber);
+            query = query.Where(x => IdentificationHelper.NormalizeAccountNumber(x.AccountNumber).Contains(normalized, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterPaymentMethod))
+        {
+            query = query.Where(x => x.PaymentMethod.Equals(filterPaymentMethod, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (filterDateFrom.HasValue)
+        {
+            query = query.Where(x => x.PaymentDate.Date >= filterDateFrom.Value.Date);
+        }
+
+        if (filterDateTo.HasValue)
+        {
+            query = query.Where(x => x.PaymentDate.Date <= filterDateTo.Value.Date);
+        }
+
+        filteredReceipts = query.OrderByDescending(x => x.PaymentDate).ToList();
+
+        if (filteredReceipts.Any())
+        {
+            Snackbar.Add($"Se encontraron {filteredReceipts.Count} comprobante(s).", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("No se encontraron comprobantes con los criterios indicados.", Severity.Info);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task ClearFiltersAsync()
+    {
+        filterReceiptNumber = string.Empty;
+        filterContributorId = string.Empty;
+        filterContributorName = string.Empty;
+        filterAccountNumber = string.Empty;
+        filterPaymentMethod = string.Empty;
+        filterDateFrom = null;
+        filterDateTo = null;
+        
+        filteredReceipts = allReceipts.ToList();
+        showDetail = false;
+        selectedReceipt = null;
+        
+        Snackbar.Add("Filtros limpiados.", Severity.Normal);
+        
+        return Task.CompletedTask;
+    }
+
+    private async Task ViewReceiptAsync(PaymentTransactionDto transaction)
+    {
+        var account = await DataService.GetAccountByNumberAsync(transaction.AccountNumber);
+
+        selectedReceipt = new PaymentReceiptDto
+        {
+            ReceiptNumber = transaction.ReceiptNumber,
+            AccountNumber = transaction.AccountNumber,
+            ContributorId = transaction.ContributorId,
+            ContributorName = transaction.ContributorName,
+            PropertyAddress = account?.PropertyAddress ?? string.Empty,
+            PaymentDate = transaction.PaymentDate,
+            PaymentMethod = transaction.PaymentMethod,
+            PaymentMethodData = transaction.PaymentMethodData,
+            TotalAmount = transaction.TotalAmount,
+            Items = transaction.Items,
+            CollectorUser = transaction.CollectorUser,
+            CashierStation = transaction.CashierStation,
+            Notes = transaction.Notes,
+            ReprintCount = transaction.ReprintCount,
+            LastReprintedAt = transaction.LastReprintedAt
+        };
+
+        showDetail = true;
+        StateHasChanged();
+    }
+
+    private void CloseDetail()
+    {
+        showDetail = false;
+        selectedReceipt = null;
+        StateHasChanged();
+    }
+
+    private async Task ExportHtmlAsync(PaymentTransactionDto transaction)
+    {
+        await ViewReceiptAsync(transaction);
+        if (selectedReceipt == null) return;
+
+        await DataService.RegisterReceiptReprintAsync(selectedReceipt.ReceiptNumber, "HTML", "usuario.municipal");
+        
+        var content = BuildReceiptHtml();
+        var fileName = $"Comprobante_{selectedReceipt.ReceiptNumber}.html";
+        await ExportHelper.ExportAsHtmlAsync(content, fileName);
+        Snackbar.Add("Comprobante exportado correctamente.", Severity.Success);
+        
+        await RefreshDataAsync();
+    }
+
+    private async Task PrintAsync(PaymentTransactionDto transaction)
+    {
+        await ViewReceiptAsync(transaction);
+        if (selectedReceipt == null) return;
+
+        await DataService.RegisterReceiptReprintAsync(selectedReceipt.ReceiptNumber, "Impresión", "usuario.municipal");
+
+        var content = BuildReceiptHtml();
+        await ExportHelper.PrintHtmlAsync(content);
+        
+        await RefreshDataAsync();
+    }
+
+    private async Task ExportPdfAsync(PaymentTransactionDto transaction)
+    {
+        await ViewReceiptAsync(transaction);
+        if (selectedReceipt == null) return;
+
+        await DataService.RegisterReceiptReprintAsync(selectedReceipt.ReceiptNumber, "PDF", "usuario.municipal");
+
+        var content = BuildReceiptHtml();
+        var fileName = $"Comprobante_{selectedReceipt.ReceiptNumber}.pdf";
+        await ExportHelper.ExportAsPdfAsync(content, fileName);
+        Snackbar.Add("Comprobante exportado correctamente.", Severity.Success);
+        
+        await RefreshDataAsync();
+    }
+
+    private async Task RefreshDataAsync()
+    {
+        await LoadAllReceiptsAsync();
+        await ApplyFiltersAsync();
+        
+        if (selectedReceipt != null)
+        {
+            var updated = filteredReceipts.FirstOrDefault(x => x.ReceiptNumber == selectedReceipt.ReceiptNumber);
+            if (updated != null)
+            {
+                selectedReceipt.ReprintCount = updated.ReprintCount;
+                selectedReceipt.LastReprintedAt = updated.LastReprintedAt;
+            }
+        }
+        
+        StateHasChanged();
+    }
+
+    private string BuildReceiptHtml()
+    {
+        if (selectedReceipt == null) return string.Empty;
+
+        var contentBuilder = new System.Text.StringBuilder();
+        
+        contentBuilder.Append("<div class='section'><div class='section-title'>Datos del pago</div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Comprobante:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.ReceiptNumber)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Fecha:</span><span class='field-value'>{selectedReceipt.PaymentDate:dd/MM/yyyy HH:mm}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Método de pago:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.PaymentMethod)}</span></div>");
+        
+        if (selectedReceipt.PaymentMethodData != null)
+        {
+            if (selectedReceipt.PaymentMethod == "Tarjeta" && !string.IsNullOrEmpty(selectedReceipt.PaymentMethodData.CardBrand))
+            {
+                contentBuilder.Append($"<div class='field'><span class='field-label'>Tarjeta:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.PaymentMethodData.CardBrand)} ****{DocumentExportHelper.HtmlEncode(selectedReceipt.PaymentMethodData.CardLastFour)}</span></div>");
+            }
+            else if (selectedReceipt.PaymentMethod == "Transferencia bancaria" && !string.IsNullOrEmpty(selectedReceipt.PaymentMethodData.Bank))
+            {
+                contentBuilder.Append($"<div class='field'><span class='field-label'>Banco:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.PaymentMethodData.Bank)}</span></div>");
+                contentBuilder.Append($"<div class='field'><span class='field-label'>Referencia bancaria:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.PaymentMethodData.Reference)}</span></div>");
+            }
+            else if (selectedReceipt.PaymentMethod == "SINPE Móvil" && !string.IsNullOrEmpty(selectedReceipt.PaymentMethodData.SinpePhone))
+            {
+                contentBuilder.Append($"<div class='field'><span class='field-label'>Teléfono SINPE:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.PaymentMethodData.SinpePhone)}</span></div>");
+                contentBuilder.Append($"<div class='field'><span class='field-label'>Referencia SINPE:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.PaymentMethodData.Reference)}</span></div>");
+            }
+        }
+        
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Cuenta:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.AccountNumber)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Contribuyente:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.ContributorName)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Cédula:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.ContributorId)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Dirección:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.PropertyAddress)}</span></div>");
+        
+        if (selectedReceipt.ReprintCount > 0)
+        {
+            contentBuilder.Append($"<div class='field'><span class='field-label'>Reimpresiones:</span><span class='field-value'>{selectedReceipt.ReprintCount}</span></div>");
+        }
+        
+        contentBuilder.Append("</div>");
+
+        contentBuilder.Append("<div class='section'><div class='section-title'>Detalle de pago</div>");
+        contentBuilder.Append("<table><thead><tr><th>Tipo</th><th>Período</th><th>Referencia</th><th style='text-align: right;'>Monto</th></tr></thead><tbody>");
+        foreach (var item in selectedReceipt.Items)
+        {
+            contentBuilder.Append("<tr>");
+            contentBuilder.Append($"<td>{DocumentExportHelper.HtmlEncode(item.PaymentTypeName)}</td>");
+            contentBuilder.Append($"<td>{DocumentExportHelper.HtmlEncode(item.Period)}</td>");
+            contentBuilder.Append($"<td>{DocumentExportHelper.HtmlEncode(item.Reference)}</td>");
+            contentBuilder.Append($"<td style='text-align: right;'>{CurrencyHelper.FormatColones(item.Amount)}</td>");
+            contentBuilder.Append("</tr>");
+        }
+        contentBuilder.Append($"<tr><td colspan='3' style='text-align: right;'><strong>Total pagado:</strong></td><td style='text-align: right;'><strong>{CurrencyHelper.FormatColones(selectedReceipt.TotalAmount)}</strong></td></tr>");
+        contentBuilder.Append("</tbody></table></div>");
+
+        contentBuilder.Append("<div class='section'><div class='section-title'>Información adicional</div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Recibido por:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.CollectorUser)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Caja:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.CashierStation)}</span></div>");
+        if (!string.IsNullOrWhiteSpace(selectedReceipt.Notes))
+        {
+            contentBuilder.Append($"<div class='field'><span class='field-label'>Observaciones:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedReceipt.Notes)}</span></div>");
+        }
+        contentBuilder.Append("</div>");
+
+        return DocumentExportHelper.BuildMunicipalDocument(
+            "Comprobante de Pago Municipal",
+            selectedReceipt.ReceiptNumber,
+            contentBuilder.ToString()
+        );
+    }
+}

@@ -5,17 +5,30 @@ namespace BlazorApp.Models.PlataformaServicios;
 
 public class PsProcedureTypeDto
 {
+    public string Id { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
     public string ModuleName { get; set; } = string.Empty;
     public string Department { get; set; } = string.Empty;
+    public string TargetDepartment { get; set; } = string.Empty;
     public bool RequiresRuc { get; set; }
     public bool RequiresFinca { get; set; }
     public bool RequiresPatent { get; set; }
+    public bool RequiresProperty { get; set; }
+    public bool RequiresServiceAccount { get; set; }
+    public bool RequiresMeter { get; set; }
+    public bool RequiresBuildingPermit { get; set; }
+    public bool RequiresAccountUpToDate { get; set; }
+    public bool RequiresInspection { get; set; }
     public bool RequiresDocuments { get; set; } = true;
+    public List<string> Requirements { get; set; } = new();
     public int DeadlineDays { get; set; } = 10;
+    public int EstimatedDays { get; set; } = 10;
     public string InitialStatus { get; set; } = "Recibido";
     public string Priority { get; set; } = "Normal";
+    public bool Active { get; set; } = true;
 }
 
 public class PsApplicantDto
@@ -56,6 +69,8 @@ public class PsProcedureObjectDto
     public string TipoActualizacionRuc { get; set; } = string.Empty;
     public string DatosAModificar { get; set; } = string.Empty;
     public string OrigenSolicitud { get; set; } = string.Empty;
+    public string PermisoVinculadoId { get; set; } = string.Empty;
+    public string PermisoVinculadoExpediente { get; set; } = string.Empty;
     public string Descripcion { get; set; } = string.Empty;
     public string Observaciones { get; set; } = string.Empty;
     public string ReferenciaExterna { get; set; } = string.Empty;
@@ -164,7 +179,7 @@ public class PsAuditEventDto
 {
     public string EventId { get; set; } = Guid.NewGuid().ToString("N");
     public DateTime CreatedAt { get; set; } = DateTime.Now;
-    public string User { get; set; } = "demo.user";
+    public string User { get; set; } = string.Empty;
     public string Action { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Severity { get; set; } = "Info";
@@ -175,7 +190,7 @@ public class PsReportDto
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Filters { get; set; } = string.Empty;
-    public string Status { get; set; } = "Mock";
+    public string Status { get; set; } = "Disponible";
 }
 
 public class PsCatalogItemDto

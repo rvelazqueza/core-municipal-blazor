@@ -1,51 +1,286 @@
 @using BlazorApp.Models.Auditoria
+@using BlazorApp.Helpers
+@using MudBlazor
+@inject DocumentExportHelper DocumentExportHelper
 
 <MudPaper Outlined="true" Class="pa-4">
-    <MudStack Spacing="2">
+    <MudStack Spacing="3">
         <div class="d-flex flex-wrap justify-space-between align-center gap-2">
             <div>
                 <MudText Typo="Typo.h6">Auditoría de integraciones institucionales</MudText>
                 <MudText Typo="Typo.body2" Class="mud-text-secondary">Eventos operativos entre módulos institucionales.</MudText>
             </div>
-            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{Events.Count()} eventos")</MudChip>
+            <MudStack Row="true" Spacing="1">
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{filteredEvents.Count()} de {Events.Count()} eventos")</MudChip>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="ExportPdfAsync" Size="Size.Small" Disabled="@(filteredEvents.Count() == 0)">PDF</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintDocumentAsync" Size="Size.Small" Disabled="@(filteredEvents.Count() == 0)">Imprimir</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportHtmlAsync" Size="Size.Small" Disabled="@(filteredEvents.Count() == 0)">HTML</MudButton>
+            </MudStack>
         </div>
 
-        <MudTable T="AuditIntegrationEventDto" Items="@Events" Hover="true" Breakpoint="Breakpoint.Sm">
-            <HeaderContent>
-                <MudTh>Integración</MudTh>
-                <MudTh>Módulo origen</MudTh>
-                <MudTh>Módulo destino</MudTh>
-                <MudTh>Evento</MudTh>
-                <MudTh>Estado</MudTh>
-                <MudTh>Fecha</MudTh>
-                <MudTh>Mensaje</MudTh>
-                <MudTh>CorrelationId</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Integración">@context.Action</MudTd>
-                <MudTd DataLabel="Módulo origen">@context.ModuleOrigin</MudTd>
-                <MudTd DataLabel="Módulo destino">@context.ModuleDestination</MudTd>
-                <MudTd DataLabel="Evento">@context.EventType</MudTd>
-                <MudTd DataLabel="Estado">
-                    <MudChip T="string" Color="@GetStateColor(context.IntegrationState)" Variant="Variant.Outlined" Size="Size.Small">@context.IntegrationState</MudChip>
-                </MudTd>
-                <MudTd DataLabel="Fecha">@context.EventDate.ToString("dd/MM/yyyy HH:mm")</MudTd>
-                <MudTd DataLabel="Mensaje">@context.ResultMessage</MudTd>
-                <MudTd DataLabel="CorrelationId">@context.CorrelationId</MudTd>
-            </RowTemplate>
-        </MudTable>
+        @if (!string.IsNullOrWhiteSpace(dateRangeError))
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true">@dateRangeError</MudAlert>
+        }
+
+        <MudExpansionPanels>
+            <MudExpansionPanel Text="Filtros de búsqueda">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect T="string" @bind-Value="filterSystem" Label="Sistema" Variant="Variant.Outlined" Dense="true" Clearable="true">
+                            @foreach (var system in systems)
+                            {
+                                <MudSelectItem Value="@system">@system</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField T="string" @bind-Value="filterOperation" Label="Operación" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect T="string" @bind-Value="filterState" Label="Estado" Variant="Variant.Outlined" Dense="true" Clearable="true">
+                            @foreach (var state in states)
+                            {
+                                <MudSelectItem Value="@state">@state</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect T="string" @bind-Value="filterModule" Label="Módulo" Variant="Variant.Outlined" Dense="true" Clearable="true">
+                            @foreach (var module in modules)
+                            {
+                                <MudSelectItem Value="@module">@module</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField T="string" @bind-Value="filterReference" Label="Referencia o expediente" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudDatePicker Label="Fecha desde" @bind-Date="filterDateFrom" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudDatePicker Label="Fecha hasta" @bind-Date="filterDateTo" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="2" Class="d-flex align-center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="ApplyFiltersAsync" FullWidth="true">Buscar</MudButton>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="2" Class="d-flex align-center">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Clear" OnClick="ClearFiltersAsync" FullWidth="true">Limpiar</MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+
+        @if (filteredEvents.Any())
+        {
+            <MudTable T="AuditIntegrationEventDto" Items="@filteredEvents" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
+                <HeaderContent>
+                    <MudTh>Integración</MudTh>
+                    <MudTh>Módulo origen</MudTh>
+                    <MudTh>Módulo destino</MudTh>
+                    <MudTh>Evento</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh>Fecha</MudTh>
+                    <MudTh>Mensaje</MudTh>
+                    <MudTh>CorrelationId</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Integración">@context.Action</MudTd>
+                    <MudTd DataLabel="Módulo origen">@context.ModuleOrigin</MudTd>
+                    <MudTd DataLabel="Módulo destino">@context.ModuleDestination</MudTd>
+                    <MudTd DataLabel="Evento">@context.EventType</MudTd>
+                    <MudTd DataLabel="Estado">
+                        <MudChip T="string" Color="@GetStateColor(context.IntegrationState)" Variant="Variant.Outlined" Size="Size.Small">@context.IntegrationState</MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Fecha">@context.EventDate.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                    <MudTd DataLabel="Mensaje">@context.ResultMessage</MudTd>
+                    <MudTd DataLabel="CorrelationId">@context.CorrelationId</MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                No se encontraron eventos con los criterios seleccionados.
+            </MudAlert>
+        }
     </MudStack>
 </MudPaper>
 
 @code {
     [Parameter, EditorRequired] public IEnumerable<AuditIntegrationEventDto> Events { get; set; } = Array.Empty<AuditIntegrationEventDto>();
 
+    private IEnumerable<AuditIntegrationEventDto> filteredEvents = Array.Empty<AuditIntegrationEventDto>();
+    private string? filterSystem;
+    private string? filterOperation;
+    private string? filterState;
+    private string? filterModule;
+    private string? filterReference;
+    private DateTime? filterDateFrom;
+    private DateTime? filterDateTo;
+    private string? dateRangeError;
+
+    private readonly string[] systems = { "Registro Nacional", "Hacienda", "CFIA", "SINPE", "Correo institucional", "Plataforma de interoperabilidad" };
+    private readonly string[] states = { "Procesado", "Con observaciones", "Fallido", "Pendiente" };
+    private readonly string[] modules = { "RUC", "Bienes Inmuebles", "Patentes", "Permisos de Construcción", "Mercado Municipal", "Plataforma de Servicios" };
+
+    protected override void OnParametersSet()
+    {
+        ApplyFilters();
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        if (filterDateFrom.HasValue && filterDateTo.HasValue && filterDateFrom.Value > filterDateTo.Value)
+        {
+            dateRangeError = "La fecha inicial no puede ser posterior a la fecha final.";
+            return;
+        }
+
+        dateRangeError = null;
+        ApplyFilters();
+        await Task.CompletedTask;
+    }
+
+    private void ApplyFilters()
+    {
+        var result = Events.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(filterSystem))
+        {
+            result = result.Where(e => e.Action.Contains(filterSystem, StringComparison.OrdinalIgnoreCase) ||
+                                      e.ModuleOrigin.Contains(filterSystem, StringComparison.OrdinalIgnoreCase) ||
+                                      e.ModuleDestination.Contains(filterSystem, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterOperation))
+        {
+            result = result.Where(e => e.Action.Contains(filterOperation, StringComparison.OrdinalIgnoreCase) ||
+                                      e.EventType.Contains(filterOperation, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterState))
+        {
+            result = result.Where(e => e.IntegrationState.Equals(filterState, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterModule))
+        {
+            result = result.Where(e => e.ModuleOrigin.Equals(filterModule, StringComparison.OrdinalIgnoreCase) ||
+                                      e.ModuleDestination.Equals(filterModule, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterReference))
+        {
+            result = result.Where(e => e.CorrelationId.Contains(filterReference, StringComparison.OrdinalIgnoreCase) ||
+                                      e.ResultMessage.Contains(filterReference, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (filterDateFrom.HasValue)
+        {
+            result = result.Where(e => e.EventDate >= filterDateFrom.Value.Date);
+        }
+
+        if (filterDateTo.HasValue)
+        {
+            result = result.Where(e => e.EventDate <= filterDateTo.Value.Date.AddDays(1).AddSeconds(-1));
+        }
+
+        filteredEvents = result.OrderByDescending(e => e.EventDate).ToList();
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        filterSystem = null;
+        filterOperation = null;
+        filterState = null;
+        filterModule = null;
+        filterReference = null;
+        filterDateFrom = null;
+        filterDateTo = null;
+        dateRangeError = null;
+        ApplyFilters();
+        await Task.CompletedTask;
+    }
+
     private static Color GetStateColor(string state) => state switch
     {
-        "Fallido" => Color.Error,
         "Preparado" => Color.Success,
-        "Referencial" => Color.Info,
         "Procesado" => Color.Primary,
         _ => Color.Warning
     };
+
+    private async Task ExportHtmlAsync()
+    {
+        var content = BuildIntegrationDocument();
+        var fileName = $"Auditoria_Integraciones_{DateTime.Today:yyyy-MM-dd}.html";
+        await DocumentExportHelper.ExportAsHtmlAsync(content, fileName);
+    }
+
+    private async Task PrintDocumentAsync()
+    {
+        var content = BuildIntegrationDocument();
+        await DocumentExportHelper.PrintHtmlAsync(content);
+    }
+
+    private async Task ExportPdfAsync()
+    {
+        var content = BuildIntegrationDocument();
+        var fileName = $"Auditoria_Integraciones_{DateTime.Today:yyyy-MM-dd}.pdf";
+        await DocumentExportHelper.ExportAsPdfAsync(content, fileName);
+    }
+
+    private string BuildIntegrationDocument()
+    {
+        var sb = new System.Text.StringBuilder();
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Filtros aplicados</div>");
+        if (!string.IsNullOrWhiteSpace(filterSystem))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Sistema:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(filterSystem));
+        }
+        if (!string.IsNullOrWhiteSpace(filterState))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Estado:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(filterState));
+        }
+        if (!string.IsNullOrWhiteSpace(filterModule))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Módulo:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(filterModule));
+        }
+        if (filterDateFrom.HasValue)
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Fecha desde:</span><span class='field-value'>{0}</span></div>", filterDateFrom.Value.ToString("dd/MM/yyyy"));
+        }
+        if (filterDateTo.HasValue)
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Fecha hasta:</span><span class='field-value'>{0}</span></div>", filterDateTo.Value.ToString("dd/MM/yyyy"));
+        }
+        sb.AppendFormat("<div class='field'><span class='field-label'>Total eventos:</span><span class='field-value'>{0}</span></div>", filteredEvents.Count());
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Eventos de Integraciones</div>");
+        sb.Append("<table>");
+        sb.Append("<thead><tr><th>Integración</th><th>Módulo origen</th><th>Módulo destino</th><th>Estado</th><th>Fecha</th><th>Mensaje</th></tr></thead>");
+        sb.Append("<tbody>");
+        foreach (var evt in filteredEvents)
+        {
+            sb.Append("<tr>");
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.Action));
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.ModuleOrigin));
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.ModuleDestination));
+            sb.AppendFormat("<td><span class='badge badge-{0}'>{1}</span></td>",
+                evt.IntegrationState == "Preparado" ? "success" : evt.IntegrationState == "Procesado" ? "info" : "warning",
+                Helpers.DocumentExportHelper.HtmlEncode(evt.IntegrationState));
+            sb.AppendFormat("<td>{0}</td>", evt.EventDate.ToString("dd/MM/yyyy HH:mm"));
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.ResultMessage));
+            sb.Append("</tr>");
+        }
+        sb.Append("</tbody></table>");
+        sb.Append("</div>");
+
+        return Helpers.DocumentExportHelper.BuildMunicipalDocument("Auditoría de Integraciones", $"Reporte {DateTime.Today:dd/MM/yyyy}", sb.ToString());
+    }
 }

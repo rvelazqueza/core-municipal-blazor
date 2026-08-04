@@ -39,12 +39,6 @@
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.NoteAdd" OnClick="CreateNewAsync">Nueva solicitud de patente</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Timer" OnClick="ApplyTemporalTypeAsync">Licencias temporales</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.LocalBar" OnClick="ApplyLiquorTypeAsync">Licencias de licores</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" OnClick="ShowFeaturePendingAsync">Declaraciones</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Redeem" OnClick="ShowFeaturePendingAsync">Exoneraciones</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Badge" OnClick="ShowFeaturePendingAsync">Inspecciones</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="ShowFeaturePendingAsync">Denuncias</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Send" OnClick="ShowFeaturePendingAsync">Emisión</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Assessment" OnClick="ShowFeaturePendingAsync">Reportes</MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Settings" OnClick="OpenConfiguracionAsync">Configuración Patentes</MudButton>
             </div>
         </MudStack>
@@ -182,15 +176,9 @@
                         </MudTd>
                         <MudTd DataLabel="Última actualización">@GetLastUpdate(context)</MudTd>
                         <MudTd DataLabel="Acciones">
-                            <div class="d-flex flex-wrap gap-1">
-                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.FolderOpen" OnClick="@(() => ViewExpedienteAsync(context))">Ver expediente</MudButton>
-                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Edit" OnClick="@(() => EditAsync(context))">Editar</MudButton>
-                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Autorenew" OnClick="@(() => RenewAsync(context))">Renovar</MudButton>
-                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.SwapHoriz" OnClick="@(() => ModifyAsync(context))">Modificar</MudButton>
-                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.PauseCircle" OnClick="@(() => SuspendAsync(context))">Suspender</MudButton>
-                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="@(() => RegisterComplaintAsync(context))">Registrar denuncia</MudButton>
-                                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.FactCheck" OnClick="@(() => CreateRelatedProcedureAsync(context))">Crear trámite relacionado</MudButton>
-                            </div>
+                            <MudTooltip Text="Ver información">
+                                <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Info" Color="Color.Primary" />
+                            </MudTooltip>
                         </MudTd>
                     </RowTemplate>
                     <PagerContent>

@@ -1,4 +1,7 @@
 using BlazorApp.Services;
+using BlazorApp.Services.PlataformaServicios;
+using BlazorApp.Services.PermisosConstruccion;
+using BlazorApp.Helpers;
 using Microsoft.AspNetCore.Components.Web;
 using BlazorApp;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -25,6 +28,11 @@ builder.Services.AddScoped<IActividadEconomicaService, ActividadEconomicaMockSer
 builder.Services.AddScoped<IUsoSueloMockService, UsoSueloMockService>();
 builder.Services.AddScoped<IPatentesFormularioService, PatentesFormularioService>();
 builder.Services.AddScoped<IPatentesValidacionService, PatentesValidacionService>();
+builder.Services.AddScoped<PlataformaServiciosMockService>();
+builder.Services.AddScoped<PermisosConstruccionMockService>();
+builder.Services.AddScoped<BlazorApp.Services.Pagos.PagosMockService>();
+builder.Services.AddScoped<LocalStorageHelper>();
+builder.Services.AddScoped<DocumentExportHelper>();
 builder.Services.AddSingleton<ILoginSettingsService, LoginSettingsMockService>();
 builder.Services.AddSingleton<IAuthService, AuthMockService>();
 

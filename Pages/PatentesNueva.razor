@@ -6,20 +6,14 @@
 @inject NavigationManager NavigationManager
 
 <PageTitleBar Title="Nueva solicitud de patente"
-              Subtitle="Registro guiado reutilizable para solicitudes de patente."
+              Subtitle="Complete la información requerida para registrar la solicitud de patente."
               Breadcrumbs="breadcrumbs">
     <Actions>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/patentes">Volver a consulta</MudButton>
     </Actions>
 </PageTitleBar>
 
-<MudStack Spacing="3">
-    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">
-        Esta pantalla implementa la base del proceso guiado y deja preparada la estructura para integrar reglas, expediente y pasos operativos posteriores.
-    </MudAlert>
-
-    <PatenteCreateWizard OnCancelled="HandleCancelledAsync" />
-</MudStack>
+<PatenteCreateWizard OnCancelled="HandleCancelledAsync" />
 
 @code {
     private readonly List<BreadcrumbItem> breadcrumbs = new()

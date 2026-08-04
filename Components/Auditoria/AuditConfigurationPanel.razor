@@ -1,44 +1,187 @@
 @using BlazorApp.Models.Auditoria
+@using BlazorApp.Helpers
+@using MudBlazor
+@inject DocumentExportHelper DocumentExportHelper
 
 <MudPaper Outlined="true" Class="pa-4">
-    <MudStack Spacing="2">
+    <MudStack Spacing="3">
         <div class="d-flex flex-wrap justify-space-between align-center gap-2">
             <div>
                 <MudText Typo="Typo.h6">Auditoría de configuración</MudText>
                 <MudText Typo="Typo.body2" Class="mud-text-secondary">Registro de catálogos, parámetros, permisos y reglas.</MudText>
             </div>
-            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{Events.Count()} eventos")</MudChip>
+            <MudStack Row="true" Spacing="1">
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{filteredEvents.Count()} de {Events.Count()} eventos")</MudChip>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="ExportPdfAsync" Size="Size.Small" Disabled="@(filteredEvents.Count() == 0)">PDF</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintDocumentAsync" Size="Size.Small" Disabled="@(filteredEvents.Count() == 0)">Imprimir</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportHtmlAsync" Size="Size.Small" Disabled="@(filteredEvents.Count() == 0)">HTML</MudButton>
+            </MudStack>
         </div>
 
-        <MudTable T="AuditConfigurationEventDto" Items="@Events" Hover="true" Breakpoint="Breakpoint.Sm">
-            <HeaderContent>
-                <MudTh>Parámetro</MudTh>
-                <MudTh>Valor anterior</MudTh>
-                <MudTh>Valor nuevo</MudTh>
-                <MudTh>Usuario</MudTh>
-                <MudTh>Fecha</MudTh>
-                <MudTh>Justificación</MudTh>
-                <MudTh>Módulo afectado</MudTh>
-                <MudTh>Estado</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Parámetro">@context.Parameter</MudTd>
-                <MudTd DataLabel="Valor anterior">@context.PreviousValue</MudTd>
-                <MudTd DataLabel="Valor nuevo">@context.NewValue</MudTd>
-                <MudTd DataLabel="Usuario">@context.UserName</MudTd>
-                <MudTd DataLabel="Fecha">@context.EventDate.ToString("dd/MM/yyyy HH:mm")</MudTd>
-                <MudTd DataLabel="Justificación">@context.Justification</MudTd>
-                <MudTd DataLabel="Módulo afectado">@context.AffectedModule</MudTd>
-                <MudTd DataLabel="Estado">
-                    <MudChip T="string" Color="@GetStateColor(context.ConfigurationState)" Variant="Variant.Outlined" Size="Size.Small">@context.ConfigurationState</MudChip>
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
+        @if (!string.IsNullOrWhiteSpace(dateRangeError))
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true">@dateRangeError</MudAlert>
+        }
+
+        <MudExpansionPanels>
+            <MudExpansionPanel Text="Filtros de búsqueda">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect T="string" @bind-Value="filterModule" Label="Módulo" Variant="Variant.Outlined" Dense="true" Clearable="true">
+                            @foreach (var module in modules)
+                            {
+                                <MudSelectItem Value="@module">@module</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField T="string" @bind-Value="filterParameter" Label="Parámetro" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField T="string" @bind-Value="filterUser" Label="Usuario" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect T="string" @bind-Value="filterChangeType" Label="Tipo de cambio" Variant="Variant.Outlined" Dense="true" Clearable="true">
+                            @foreach (var changeType in changeTypes)
+                            {
+                                <MudSelectItem Value="@changeType">@changeType</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudDatePicker Label="Fecha desde" @bind-Date="filterDateFrom" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudDatePicker Label="Fecha hasta" @bind-Date="filterDateTo" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3" Class="d-flex align-center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="ApplyFiltersAsync" FullWidth="true">Buscar</MudButton>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3" Class="d-flex align-center">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Clear" OnClick="ClearFiltersAsync" FullWidth="true">Limpiar</MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+
+        @if (filteredEvents.Any())
+        {
+            <MudTable T="AuditConfigurationEventDto" Items="@filteredEvents" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
+                <HeaderContent>
+                    <MudTh>Parámetro</MudTh>
+                    <MudTh>Valor anterior</MudTh>
+                    <MudTh>Valor nuevo</MudTh>
+                    <MudTh>Usuario</MudTh>
+                    <MudTh>Fecha</MudTh>
+                    <MudTh>Justificación</MudTh>
+                    <MudTh>Módulo afectado</MudTh>
+                    <MudTh>Estado</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Parámetro">@context.Parameter</MudTd>
+                    <MudTd DataLabel="Valor anterior">@context.PreviousValue</MudTd>
+                    <MudTd DataLabel="Valor nuevo">@context.NewValue</MudTd>
+                    <MudTd DataLabel="Usuario">@context.UserName</MudTd>
+                    <MudTd DataLabel="Fecha">@context.EventDate.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                    <MudTd DataLabel="Justificación">@context.Justification</MudTd>
+                    <MudTd DataLabel="Módulo afectado">@context.AffectedModule</MudTd>
+                    <MudTd DataLabel="Estado">
+                        <MudChip T="string" Color="@GetStateColor(context.ConfigurationState)" Variant="Variant.Outlined" Size="Size.Small">@context.ConfigurationState</MudChip>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                No se encontraron eventos con los criterios seleccionados.
+            </MudAlert>
+        }
     </MudStack>
 </MudPaper>
 
 @code {
     [Parameter, EditorRequired] public IEnumerable<AuditConfigurationEventDto> Events { get; set; } = Array.Empty<AuditConfigurationEventDto>();
+
+    private IEnumerable<AuditConfigurationEventDto> filteredEvents = Array.Empty<AuditConfigurationEventDto>();
+    private string? filterModule;
+    private string? filterParameter;
+    private string? filterUser;
+    private string? filterChangeType;
+    private DateTime? filterDateFrom;
+    private DateTime? filterDateTo;
+    private string? dateRangeError;
+
+    private readonly string[] modules = { "RUC", "Bienes Inmuebles", "Patentes", "Permisos de Construcción", "Mercado Municipal", "Plataforma de Servicios", "Auditoría", "Administración" };
+    private readonly string[] changeTypes = { "Creación", "Modificación", "Activación", "Desactivación", "Cambio de valor" };
+
+    protected override void OnParametersSet()
+    {
+        ApplyFilters();
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        if (filterDateFrom.HasValue && filterDateTo.HasValue && filterDateFrom.Value > filterDateTo.Value)
+        {
+            dateRangeError = "La fecha inicial no puede ser posterior a la fecha final.";
+            return;
+        }
+
+        dateRangeError = null;
+        ApplyFilters();
+        await Task.CompletedTask;
+    }
+
+    private void ApplyFilters()
+    {
+        var result = Events.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(filterModule))
+        {
+            result = result.Where(e => e.AffectedModule.Equals(filterModule, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterParameter))
+        {
+            result = result.Where(e => e.Parameter.Contains(filterParameter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterUser))
+        {
+            result = result.Where(e => e.UserName.Contains(filterUser, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterChangeType))
+        {
+            result = result.Where(e => e.Action.Equals(filterChangeType, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (filterDateFrom.HasValue)
+        {
+            result = result.Where(e => e.EventDate >= filterDateFrom.Value.Date);
+        }
+
+        if (filterDateTo.HasValue)
+        {
+            result = result.Where(e => e.EventDate <= filterDateTo.Value.Date.AddDays(1).AddSeconds(-1));
+        }
+
+        filteredEvents = result.OrderByDescending(e => e.EventDate).ToList();
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        filterModule = null;
+        filterParameter = null;
+        filterUser = null;
+        filterChangeType = null;
+        filterDateFrom = null;
+        filterDateTo = null;
+        dateRangeError = null;
+        ApplyFilters();
+        await Task.CompletedTask;
+    }
 
     private static Color GetStateColor(string state) => state switch
     {
@@ -47,4 +190,79 @@
         "Advertencia" => Color.Warning,
         _ => Color.Primary
     };
+
+    private async Task ExportHtmlAsync()
+    {
+        var content = BuildConfigurationDocument();
+        var fileName = $"Auditoria_Configuracion_{DateTime.Today:yyyy-MM-dd}.html";
+        await DocumentExportHelper.ExportAsHtmlAsync(content, fileName);
+    }
+
+    private async Task PrintDocumentAsync()
+    {
+        var content = BuildConfigurationDocument();
+        await DocumentExportHelper.PrintHtmlAsync(content);
+    }
+
+    private async Task ExportPdfAsync()
+    {
+        var content = BuildConfigurationDocument();
+        var fileName = $"Auditoria_Configuracion_{DateTime.Today:yyyy-MM-dd}.pdf";
+        await DocumentExportHelper.ExportAsPdfAsync(content, fileName);
+    }
+
+    private string BuildConfigurationDocument()
+    {
+        var sb = new System.Text.StringBuilder();
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Filtros aplicados</div>");
+        if (!string.IsNullOrWhiteSpace(filterModule))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Módulo:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(filterModule));
+        }
+        if (!string.IsNullOrWhiteSpace(filterParameter))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Parámetro:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(filterParameter));
+        }
+        if (!string.IsNullOrWhiteSpace(filterUser))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Usuario:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(filterUser));
+        }
+        if (!string.IsNullOrWhiteSpace(filterChangeType))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Tipo de cambio:</span><span class='field-value'>{0}</span></div>", Helpers.DocumentExportHelper.HtmlEncode(filterChangeType));
+        }
+        if (filterDateFrom.HasValue)
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Fecha desde:</span><span class='field-value'>{0}</span></div>", filterDateFrom.Value.ToString("dd/MM/yyyy"));
+        }
+        if (filterDateTo.HasValue)
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Fecha hasta:</span><span class='field-value'>{0}</span></div>", filterDateTo.Value.ToString("dd/MM/yyyy"));
+        }
+        sb.AppendFormat("<div class='field'><span class='field-label'>Total eventos:</span><span class='field-value'>{0}</span></div>", filteredEvents.Count());
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Eventos de Configuración</div>");
+        sb.Append("<table>");
+        sb.Append("<thead><tr><th>Parámetro</th><th>Valor anterior</th><th>Valor nuevo</th><th>Usuario</th><th>Fecha</th><th>Módulo afectado</th></tr></thead>");
+        sb.Append("<tbody>");
+        foreach (var evt in filteredEvents)
+        {
+            sb.Append("<tr>");
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.Parameter));
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.PreviousValue));
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.NewValue));
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.UserName));
+            sb.AppendFormat("<td>{0}</td>", evt.EventDate.ToString("dd/MM/yyyy HH:mm"));
+            sb.AppendFormat("<td>{0}</td>", Helpers.DocumentExportHelper.HtmlEncode(evt.AffectedModule));
+            sb.Append("</tr>");
+        }
+        sb.Append("</tbody></table>");
+        sb.Append("</div>");
+
+        return Helpers.DocumentExportHelper.BuildMunicipalDocument("Auditoría de Configuración", $"Reporte {DateTime.Today:dd/MM/yyyy}", sb.ToString());
+    }
 }

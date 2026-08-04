@@ -7,14 +7,14 @@ public class PatenteSolicitudWizardModel
 {
     public string ProcessKey { get; set; } = "patentes-nueva-solicitud";
 
-    public string NumeroSolicitud { get; set; } = "SOL-PT-DEMO-001";
-    public string NumeroExpediente { get; set; } = "EXP-PT-DEMO-001";
-    public string TipoSolicitud { get; set; } = "Nueva licencia comercial";
-    public string TipoLicencia { get; set; } = "Licencia comercial nueva";
-    public string CanalIngreso { get; set; } = "Plataforma de Servicios";
+    public string NumeroSolicitud { get; set; } = string.Empty;
+    public string NumeroExpediente { get; set; } = string.Empty;
+    public string TipoSolicitud { get; set; } = string.Empty;
+    public string TipoLicencia { get; set; } = string.Empty;
+    public string CanalIngreso { get; set; } = string.Empty;
     public string EstadoInicial { get; set; } = "Borrador";
-    public string ModalidadDeclaracionJurada { get; set; } = "Sí";
-    public bool TieneDeclaracionJurada { get; set; } = true;
+    public string ModalidadDeclaracionJurada { get; set; } = string.Empty;
+    public bool TieneDeclaracionJurada { get; set; } = false;
     public bool RequiereLocalFisico { get; set; } = true;
 
     public int? ContribuyenteId { get; set; }

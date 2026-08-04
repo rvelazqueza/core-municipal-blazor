@@ -6,7 +6,9 @@
 @using BlazorApp.Models.PermisosConstruccion
 @using BlazorApp.Services.PermisosConstruccion
 @using BlazorApp.Shared
+@using BlazorApp.Helpers
 @inject NavigationManager Navigation
+@inject DocumentExportHelper DocumentExportHelper
 
 <PageTitleBar Title="Expediente de Permisos de Construcción" Subtitle="Vista 360°, edición controlada y trazabilidad del permiso." />
 
@@ -32,6 +34,9 @@ else
                     <MudChip T="string" Text="@permit.PermitStatus" Color="@ResolveStatusColor(permit.PermitStatus)" Variant="Variant.Filled" />
                     <MudChip T="string" Text="@($"APC {permit.Apc.ApcStatus}")" Color="@ResolveStatusColor(permit.Apc.ApcStatus)" Variant="Variant.Outlined" />
                     <MudChip T="string" Text="@($"Pago {permit.PaymentStatus}")" Color="@ResolveStatusColor(permit.PaymentStatus)" Variant="Variant.Outlined" />
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="ExportPdfAsync" Size="Size.Small">PDF</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintDocumentAsync" Size="Size.Small">Imprimir</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportHtmlAsync" Size="Size.Small">HTML</MudButton>
                     <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="GoBack">Volver a la bandeja</MudButton>
                 </MudStack>
             </MudStack>
@@ -131,14 +136,16 @@ else
 
 @code {
     [Parameter] public string Id { get; set; } = string.Empty;
+    [Inject] private LocalStorageHelper? LocalStorage { get; set; }
 
-    private readonly PermisosConstruccionMockService service = new();
+    private PermisosConstruccionMockService service = new();
     private PcPermitDto? permit;
     private List<PcCatalogItemDto> catalogItems = [];
     private int activeTabIndex;
 
     protected override async Task OnParametersSetAsync()
     {
+        service = LocalStorage != null ? new PermisosConstruccionMockService(LocalStorage) : service;
         permit = await service.GetPermitAsync(Id);
         catalogItems = await service.GetCatalogItemsAsync();
     }
@@ -177,4 +184,118 @@ else
         var value when value.Contains("anul") => Color.Dark,
         _ => Color.Info
     };
+
+    private async Task ExportHtmlAsync()
+    {
+        var content = BuildPermitDocument();
+        var fileName = $"Permiso_{permit!.CaseNumber}.html";
+        await DocumentExportHelper.ExportAsHtmlAsync(content, fileName);
+    }
+
+    private async Task PrintDocumentAsync()
+    {
+        var content = BuildPermitDocument();
+        await DocumentExportHelper.PrintHtmlAsync(content);
+    }
+
+    private async Task ExportPdfAsync()
+    {
+        var content = BuildPermitDocument();
+        var fileName = $"Permiso_{permit!.CaseNumber}.pdf";
+        await DocumentExportHelper.ExportAsPdfAsync(content, fileName);
+    }
+
+    private string BuildPermitDocument()
+    {
+        var sb = new System.Text.StringBuilder();
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Información General del Permiso</div>");
+        sb.AppendFormat("<div class='field'><span class='field-label'>Número de expediente:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit!.CaseNumber));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Tipo de permiso:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.TypeName));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Estado:</span><span class='field-value'><span class='badge badge-info'>{0}</span></span></div>", DocumentExportHelper.HtmlEncode(permit.PermitStatus));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Fecha de ingreso:</span><span class='field-value'>{0}</span></div>", permit.CreatedAt.ToString("dd/MM/yyyy"));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Distrito:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.District));
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Solicitante</div>");
+        sb.AppendFormat("<div class='field'><span class='field-label'>Identificación:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Applicant.Identification));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Nombre:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Applicant.Name));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Teléfono:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Applicant.Phone));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Correo:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Applicant.Email));
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Finca / Inmueble</div>");
+        sb.AppendFormat("<div class='field'><span class='field-label'>Número de finca:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Property.PropertyNumber));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Plano catastrado:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Property.PlanNumber));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Distrito:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Property.District));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Dirección:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Property.ExactAddress));
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Datos Técnicos</div>");
+        sb.AppendFormat("<div class='field'><span class='field-label'>Tipo de obra:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.TechnicalWork.WorkType));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Área a construir:</span><span class='field-value'>{0} m²</span></div>", DocumentExportHelper.HtmlEncode(permit.TechnicalWork.NewArea.ToString()));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Valor estimado:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.TechnicalWork.WorkAmount.ToString()));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Profesional responsable:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Professional.Name));
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Estado APC</div>");
+        sb.AppendFormat("<div class='field'><span class='field-label'>Estado:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Apc.ApcStatus));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Número APC:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Apc.CfiaApcCode));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Fecha de aprobación:</span><span class='field-value'>{0}</span></div>", permit.Apc.ApprovalDate?.ToString("dd/MM/yyyy") ?? "N/A");
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Pago y Tasación</div>");
+        sb.AppendFormat("<div class='field'><span class='field-label'>Estado de pago:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.PaymentStatus));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Monto tasado:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(permit.Assessment.TotalToPay.ToString("N2")));
+        sb.Append("</div>");
+
+        if (permit.Requirements.Any())
+        {
+            sb.Append("<div class='section'>");
+            sb.Append("<div class='section-title'>Requisitos</div>");
+            sb.Append("<table>");
+            sb.Append("<thead><tr><th>Requisito</th><th>Estado</th><th>Observación</th></tr></thead>");
+            sb.Append("<tbody>");
+            foreach (var req in permit.Requirements)
+            {
+                sb.Append("<tr>");
+                sb.AppendFormat("<td>{0}</td>", DocumentExportHelper.HtmlEncode(req.Name));
+                sb.AppendFormat("<td><span class='badge badge-{0}'>{1}</span></td>",
+                    req.State == "Presentado" ? "success" : req.State == "Pendiente" ? "warning" : "info",
+                    DocumentExportHelper.HtmlEncode(req.State));
+                sb.AppendFormat("<td>{0}</td>", DocumentExportHelper.HtmlEncode(req.Observation));
+                sb.Append("</tr>");
+            }
+            sb.Append("</tbody></table>");
+            sb.Append("</div>");
+        }
+
+        if (permit.HistoryEvents.Any())
+        {
+            sb.Append("<div class='section'>");
+            sb.Append("<div class='section-title'>Historial</div>");
+            sb.Append("<table>");
+            sb.Append("<thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Comentario</th></tr></thead>");
+            sb.Append("<tbody>");
+            foreach (var evt in permit.HistoryEvents.OrderByDescending(h => h.Date))
+            {
+                sb.Append("<tr>");
+                sb.AppendFormat("<td>{0}</td>", evt.Date.ToString("dd/MM/yyyy HH:mm"));
+                sb.AppendFormat("<td>{0}</td>", DocumentExportHelper.HtmlEncode(evt.User));
+                sb.AppendFormat("<td>{0}</td>", DocumentExportHelper.HtmlEncode(evt.Action));
+                sb.AppendFormat("<td>{0}</td>", DocumentExportHelper.HtmlEncode(evt.Comment));
+                sb.Append("</tr>");
+            }
+            sb.Append("</tbody></table>");
+            sb.Append("</div>");
+        }
+
+        return DocumentExportHelper.BuildMunicipalDocument("Expediente de Permiso de Construcción", permit.CaseNumber, sb.ToString());
+    }
 }

@@ -3,6 +3,7 @@
 @using BlazorApp.Models.PermisosConstruccion
 @using BlazorApp.Services.PermisosConstruccion
 @using BlazorApp.Shared
+@using BlazorApp.Helpers
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
@@ -70,14 +71,19 @@
 </MudStack>
 
 @code {
+    [Inject] private LocalStorageHelper? LocalStorage { get; set; }
     private readonly PermisosConstruccionMockService service = new();
     private List<PcPermitDto> permits = [];
+    private List<PcPermitDto> allPermits = [];
     private List<PcIntegrationStatusDto> integrations = [];
+    private string currentView = "Todos";
 
     protected override async Task OnInitializedAsync()
     {
-        permits = await service.GetPermitsAsync();
-        integrations = await service.GetIntegrationsAsync();
+        var serviceWithStorage = LocalStorage != null ? new PermisosConstruccionMockService(LocalStorage) : service;
+        allPermits = await serviceWithStorage.GetPermitsAsync();
+        permits = allPermits;
+        integrations = await serviceWithStorage.GetIntegrationsAsync();
     }
 
     private void GoToNewPermit() => Navigation.NavigateTo("/permisos-construccion/nuevo");
@@ -95,22 +101,105 @@
     }
 
     private Task EditPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Editar {permit.CaseNumber} estará disponible en la siguiente parte.");
-    private Task ReviewPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Revisión para {permit.CaseNumber}.");
+
+    private async Task ReviewPermitAsync(PcPermitDto permit)
+    {
+        // For now, simplified version without dialog - just mark as reviewed
+        if (LocalStorage != null)
+        {
+            var serviceWithStorage = new PermisosConstruccionMockService(LocalStorage);
+            await serviceWithStorage.CompleteReviewAsync(permit.Id, "Técnico municipal", "Revisión completada desde bandeja", "Revisado");
+            allPermits = await serviceWithStorage.GetPermitsAsync();
+            ApplyCurrentFilter();
+            Snackbar.Add($"Revisión completada para {permit.CaseNumber}.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"Revisión para {permit.CaseNumber}.", Severity.Info);
+        }
+    }
+
     private Task PreventPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Prevención para {permit.CaseNumber}.");
     private Task AssessPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Tasación para {permit.CaseNumber}.");
     private Task SimulatePaymentAsync(PcPermitDto permit) => ShowSnackAsync($"Pago para {permit.CaseNumber}.");
     private Task ApprovePermitAsync(PcPermitDto permit) => ShowSnackAsync($"Aprobación para {permit.CaseNumber}.");
     private Task AnnulPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Anulación para {permit.CaseNumber}.");
-    private Task RequestInspectionAsync(PcPermitDto permit) => ShowSnackAsync($"Inspección solicitada para {permit.CaseNumber}.");
+
+    private async Task RequestInspectionAsync(PcPermitDto permit)
+    {
+        // Simplified version - register inspection directly
+        if (LocalStorage != null)
+        {
+            var serviceWithStorage = new PermisosConstruccionMockService(LocalStorage);
+            await serviceWithStorage.RegisterInspectionAsync(permit.Id, DateTime.Today, "Inspector municipal", "Conforme", "Inspección registrada desde bandeja");
+            allPermits = await serviceWithStorage.GetPermitsAsync();
+            ApplyCurrentFilter();
+            Snackbar.Add($"Inspección registrada para {permit.CaseNumber}.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"Inspección solicitada para {permit.CaseNumber}.", Severity.Info);
+        }
+    }
+
     private Task AuditPermitAsync(PcPermitDto permit) => ShowSnackAsync($"Auditoría para {permit.CaseNumber}.");
 
     private Task ShowApcSimulatedAsync() => ShowSnackAsync("Expedientes APC disponibles en esta bandeja.");
-    private Task ShowObraMenorAsync() => ShowSnackAsync("Vista de obra menor disponible.");
-    private Task ShowPendingReviewAsync() => ShowSnackAsync("Pendientes de revisión cargados en la bandeja.");
-    private Task ShowPendingInspectionAsync() => ShowSnackAsync("Pendientes de inspección inicial cargados en la bandeja.");
+
+    private Task ShowObraMenorAsync()
+    {
+        currentView = "Obra menor";
+        permits = allPermits.Where(p => p.TypeCode == "OM" || p.TypeName.Contains("Obra menor", StringComparison.OrdinalIgnoreCase)).ToList();
+        Snackbar.Add($"Mostrando {permits.Count} permisos de obra menor.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task ShowPendingReviewAsync()
+    {
+        currentView = "Pendientes de revisión";
+        permits = allPermits.Where(p =>
+            p.PermitStatus.Contains("revisión", StringComparison.OrdinalIgnoreCase) ||
+            p.PermitStatus.Contains("recibido", StringComparison.OrdinalIgnoreCase) ||
+            p.MunicipalReview.Status.Contains("Pendiente", StringComparison.OrdinalIgnoreCase)
+        ).ToList();
+        Snackbar.Add($"Mostrando {permits.Count} permisos pendientes de revisión.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task ShowPendingInspectionAsync()
+    {
+        currentView = "Pendientes de inspección";
+        permits = allPermits.Where(p =>
+            p.PermitStatus.Contains("inspección", StringComparison.OrdinalIgnoreCase) ||
+            p.InspectionStatus.Contains("Pendiente", StringComparison.OrdinalIgnoreCase) ||
+            p.QualityControl.RequiresInspection && p.QualityControl.InspectionStatus.Contains("Pendiente", StringComparison.OrdinalIgnoreCase)
+        ).ToList();
+        Snackbar.Add($"Mostrando {permits.Count} permisos pendientes de inspección.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
     private Task ShowPendingPaymentAsync() => ShowSnackAsync("Pendientes de pago y cobro.");
     private Task ShowAnnulmentAsync() => ShowSnackAsync("Anulaciones y trazabilidad operativa.");
     private Task ShowCorrespondenceAsync() => ShowSnackAsync("Correspondencia disponible.");
     private Task ShowReportsAsync() => ShowSnackAsync("Reportes operativos disponibles.");
     private Task ShowIntegrationsAsync() => ShowSnackAsync("Integraciones institucionales preparadas.");
+
+    private void ApplyCurrentFilter()
+    {
+        switch (currentView)
+        {
+            case "Obra menor":
+                ShowObraMenorAsync();
+                break;
+            case "Pendientes de revisión":
+                ShowPendingReviewAsync();
+                break;
+            case "Pendientes de inspección":
+                ShowPendingInspectionAsync();
+                break;
+            default:
+                permits = allPermits;
+                break;
+        }
+    }
 }

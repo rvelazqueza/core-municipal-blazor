@@ -8,6 +8,7 @@
 @using MudBlazor
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject PlataformaServiciosMockService DataService
 
 <PageTitleBar Title="Plataforma de Servicios"
               Subtitle="Ventanilla única para recepción, clasificación, seguimiento y resolución de trámites municipales.">
@@ -231,7 +232,6 @@
 </MudStack>
 
 @code {
-    private readonly PlataformaServiciosMockService mockService = new();
     private List<PsProcedureDto> procedures = new();
     private List<PsProcedureDto> filteredProcedures = new();
     private List<PsProcedureTypeDto> procedureTypes = new();
@@ -259,10 +259,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        procedureTypes = await mockService.GetProcedureTypesAsync();
-        procedures = await mockService.GetProceduresAsync();
-        reports = await mockService.GetReportsAsync();
-        integrations = await mockService.GetIntegrationsAsync();
+        procedureTypes = await DataService.GetProcedureTypesAsync();
+        procedures = await DataService.GetProceduresAsync();
+        reports = await DataService.GetReportsAsync();
+        integrations = await DataService.GetIntegrationsAsync();
         filteredProcedures = procedures.ToList();
     }
 
@@ -374,5 +374,5 @@
         => priority is "Urgente" ? Color.Error : priority is "Alta" ? Color.Warning : Color.Info;
 
     private Color GetIntegrationColor(string status)
-        => status is "Preparado" ? Color.Success : status is "Simulado" ? Color.Info : Color.Warning;
+        => status is "Preparado" ? Color.Success : status is "Procesado" ? Color.Info : Color.Warning;
 }

@@ -22,4 +22,35 @@ public class MaestroDatosMockService : IMaestroDatosService
     public Task<List<string>> GetEstadosPatenteAsync() => Task.FromResult(new List<string> { "Borrador", "En revision", "Prevenido", "Aprobado", "Rechazado", "Suspendido", "Cancelado" });
     public Task<List<string>> GetTiposPatenteAsync() => Task.FromResult(new List<string> { "Comercial", "Industrial", "Temporal" });
     public Task<List<string>> GetEstadosUsoSueloAsync() => Task.FromResult(new List<string> { "Pendiente", "Conforme", "No conforme" });
+
+    public Task<List<string>> GetNacionalidadesAsync() => Task.FromResult(new List<string>
+    {
+        "Costarricense",
+        "Nicaragüense",
+        "Panameña",
+        "Estadounidense",
+        "Mexicana",
+        "Colombiana",
+        "Venezolana",
+        "Salvadoreña",
+        "Hondureña",
+        "Guatemalteca",
+        "Española",
+        "Argentina",
+        "Chilena",
+        "Peruana",
+        "Cubana",
+        "Dominicana",
+        "Ecuatoriana",
+        "Brasileña",
+        "Canadiense",
+        "Alemana",
+        "Francesa",
+        "Italiana",
+        "Británica",
+        "China",
+        "Japonesa",
+        "Coreana",
+        "India"
+    });
 }

@@ -82,16 +82,10 @@ public partial class PatenteCreateWizard : ComponentBase
         localesMock = moduleSnapshot.Locales.OrderBy(x => x.NombreLocal).ToList();
         actividadesEconomicasMock = moduleSnapshot.ActividadesEconomicas.OrderBy(x => x.Descripcion).ToList();
         await RestoreDraftAsync();
-        await EnsureMockIdentifiersAsync();
         EnsureDefaults();
         SyncCatalogSelectionsFromModel();
         await EnsureLocalSelectionAsync(refresh: false);
         await EnsureActividadSelectionAsync(refresh: false);
-        if (model.ContribuyenteId is null && !model.PendienteRegistroContribuyente && contribuyentes.Any())
-        {
-            selectedContribuyenteId = contribuyentes[0].Id.ToString();
-            await OnContribuyenteChangedAsync();
-        }
         await RefreshWizardStateAsync(persist: false);
     }
 
@@ -174,8 +168,6 @@ public partial class PatenteCreateWizard : ComponentBase
     private void EnsureDefaults()
     {
         model.ProcessKey = ProcessKey;
-        model.NumeroSolicitud = string.IsNullOrWhiteSpace(model.NumeroSolicitud) ? $"SOL-PT-{DateTime.Today:yyyy}-0001" : model.NumeroSolicitud;
-        model.NumeroExpediente = string.IsNullOrWhiteSpace(model.NumeroExpediente) ? $"EXP-PT-{DateTime.Today:yyyy}-0001" : model.NumeroExpediente;
         model.TipoSolicitud = string.IsNullOrWhiteSpace(model.TipoSolicitud) ? "Licencia comercial nueva" : model.TipoSolicitud;
         model.TipoLicencia = string.IsNullOrWhiteSpace(model.TipoLicencia) ? "Ordinaria" : model.TipoLicencia;
         model.CanalIngreso = string.IsNullOrWhiteSpace(model.CanalIngreso) ? "Plataforma de Servicios" : model.CanalIngreso;
@@ -183,9 +175,6 @@ public partial class PatenteCreateWizard : ComponentBase
         model.ModalidadDeclaracionJurada = string.IsNullOrWhiteSpace(model.ModalidadDeclaracionJurada) ? "Sí" : model.ModalidadDeclaracionJurada;
         model.TieneDeclaracionJurada = string.Equals(model.ModalidadDeclaracionJurada, "Sí", StringComparison.OrdinalIgnoreCase);
         model.TipoPersona = string.IsNullOrWhiteSpace(model.TipoPersona) ? "Fisica" : model.TipoPersona;
-        model.Correo = string.IsNullOrWhiteSpace(model.Correo) ? "patentes@municipalidad.go.cr" : model.Correo;
-        model.Telefono = string.IsNullOrWhiteSpace(model.Telefono) ? "2222-2222" : model.Telefono;
-        model.DireccionFiscal = string.IsNullOrWhiteSpace(model.DireccionFiscal) ? "Dirección fiscal" : model.DireccionFiscal;
         model.MedioNotificacion = string.IsNullOrWhiteSpace(model.MedioNotificacion) ? "Correo electrónico" : model.MedioNotificacion;
         model.EstadoContribuyente = string.IsNullOrWhiteSpace(model.EstadoContribuyente) ? "Activo" : model.EstadoContribuyente;
         model.CalidadDatosRuc = string.IsNullOrWhiteSpace(model.CalidadDatosRuc) ? "Validado" : model.CalidadDatosRuc;
@@ -194,49 +183,21 @@ public partial class PatenteCreateWizard : ComponentBase
         model.TipoUbicacion = string.IsNullOrWhiteSpace(model.TipoUbicacion)
             ? (model.RequiereLocalFisico ? "Local físico" : "Actividad sin local físico")
             : model.TipoUbicacion;
-        model.DireccionLocal = string.IsNullOrWhiteSpace(model.DireccionLocal) ? "Avenida Central, local comercial" : model.DireccionLocal;
-        model.FincaOIdPredial = string.IsNullOrWhiteSpace(model.FincaOIdPredial) ? "F-0001" : model.FincaOIdPredial;
-        model.IdPredial = string.IsNullOrWhiteSpace(model.IdPredial) ? "ID-PR-0001" : model.IdPredial;
-        model.NumeroFinca = string.IsNullOrWhiteSpace(model.NumeroFinca) ? "1-23456" : model.NumeroFinca;
-        model.Dueno = string.IsNullOrWhiteSpace(model.Dueno) ? "Municipalidad" : model.Dueno;
-        model.CondicionOcupacion = string.IsNullOrWhiteSpace(model.CondicionOcupacion) ? "Propiedad" : model.CondicionOcupacion;
-        model.AreaLocal = string.IsNullOrWhiteSpace(model.AreaLocal) ? "120 m²" : model.AreaLocal;
-        model.NombreComercialLocal = string.IsNullOrWhiteSpace(model.NombreComercialLocal) ? "Local comercial" : model.NombreComercialLocal;
         model.EstadoGis = string.IsNullOrWhiteSpace(model.EstadoGis) ? "Pendiente" : model.EstadoGis;
         model.Distrito = string.IsNullOrWhiteSpace(model.Distrito) && distritos.Any() ? distritos[0] : model.Distrito;
-        model.ActividadEconomica = string.IsNullOrWhiteSpace(model.ActividadEconomica) ? "Restaurante" : model.ActividadEconomica;
-        model.CodigoCaecr = string.IsNullOrWhiteSpace(model.CodigoCaecr) ? "5610" : model.CodigoCaecr;
-        model.CodigoCiiuVisual = string.IsNullOrWhiteSpace(model.CodigoCiiuVisual) ? "CIIU 5610" : model.CodigoCiiuVisual;
-        model.NombreComercial = string.IsNullOrWhiteSpace(model.NombreComercial) ? "Comercio Municipal" : model.NombreComercial;
-        model.ActividadPrincipal = string.IsNullOrWhiteSpace(model.ActividadPrincipal) ? "Venta de alimentos" : model.ActividadPrincipal;
-        model.ActividadesSecundarias = string.IsNullOrWhiteSpace(model.ActividadesSecundarias) ? "Servicio al cliente, Delivery" : model.ActividadesSecundarias;
         model.RiesgoActividad = string.IsNullOrWhiteSpace(model.RiesgoActividad) ? "Bajo" : model.RiesgoActividad;
-        model.HorarioAtencion = string.IsNullOrWhiteSpace(model.HorarioAtencion) ? "Lunes a viernes 8:00 a.m. - 5:00 p.m." : model.HorarioAtencion;
-        model.Empleados = string.IsNullOrWhiteSpace(model.Empleados) ? "3" : model.Empleados;
-        model.RequiereLicores = model.RequiereLicores;
-        model.RequierePermisoSanitario = true;
-        model.RequiereInspeccion = true;
-        model.ActividadTemporal = false;
-        model.CertificadoUsoSuelo = string.IsNullOrWhiteSpace(model.CertificadoUsoSuelo) ? "CUS-MUN-001" : model.CertificadoUsoSuelo;
-        model.NumeroCertificadoUsoSuelo = string.IsNullOrWhiteSpace(model.NumeroCertificadoUsoSuelo) ? "CUS-MUN-001" : model.NumeroCertificadoUsoSuelo;
-        model.Zonificacion = string.IsNullOrWhiteSpace(model.Zonificacion) ? "Mixta comercial" : model.Zonificacion;
-        model.ActividadesAutorizadas = string.IsNullOrWhiteSpace(model.ActividadesAutorizadas) ? "Comercio, alimentos, atención al público" : model.ActividadesAutorizadas;
-        model.CompatibilidadUsoSuelo = string.IsNullOrWhiteSpace(model.CompatibilidadUsoSuelo) ? "Compatible" : model.CompatibilidadUsoSuelo;
-        model.FechaValidacionUsoSuelo ??= DateTime.Today;
-        model.FechaVencimientoUsoSuelo ??= DateTime.Today.AddYears(1);
-        model.ResultadoUsoSuelo = string.IsNullOrWhiteSpace(model.ResultadoUsoSuelo) ? "Aprobado" : model.ResultadoUsoSuelo;
-        model.EstadoUsoSuelo = string.IsNullOrWhiteSpace(model.EstadoUsoSuelo) ? "Conforme" : model.EstadoUsoSuelo;
+        model.EstadoUsoSuelo = string.IsNullOrWhiteSpace(model.EstadoUsoSuelo) ? "Pendiente" : model.EstadoUsoSuelo;
         model.EstadoRequisitos = string.IsNullOrWhiteSpace(model.EstadoRequisitos) ? "Cumple" : model.EstadoRequisitos;
         model.EstadoIdentificacion = string.IsNullOrWhiteSpace(model.EstadoIdentificacion) ? "Cumple" : model.EstadoIdentificacion;
         model.EstadoPersoneriaJuridica = string.IsNullOrWhiteSpace(model.EstadoPersoneriaJuridica) ? "Cumple" : model.EstadoPersoneriaJuridica;
         model.EstadoUsoSueloChecklist = string.IsNullOrWhiteSpace(model.EstadoUsoSueloChecklist) ? "Cumple" : model.EstadoUsoSueloChecklist;
-        model.EstadoPermisoSanitario = string.IsNullOrWhiteSpace(model.EstadoPermisoSanitario) ? "Cumple" : model.EstadoPermisoSanitario;
+        model.EstadoPermisoSanitario = string.IsNullOrWhiteSpace(model.EstadoPermisoSanitario) ? "Pendiente" : model.EstadoPermisoSanitario;
         model.EstadoArrendamientoPropiedad = string.IsNullOrWhiteSpace(model.EstadoArrendamientoPropiedad) ? "Cumple" : model.EstadoArrendamientoPropiedad;
         model.EstadoCcssChecklist = string.IsNullOrWhiteSpace(model.EstadoCcssChecklist) ? "Cumple" : model.EstadoCcssChecklist;
         model.EstadoFodesafChecklist = string.IsNullOrWhiteSpace(model.EstadoFodesafChecklist) ? "Cumple" : model.EstadoFodesafChecklist;
         model.EstadoInsChecklist = string.IsNullOrWhiteSpace(model.EstadoInsChecklist) ? "Cumple" : model.EstadoInsChecklist;
         model.EstadoDeclaracionJuradaChecklist = string.IsNullOrWhiteSpace(model.EstadoDeclaracionJuradaChecklist) ? "Cumple" : model.EstadoDeclaracionJuradaChecklist;
-        model.EstadoComprobantePago = string.IsNullOrWhiteSpace(model.EstadoComprobantePago) ? "Cumple" : model.EstadoComprobantePago;
+        model.EstadoComprobantePago = string.IsNullOrWhiteSpace(model.EstadoComprobantePago) ? "Pendiente" : model.EstadoComprobantePago;
         model.EstadoCroquis = string.IsNullOrWhiteSpace(model.EstadoCroquis) ? "Cumple" : model.EstadoCroquis;
         model.DeclaracionJuradaDiasHabiles = model.DeclaracionJuradaDiasHabiles <= 0 ? 60 : model.DeclaracionJuradaDiasHabiles;
         model.EstadoDeclaracionJurada = string.IsNullOrWhiteSpace(model.EstadoDeclaracionJurada) ? "Sí" : model.EstadoDeclaracionJurada;
@@ -244,19 +205,12 @@ public partial class PatenteCreateWizard : ComponentBase
         model.EstadoCcss = string.IsNullOrWhiteSpace(model.EstadoCcss) ? "Conforme" : model.EstadoCcss;
         model.EstadoFodesaf = string.IsNullOrWhiteSpace(model.EstadoFodesaf) ? "Conforme" : model.EstadoFodesaf;
         model.EstadoIns = string.IsNullOrWhiteSpace(model.EstadoIns) ? "Conforme" : model.EstadoIns;
-        model.FechaInicioActividad = string.IsNullOrWhiteSpace(model.FechaInicioActividad) ? DateTime.Today.AddMonths(-2).ToString("dd/MM/yyyy") : model.FechaInicioActividad;
-        model.RegimenTributario = string.IsNullOrWhiteSpace(model.RegimenTributario) ? "Simplificado" : model.RegimenTributario;
         model.PeriodoFiscal = string.IsNullOrWhiteSpace(model.PeriodoFiscal) ? DateTime.Today.Year.ToString() : model.PeriodoFiscal;
-        model.ActividadesEnOtrosCantones = string.IsNullOrWhiteSpace(model.ActividadesEnOtrosCantones) ? "No" : model.ActividadesEnOtrosCantones;
         model.EstadoIntegracionGeneral = string.IsNullOrWhiteSpace(model.EstadoIntegracionGeneral) ? "Completo" : model.EstadoIntegracionGeneral;
-        model.SolicitanteAlDia = true;
-        model.DuenoPropiedadAlDia = true;
         model.ArreglosPago = string.IsNullOrWhiteSpace(model.ArreglosPago) ? "No aplica" : model.ArreglosPago;
         model.EstadoMorosidad = string.IsNullOrWhiteSpace(model.EstadoMorosidad) ? "Conforme" : model.EstadoMorosidad;
         model.ResultadoMorosidad = string.IsNullOrWhiteSpace(model.ResultadoMorosidad) ? "Conforme" : model.ResultadoMorosidad;
-        model.SolicitarInspeccion = model.SolicitarInspeccion;
         model.EstadoInspeccion = string.IsNullOrWhiteSpace(model.EstadoInspeccion) ? "Solicitada" : model.EstadoInspeccion;
-        model.InspectorAsignado = string.IsNullOrWhiteSpace(model.InspectorAsignado) ? "Inspector Municipal" : model.InspectorAsignado;
         model.EstadoRevision = string.IsNullOrWhiteSpace(model.EstadoRevision) ? "Conforme" : model.EstadoRevision;
         model.ResultadoRevision = string.IsNullOrWhiteSpace(model.ResultadoRevision) ? "Conforme" : model.ResultadoRevision;
         model.Multa = model.Multa < 0 ? 0m : model.Multa;

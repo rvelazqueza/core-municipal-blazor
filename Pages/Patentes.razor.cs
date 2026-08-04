@@ -207,42 +207,6 @@ public partial class Patentes : ComponentBase
         return Task.CompletedTask;
     }
 
-    private Task ShowFeaturePendingAsync()
-    {
-        Snackbar.Add("Funcionalidad disponible en una siguiente etapa del módulo.", Severity.Info);
-        return Task.CompletedTask;
-    }
-
-    private Task ViewExpedienteAsync(LicenciaComercialDto licencia)
-    {
-        Snackbar.Add($"Expediente {GetExpediente(licencia)} todavía no tiene pantalla independiente en esta iteración.", Severity.Info);
-        return Task.CompletedTask;
-    }
-
-    private Task ShowPendingActionAsync(string accion, LicenciaComercialDto licencia)
-    {
-        Snackbar.Add($"{accion} sobre {licencia.NumeroLicencia} queda preparado para la siguiente etapa.", Severity.Info);
-        return Task.CompletedTask;
-    }
-
-    private Task EditAsync(LicenciaComercialDto licencia)
-        => ShowPendingActionAsync("Editar", licencia);
-
-    private Task RenewAsync(LicenciaComercialDto licencia)
-        => ShowPendingActionAsync("Renovar", licencia);
-
-    private Task ModifyAsync(LicenciaComercialDto licencia)
-        => ShowPendingActionAsync("Modificar", licencia);
-
-    private Task SuspendAsync(LicenciaComercialDto licencia)
-        => ShowPendingActionAsync("Suspender", licencia);
-
-    private Task RegisterComplaintAsync(LicenciaComercialDto licencia)
-        => ShowPendingActionAsync("Registrar denuncia", licencia);
-
-    private Task CreateRelatedProcedureAsync(LicenciaComercialDto licencia)
-        => ShowPendingActionAsync("Crear trámite relacionado", licencia);
-
     private static string GetExpediente(LicenciaComercialDto licencia)
         => string.IsNullOrWhiteSpace(licencia.Expediente) ? $"EXP-{licencia.NumeroLicencia}" : licencia.Expediente;
 

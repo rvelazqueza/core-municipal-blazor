@@ -6,14 +6,19 @@
 @using BlazorApp.Services.PlataformaServicios
 @using BlazorApp.Shared
 @using MudBlazor
+@using BlazorApp.Helpers
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject DocumentExportHelper ExportHelper
 
 <PageTitleBar Title="Expediente de trámite"
               Subtitle="Vista 360° del expediente con secciones para consulta y edición del proceso municipal.">
     <Actions>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBackAsync">Volver</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="EditAsync">Editar trámite</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintDocumentAsync">Imprimir</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="ExportPdfAsync">Generar PDF</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Html" OnClick="ExportHtmlAsync">Exportar HTML</MudButton>
     </Actions>
 </PageTitleBar>
 
@@ -33,7 +38,7 @@ else
                 <MudGrid Spacing="3">
                     <MudItem xs="12" md="4"><KpiCard Title="Expediente" Value="@procedure.CaseNumber" Subtitle="Número de expediente" Icon="@Icons.Material.Filled.Badge" Color="Color.Primary" /></MudItem>
                     <MudItem xs="12" md="4"><KpiCard Title="Estado" Value="@procedure.Status" Subtitle="Estado operativo actual" Icon="@Icons.Material.Filled.Flag" Color="@GetStatusColor(procedure.Status)" /></MudItem>
-                    <MudItem xs="12" md="4"><KpiCard Title="Plazo" Value="@procedure.Deadline.Status" Subtitle="Semáforo referencial" Icon="@Icons.Material.Filled.Schedule" Color="@GetDeadlineColor(procedure.Deadline.Status)" /></MudItem>
+                    <MudItem xs="12" md="4"><KpiCard Title="Plazo" Value="@procedure.Deadline.Status" Subtitle="Seguimiento del plazo" Icon="@Icons.Material.Filled.Schedule" Color="@GetDeadlineColor(procedure.Deadline.Status)" /></MudItem>
                 </MudGrid>
                 <MudGrid Spacing="3" Class="mt-2">
                     <MudItem xs="12" md="8">
@@ -372,8 +377,8 @@ else
 
 @code {
     [Parameter] public string Id { get; set; } = string.Empty;
+    [Inject] private PlataformaServiciosMockService mockService { get; set; } = default!;
 
-    private readonly PlataformaServiciosMockService mockService = new();
     private PsProcedureDto? procedure;
     private int activeTab;
     private readonly List<string> reportSummaries = new()
@@ -451,10 +456,134 @@ else
         => status is "Enviada" ? Color.Success : status is "Fallida" ? Color.Error : Color.Warning;
 
     private Color GetIntegrationColor(string status)
-        => status is "Preparado" ? Color.Success : status is "Simulado" ? Color.Info : Color.Warning;
+        => status is "Preparado" ? Color.Success : status is "Procesado" ? Color.Info : Color.Warning;
 
     private Color GetAuditColor(string severity)
         => severity is "Success" ? Color.Success : severity is "Warning" ? Color.Warning : Color.Info;
 
     private static string FormatDate(DateTime date) => date.ToString("dd/MM/yyyy");
+
+    private async Task ExportHtmlAsync()
+    {
+        var content = BuildProcedureDocument();
+        var fileName = $"Tramite_{procedure.CaseNumber}.html";
+        await ExportHelper.ExportAsHtmlAsync(content, fileName);
+    }
+
+    private async Task PrintDocumentAsync()
+    {
+        var content = BuildProcedureDocument();
+        await ExportHelper.PrintHtmlAsync(content);
+    }
+
+    private async Task ExportPdfAsync()
+    {
+        var content = BuildProcedureDocument();
+        var fileName = $"Tramite_{procedure.CaseNumber}.pdf";
+        await ExportHelper.ExportAsPdfAsync(content, fileName);
+    }
+
+    private string BuildProcedureDocument()
+    {
+        var sb = new System.Text.StringBuilder();
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Información General</div>");
+        sb.AppendFormat("<div class='field'><span class='field-label'>Número de expediente:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.CaseNumber));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Tipo de trámite:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.TypeName));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Canal:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Channel));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Estado:</span><span class='field-value'><span class='badge badge-info'>{0}</span></span></div>", DocumentExportHelper.HtmlEncode(procedure.Status));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Prioridad:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Priority));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Fecha de ingreso:</span><span class='field-value'>{0}</span></div>", procedure.EntryDate.ToString("dd/MM/yyyy"));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Fecha límite:</span><span class='field-value'>{0}</span></div>", procedure.LimitDate.ToString("dd/MM/yyyy"));
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Solicitante</div>");
+        sb.AppendFormat("<div class='field'><span class='field-label'>Identificación:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Applicant.Identification));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Nombre:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Applicant.Name));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Teléfono:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Applicant.Phone));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Correo:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Applicant.Email));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Dirección:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Applicant.FiscalAddress));
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Objeto del Trámite</div>");
+        if (!string.IsNullOrWhiteSpace(procedure.Object.Summary))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Resumen:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Object.Summary));
+        }
+        if (!string.IsNullOrWhiteSpace(procedure.Object.NumeroFinca))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Número de finca:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Object.NumeroFinca));
+        }
+        if (!string.IsNullOrWhiteSpace(procedure.Object.Distrito))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Distrito:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Object.Distrito));
+        }
+        if (!string.IsNullOrWhiteSpace(procedure.Object.NombreComercial))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Nombre comercial:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Object.NombreComercial));
+        }
+        if (!string.IsNullOrWhiteSpace(procedure.Object.PermisoVinculadoExpediente))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Permiso vinculado:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Object.PermisoVinculadoExpediente));
+        }
+        if (!string.IsNullOrWhiteSpace(procedure.Object.Descripcion))
+        {
+            sb.AppendFormat("<div class='field'><span class='field-label'>Descripción:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Object.Descripcion));
+        }
+        sb.Append("</div>");
+
+        sb.Append("<div class='section'>");
+        sb.Append("<div class='section-title'>Gestión</div>");
+        sb.AppendFormat("<div class='field'><span class='field-label'>Módulo:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.ResolverModule));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Departamento:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Department));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Responsable:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Responsible));
+        sb.AppendFormat("<div class='field'><span class='field-label'>Equipo:</span><span class='field-value'>{0}</span></div>", DocumentExportHelper.HtmlEncode(procedure.Team));
+        sb.Append("</div>");
+
+        if (procedure.Requirements.Any())
+        {
+            sb.Append("<div class='section'>");
+            sb.Append("<div class='section-title'>Requisitos</div>");
+            sb.Append("<table>");
+            sb.Append("<thead><tr><th>Requisito</th><th>Estado</th><th>Observación</th></tr></thead>");
+            sb.Append("<tbody>");
+            foreach (var req in procedure.Requirements)
+            {
+                sb.Append("<tr>");
+                sb.AppendFormat("<td>{0}</td>", DocumentExportHelper.HtmlEncode(req.Name));
+                sb.AppendFormat("<td><span class='badge badge-{0}'>{1}</span></td>",
+                    req.Status == "Recibido" ? "success" : req.Status == "Pendiente" ? "warning" : "info",
+                    DocumentExportHelper.HtmlEncode(req.Status));
+                sb.AppendFormat("<td>{0}</td>", DocumentExportHelper.HtmlEncode(req.Observation));
+                sb.Append("</tr>");
+            }
+            sb.Append("</tbody></table>");
+            sb.Append("</div>");
+        }
+
+        if (procedure.History.Any())
+        {
+            sb.Append("<div class='section'>");
+            sb.Append("<div class='section-title'>Historial</div>");
+            sb.Append("<table>");
+            sb.Append("<thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Comentario</th></tr></thead>");
+            sb.Append("<tbody>");
+            foreach (var evt in procedure.History.OrderByDescending(h => h.Date))
+            {
+                sb.Append("<tr>");
+                sb.AppendFormat("<td>{0}</td>", evt.Date.ToString("dd/MM/yyyy HH:mm"));
+                sb.AppendFormat("<td>{0}</td>", DocumentExportHelper.HtmlEncode(evt.User));
+                sb.AppendFormat("<td>{0}</td>", DocumentExportHelper.HtmlEncode(evt.Action));
+                sb.AppendFormat("<td>{0}</td>", DocumentExportHelper.HtmlEncode(evt.Comment));
+                sb.Append("</tr>");
+            }
+            sb.Append("</tbody></table>");
+            sb.Append("</div>");
+        }
+
+        return DocumentExportHelper.BuildMunicipalDocument("Expediente de Trámite", procedure.CaseNumber, sb.ToString());
+    }
 }

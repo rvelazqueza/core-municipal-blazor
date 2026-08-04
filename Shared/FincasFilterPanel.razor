@@ -5,16 +5,16 @@
     <MudText Typo="Typo.h6" Class="mb-3">Filtros de consulta predial</MudText>
     <MudGrid>
         <MudItem xs="12" md="6" lg="2">
-            <MudTextField T="string" Value="NumeroFinca" ValueChanged="OnNumeroFincaChanged" Label="Número de finca" Variant="Variant.Outlined" />
+            <MudTextField T="string" Value="NumeroFinca" ValueChanged="OnNumeroFincaChanged" Label="Número de finca" Variant="Variant.Outlined" Placeholder="Ingrese el número de finca" />
         </MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudTextField T="string" Value="IdPredial" ValueChanged="OnIdPredialChanged" Label="ID predial" Variant="Variant.Outlined" />
+            <MudTextField T="string" Value="IdPredial" ValueChanged="OnIdPredialChanged" Label="ID predial" Variant="Variant.Outlined" Placeholder="Ingrese el ID predial" />
         </MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudTextField T="string" Value="Propietario" ValueChanged="OnPropietarioChanged" Label="Propietario / RUC" Variant="Variant.Outlined" />
+            <MudTextField T="string" Value="Propietario" ValueChanged="OnPropietarioChanged" Label="Propietario / RUC" Variant="Variant.Outlined" Placeholder="Ingrese nombre o identificación" />
         </MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudSelect T="string" Value="Distrito" ValueChanged="OnDistritoValueChanged" Label="Distrito" Variant="Variant.Outlined" Clearable="true">
+            <MudSelect T="string" Value="Distrito" ValueChanged="OnDistritoValueChanged" Label="Distrito" Variant="Variant.Outlined" Clearable="true" Placeholder="Seleccione distrito">
                 @foreach (var item in distritos)
                 {
                     <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
@@ -22,7 +22,7 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudSelect T="string" Value="Estado" ValueChanged="OnEstadoValueChanged" Label="Estado" Variant="Variant.Outlined" Clearable="true">
+            <MudSelect T="string" Value="Estado" ValueChanged="OnEstadoValueChanged" Label="Estado" Variant="Variant.Outlined" Clearable="true" Placeholder="Seleccione estado">
                 @foreach (var item in estados)
                 {
                     <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
@@ -30,10 +30,10 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="6" lg="2">
-            <MudTextField T="string" Value="ValorFiscalMinimo" ValueChanged="OnValorFiscalMinimoChanged" Label="Valor fiscal mínimo" Variant="Variant.Outlined" />
+            <MudTextField T="string" Value="ValorFiscalMinimo" ValueChanged="OnValorFiscalMinimoChanged" Label="Valor fiscal mínimo" Variant="Variant.Outlined" Placeholder="Valor en colones" />
         </MudItem>
         <MudItem xs="12" md="6" lg="3">
-            <MudSelect T="string" Value="Condicion" ValueChanged="OnCondicionValueChanged" Label="Condición" Variant="Variant.Outlined" Clearable="true">
+            <MudSelect T="string" Value="Condicion" ValueChanged="OnCondicionValueChanged" Label="Condición" Variant="Variant.Outlined" Clearable="true" Placeholder="Seleccione condición">
                 @foreach (var item in condiciones)
                 {
                     <MudSelectItem T="string" Value="@item">@item</MudSelectItem>
@@ -93,6 +93,5 @@
         await EstadoChanged.InvokeAsync(string.Empty);
         await ValorFiscalMinimoChanged.InvokeAsync(string.Empty);
         await CondicionChanged.InvokeAsync(string.Empty);
-        await OnSearch.InvokeAsync();
     }
 }

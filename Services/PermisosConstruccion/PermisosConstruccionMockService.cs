@@ -4,19 +4,56 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using BlazorApp.Models.PermisosConstruccion;
+using BlazorApp.Helpers;
 
 namespace BlazorApp.Services.PermisosConstruccion;
 
 public class PermisosConstruccionMockService
 {
+    private const string PermitsKey = "coremunicipal.permisos";
+    private const string DraftKey = "coremunicipal.permisos.draft";
+
     private static readonly object SyncRoot = new();
     private static readonly List<PcPermitTypeDto> PermitTypes = BuildPermitTypes();
-    private static readonly List<PcPermitDto> Permits = BuildPermits();
+    private static List<PcPermitDto> Permits = BuildPermits();
     private static readonly List<PcCatalogItemDto> Catalogs = BuildCatalogs();
     private static readonly List<PcIntegrationStatusDto> Integrations = BuildIntegrations();
+    private readonly LocalStorageHelper? _localStorage;
+
+    public PermisosConstruccionMockService() { }
+
+    public PermisosConstruccionMockService(LocalStorageHelper localStorage)
+    {
+        _localStorage = localStorage;
+    }
+
+    public async Task<List<PcPermitDto>> GetPermitsAsync()
+    {
+        if (_localStorage != null)
+        {
+            var persisted = await _localStorage.GetItemAsync<List<PcPermitDto>>(PermitsKey);
+            if (persisted != null && persisted.Any())
+            {
+                lock (SyncRoot)
+                {
+                    var combined = Permits.Concat(persisted).GroupBy(x => x.Id).Select(g => g.First()).ToList();
+                    Permits = combined;
+                }
+            }
+        }
+        return Permits.Select(item => CloneObject(item)).ToList();
+    }
+
+    private async Task PersistPermitsAsync()
+    {
+        if (_localStorage != null)
+        {
+            var toPersist = Permits.Where(p => p.CreatedAt >= DateTime.Today.AddDays(-90)).ToList();
+            await _localStorage.SetItemAsync(PermitsKey, toPersist);
+        }
+    }
 
     public Task<List<PcPermitTypeDto>> GetPermitTypesAsync() => Task.FromResult(PermitTypes.Select(item => CloneObject(item)).ToList());
-    public Task<List<PcPermitDto>> GetPermitsAsync() => Task.FromResult(Permits.Select(item => CloneObject(item)).ToList());
     public Task<PcPermitDto?> GetPermitAsync(string id) => Task.FromResult(Permits.FirstOrDefault(x => x.Id == id) is PcPermitDto permit ? CloneObject(permit) : null);
     public Task<List<PcApplicantDto>> GetApplicantsAsync() => Task.FromResult(Permits.Select(x => CloneObject(x.Applicant)).GroupBy(x => x.Identification).Select(x => x.First()).ToList());
     public Task<List<PcOwnerDto>> GetOwnersAsync() => Task.FromResult(Permits.Select(x => CloneObject(x.Owner)).GroupBy(x => x.Identification).Select(x => x.First()).ToList());
@@ -37,42 +74,69 @@ public class PermisosConstruccionMockService
     public Task<List<PcHistoryEventDto>> GetHistoryTemplateAsync() => Task.FromResult(GetHistoryTemplate().Select(item => CloneObject(item)).ToList());
     public Task<List<PcAuditEventDto>> GetAuditTemplateAsync() => Task.FromResult(GetAuditTemplate().Select(item => CloneObject(item)).ToList());
 
-    public Task<PcPermitDto> GetDraftPermitAsync()
+    public async Task<PcPermitDto> GetDraftPermitAsync()
     {
-        var template = CloneObject(Permits.First());
-        template.Id = Guid.NewGuid().ToString("N");
-        template.CaseNumber = BuildCaseNumber(Permits.Count + 1);
-        template.SystemCode = $"PC-{DateTime.Now:yyyy}-{Permits.Count + 1:000}";
-        template.PermitStatus = "Borrador";
-        template.ResolutionStatus = "Borrador";
-        template.ResolutionResult = "Pendiente información";
-        template.ProgressPercent = 15;
-        template.CreatedAt = DateTime.Today;
-        template.UpdatedAt = DateTime.Today;
-        template.DueDate = DateTime.Today.AddDays(10);
-        template.UserResponsible = "analista.demo";
-        template.AssignedDepartment = template.UnitOwner;
-        template.AssignedTeam = "Equipo técnico base";
-        template.Observations = "Borrador inicial de permisos de construcción.";
-        return Task.FromResult(template);
-    }
-
-    public Task<PcPermitDto> SaveDraftAsync(PcPermitDto permit)
-    {
-        lock (SyncRoot)
+        if (_localStorage != null)
         {
-            var existing = Permits.FirstOrDefault(x => x.Id == permit.Id);
-            if (existing is not null)
-                Permits.Remove(existing);
-            permit.UpdatedAt = DateTime.Now;
-            permit.PermitStatus = "Borrador";
-            Permits.Insert(0, CloneObject(permit));
+            var draft = await _localStorage.GetItemAsync<PcPermitDto>(DraftKey);
+            if (draft != null)
+                return CloneObject(draft);
         }
 
-        return Task.FromResult(permit);
+        return new PcPermitDto
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            CaseNumber = BuildCaseNumber(Permits.Count + 1),
+            SystemCode = $"PC-{DateTime.Now:yyyy}-{Permits.Count + 1:000}",
+            PermitStatus = "Borrador",
+            ResolutionStatus = "Borrador",
+            ResolutionResult = "Pendiente información",
+            ProgressPercent = 0,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now,
+            DueDate = DateTime.Now.AddDays(10),
+            UserResponsible = "usuario.municipal",
+            AssignedDepartment = "Urbanismo",
+            AssignedTeam = "Equipo técnico",
+            UnitOwner = "Urbanismo",
+            Applicant = new PcApplicantDto(),
+            Owner = new PcOwnerDto(),
+            Property = new PcPropertyDto(),
+            Professional = new PcProfessionalDto(),
+            RoadAlignment = new PcRoadAlignmentDto(),
+            LandUse = new PcLandUseDto(),
+            MunicipalReview = new PcMunicipalReviewDto(),
+            QualityControl = new PcQualityControlDto(),
+            Assessment = new PcAssessmentDto(),
+            Payment = new PcPaymentMockDto(),
+            Resolution = new PcResolutionDto(),
+            PublicServices = [],
+            Inspections = [],
+            WorkProgressEntries = [],
+            BiUpdates = [],
+            GisTasks = [],
+            Correspondences = [],
+            Reports = [],
+            HistoryEvents = [],
+            AuditEvents = [],
+            Requirements = [],
+            Documents = [],
+            Integrations = []
+        };
     }
 
-    public Task<PcPermitDto> RegisterPermitAsync(PcPermitDto permit)
+    public async Task<PcPermitDto> SaveDraftAsync(PcPermitDto permit)
+    {
+        permit.UpdatedAt = DateTime.Now;
+        permit.PermitStatus = "Borrador";
+
+        if (_localStorage != null)
+            await _localStorage.SetItemAsync(DraftKey, permit);
+
+        return permit;
+    }
+
+    public async Task<PcPermitDto> RegisterPermitAsync(PcPermitDto permit)
     {
         lock (SyncRoot)
         {
@@ -80,34 +144,100 @@ public class PermisosConstruccionMockService
             if (existing is not null)
                 Permits.Remove(existing);
 
-            permit.PermitStatus = permit.ResolutionResult == "Aprobado" ? "Aprobado" : permit.PermitStatus;
-            permit.ResolutionStatus = "Generada";
+            permit.PermitStatus = "Recibido";
+            permit.ResolutionStatus = "En proceso";
             permit.FinishedAt = DateTime.Now;
             permit.UpdatedAt = DateTime.Now;
             permit.HistoryEvents.Insert(0, new PcHistoryEventDto
             {
                 Date = DateTime.Now,
-                User = "demo.user",
-                Action = "Registro final",
-                PreviousStatus = "En proceso",
-                NewStatus = permit.PermitStatus,
+                User = "usuario.municipal",
+                Action = "Registro inicial",
+                PreviousStatus = "Borrador",
+                NewStatus = "Recibido",
                 Department = permit.UnitOwner,
-                Comment = "Permiso registrado.",
-                Origin = "Plataforma de Construcción"
-            });
-            permit.AuditEvents.Insert(0, new PcAuditEventDto
-            {
-                Date = DateTime.Now,
-                User = "demo.user",
-                Action = "Finalizar permiso",
-                Entity = permit.CaseNumber,
-                Details = permit.ResolutionResult,
+                Comment = "Permiso registrado correctamente.",
                 Origin = "Plataforma de Construcción"
             });
             Permits.Insert(0, CloneObject(permit));
         }
 
-        return Task.FromResult(permit);
+        if (_localStorage != null)
+        {
+            await PersistPermitsAsync();
+            await _localStorage.RemoveItemAsync(DraftKey);
+        }
+
+        return permit;
+    }
+
+    public async Task<PcPermitDto> CompleteReviewAsync(string id, string responsible, string observation, string newStatus)
+    {
+        var permit = Permits.FirstOrDefault(x => x.Id == id);
+        if (permit != null)
+        {
+            var previousStatus = permit.PermitStatus;
+            permit.PermitStatus = newStatus;
+            permit.UserResponsible = responsible;
+            permit.UpdatedAt = DateTime.Now;
+            permit.MunicipalReview.Status = "Completada";
+            permit.MunicipalReview.ReviewedAt = DateTime.Now;
+            permit.MunicipalReview.Technician = responsible;
+            permit.MunicipalReview.Observations = observation;
+
+            permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+            {
+                Date = DateTime.Now,
+                User = responsible,
+                Action = "Revisión completada",
+                PreviousStatus = previousStatus,
+                NewStatus = newStatus,
+                Department = permit.UnitOwner,
+                Comment = observation,
+                Origin = "Revisión técnica"
+            });
+
+            if (_localStorage != null)
+                await PersistPermitsAsync();
+        }
+        return permit!;
+    }
+
+    public async Task<PcPermitDto> RegisterInspectionAsync(string id, DateTime inspectionDate, string inspector, string result, string observation)
+    {
+        var permit = Permits.FirstOrDefault(x => x.Id == id);
+        if (permit != null)
+        {
+            var inspection = new PcInspectionDto
+            {
+                InspectionDate = inspectionDate,
+                Inspector = inspector,
+                Result = result,
+                Notes = observation,
+                Status = "Completada",
+                InspectionType = "Inicial"
+            };
+
+            permit.Inspections.Insert(0, inspection);
+            permit.PermitStatus = result == "Conforme" ? "Aprobado" : "Con observaciones";
+            permit.UpdatedAt = DateTime.Now;
+
+            permit.HistoryEvents.Insert(0, new PcHistoryEventDto
+            {
+                Date = DateTime.Now,
+                User = inspector,
+                Action = "Inspección registrada",
+                PreviousStatus = "Pendiente inspección",
+                NewStatus = permit.PermitStatus,
+                Department = "Inspecciones",
+                Comment = $"{result}: {observation}",
+                Origin = "Inspección de campo"
+            });
+
+            if (_localStorage != null)
+                await PersistPermitsAsync();
+        }
+        return permit!;
     }
 
     private static List<PcPermitTypeDto> BuildPermitTypes() =>

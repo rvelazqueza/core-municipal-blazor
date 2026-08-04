@@ -22,4 +22,5 @@ public interface IMaestroDatosService
     Task<List<string>> GetEstadosPatenteAsync();
     Task<List<string>> GetTiposPatenteAsync();
     Task<List<string>> GetEstadosUsoSueloAsync();
+    Task<List<string>> GetNacionalidadesAsync();
 }

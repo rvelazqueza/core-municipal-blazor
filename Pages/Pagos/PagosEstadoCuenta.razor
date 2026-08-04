@@ -1,0 +1,293 @@
+@page "/pagos/estado-cuenta"
+@using BlazorApp.Models.Pagos
+@using BlazorApp.Services.Pagos
+@using BlazorApp.Shared
+@using BlazorApp.Helpers
+@using MudBlazor
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject PagosMockService DataService
+@inject DocumentExportHelper ExportHelper
+
+<PageTitleBar Title="Estado de cuenta" Subtitle="Consulte el estado de su cuenta municipal" />
+
+<MudCard Elevation="2" Class="mb-3">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Consulta de cuenta</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="4">
+                <MudSelect T="string" @bind-Value="searchType" Label="Buscar por" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("numero")">Número de cuenta</MudSelectItem>
+                    <MudSelectItem Value="@("cedula")">Cédula del contribuyente</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField T="string" @bind-Value="searchValue" Label="Identificador" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" sm="4" Class="d-flex align-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="@SearchAccountAsync">Buscar</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudCardContent>
+</MudCard>
+
+@if (selectedAccount != null)
+{
+    <MudCard Elevation="2" Class="mb-3">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">Información de la cuenta</MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download" OnClick="@ExportHtmlAsync">HTML</MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Print" OnClick="@PrintAsync">Imprimir</MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="@ExportPdfAsync">PDF</MudButton>
+            </CardHeaderActions>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.body2">Número de cuenta:</MudText>
+                    <MudText Typo="Typo.body1">@selectedAccount.AccountNumber</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.body2">Contribuyente:</MudText>
+                    <MudText Typo="Typo.body1">@selectedAccount.ContributorName</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.body2">Cédula:</MudText>
+                    <MudText Typo="Typo.body1">@selectedAccount.ContributorId</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudText Typo="Typo.body2">Estado:</MudText>
+                    <MudChip T="string" Color="@(selectedAccount.AccountStatus == "Activa" ? Color.Success : Color.Default)" Size="Size.Small">@selectedAccount.AccountStatus</MudChip>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudText Typo="Typo.body2">Dirección:</MudText>
+                    <MudText Typo="Typo.body1">@selectedAccount.PropertyAddress</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudText Typo="Typo.body2">Finca:</MudText>
+                    <MudText Typo="Typo.body1">@selectedAccount.FincaNumber</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudText Typo="Typo.body2">Último pago:</MudText>
+                    <MudText Typo="Typo.body1">@(selectedAccount.LastPaymentDate?.ToString("dd/MM/yyyy") ?? "Sin registro")</MudText>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <MudGrid Spacing="2" Class="mb-3">
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-4">
+                <MudText Typo="Typo.subtitle2">Saldo total</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Primary">@CurrencyHelper.FormatColones(selectedAccount.CurrentBalance)</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-4">
+                <MudText Typo="Typo.subtitle2">Saldo pendiente</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Info">@CurrencyHelper.FormatColones(selectedAccount.PendingAmount)</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-4">
+                <MudText Typo="Typo.subtitle2">Saldo vencido</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Error">@CurrencyHelper.FormatColones(selectedAccount.OverdueAmount)</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudCard Elevation="2" Class="mb-3">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">Obligaciones</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudTable T="AccountObligationDto" Items="@selectedAccount.Obligations" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>Tipo</MudTh>
+                    <MudTh>Período</MudTh>
+                    <MudTh Style="text-align: right;">Monto</MudTh>
+                    <MudTh Style="text-align: right;">Pagado</MudTh>
+                    <MudTh Style="text-align: right;">Pendiente</MudTh>
+                    <MudTh>Vencimiento</MudTh>
+                    <MudTh>Estado</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Tipo">@context.PaymentTypeName</MudTd>
+                    <MudTd DataLabel="Período">@context.Period</MudTd>
+                    <MudTd DataLabel="Monto" Style="text-align: right;">@CurrencyHelper.FormatColones(context.TotalAmount)</MudTd>
+                    <MudTd DataLabel="Pagado" Style="text-align: right;">@CurrencyHelper.FormatColones(context.PaidAmount)</MudTd>
+                    <MudTd DataLabel="Pendiente" Style="text-align: right;">@CurrencyHelper.FormatColones(context.PendingAmount)</MudTd>
+                    <MudTd DataLabel="Vencimiento">@context.DueDate.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Estado">
+                        <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">@context.Status</MudChip>
+                        @if (context.IsOverdue && context.PendingAmount > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Text">Vencido</MudChip>
+                        }
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">Movimientos recientes</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudTable T="AccountMovementDto" Items="@movements" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>Fecha</MudTh>
+                    <MudTh>Tipo</MudTh>
+                    <MudTh>Descripción</MudTh>
+                    <MudTh>Referencia</MudTh>
+                    <MudTh Style="text-align: right;">Débito</MudTh>
+                    <MudTh Style="text-align: right;">Crédito</MudTh>
+                    <MudTh Style="text-align: right;">Saldo</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Fecha">@context.Date.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Tipo">@context.Type</MudTd>
+                    <MudTd DataLabel="Descripción">@context.Description</MudTd>
+                    <MudTd DataLabel="Referencia">@context.Reference</MudTd>
+                    <MudTd DataLabel="Débito" Style="text-align: right;">@(context.Debit > 0 ? CurrencyHelper.FormatColones(context.Debit) : "-")</MudTd>
+                    <MudTd DataLabel="Crédito" Style="text-align: right;">@(context.Credit > 0 ? CurrencyHelper.FormatColones(context.Credit) : "-")</MudTd>
+                    <MudTd DataLabel="Saldo" Style="text-align: right;">@CurrencyHelper.FormatColones(context.Balance)</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private string searchType = "numero";
+    private string searchValue = string.Empty;
+    private MunicipalAccountDto? selectedAccount;
+    private List<AccountMovementDto> movements = new();
+
+    private async Task SearchAccountAsync()
+    {
+        if (string.IsNullOrWhiteSpace(searchValue))
+        {
+            Snackbar.Add("Ingrese un identificador válido.", Severity.Warning);
+            return;
+        }
+
+        MunicipalAccountDto? account = null;
+
+        if (searchType == "numero")
+        {
+            account = await DataService.GetAccountByNumberAsync(searchValue);
+        }
+        else
+        {
+            account = await DataService.GetAccountByContributorIdAsync(searchValue);
+        }
+
+        if (account == null)
+        {
+            Snackbar.Add("No se encontró ninguna cuenta con el identificador proporcionado.", Severity.Warning);
+            selectedAccount = null;
+            movements.Clear();
+            return;
+        }
+
+        selectedAccount = account;
+        movements = await DataService.GetAccountMovementsAsync(account.AccountNumber);
+        Snackbar.Add("Estado de cuenta consultado correctamente.", Severity.Success);
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Pagado" => Color.Success,
+            "Pago parcial" => Color.Info,
+            "Pendiente" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+
+    private async Task ExportHtmlAsync()
+    {
+        if (selectedAccount == null) return;
+
+        var content = BuildStatementHtml();
+        var fileName = $"EstadoCuenta_{selectedAccount.AccountNumber}.html";
+        await ExportHelper.ExportAsHtmlAsync(content, fileName);
+        Snackbar.Add("Estado de cuenta exportado correctamente.", Severity.Success);
+    }
+
+    private async Task PrintAsync()
+    {
+        if (selectedAccount == null) return;
+
+        var content = BuildStatementHtml();
+        await ExportHelper.PrintHtmlAsync(content);
+    }
+
+    private async Task ExportPdfAsync()
+    {
+        if (selectedAccount == null) return;
+
+        var content = BuildStatementHtml();
+        var fileName = $"EstadoCuenta_{selectedAccount.AccountNumber}.pdf";
+        await ExportHelper.ExportAsPdfAsync(content, fileName);
+        Snackbar.Add("Estado de cuenta exportado correctamente.", Severity.Success);
+    }
+
+    private string BuildStatementHtml()
+    {
+        if (selectedAccount == null) return string.Empty;
+
+        var contentBuilder = new System.Text.StringBuilder();
+        
+        contentBuilder.Append("<div class='section'><div class='section-title'>Información de la cuenta</div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Número de cuenta:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedAccount.AccountNumber)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Contribuyente:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedAccount.ContributorName)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Cédula:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedAccount.ContributorId)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Dirección:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedAccount.PropertyAddress)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Finca:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedAccount.FincaNumber)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Estado:</span><span class='field-value'>{DocumentExportHelper.HtmlEncode(selectedAccount.AccountStatus)}</span></div>");
+        contentBuilder.Append("</div>");
+
+        contentBuilder.Append("<div class='section'><div class='section-title'>Resumen de saldos</div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Saldo total:</span><span class='field-value'>{CurrencyHelper.FormatColones(selectedAccount.CurrentBalance)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Saldo pendiente:</span><span class='field-value'>{CurrencyHelper.FormatColones(selectedAccount.PendingAmount)}</span></div>");
+        contentBuilder.Append($"<div class='field'><span class='field-label'>Saldo vencido:</span><span class='field-value'>{CurrencyHelper.FormatColones(selectedAccount.OverdueAmount)}</span></div>");
+        contentBuilder.Append("</div>");
+
+        contentBuilder.Append("<div class='section'><div class='section-title'>Obligaciones</div>");
+        contentBuilder.Append("<table><thead><tr><th>Tipo</th><th>Período</th><th>Monto</th><th>Pagado</th><th>Pendiente</th><th>Vencimiento</th><th>Estado</th></tr></thead><tbody>");
+        foreach (var obl in selectedAccount.Obligations)
+        {
+            contentBuilder.Append("<tr>");
+            contentBuilder.Append($"<td>{DocumentExportHelper.HtmlEncode(obl.PaymentTypeName)}</td>");
+            contentBuilder.Append($"<td>{DocumentExportHelper.HtmlEncode(obl.Period)}</td>");
+            contentBuilder.Append($"<td>{CurrencyHelper.FormatColones(obl.TotalAmount)}</td>");
+            contentBuilder.Append($"<td>{CurrencyHelper.FormatColones(obl.PaidAmount)}</td>");
+            contentBuilder.Append($"<td>{CurrencyHelper.FormatColones(obl.PendingAmount)}</td>");
+            contentBuilder.Append($"<td>{obl.DueDate:dd/MM/yyyy}</td>");
+            contentBuilder.Append($"<td>{DocumentExportHelper.HtmlEncode(obl.Status)}</td>");
+            contentBuilder.Append("</tr>");
+        }
+        contentBuilder.Append("</tbody></table></div>");
+
+        return DocumentExportHelper.BuildMunicipalDocument(
+            "Estado de Cuenta Municipal",
+            selectedAccount.AccountNumber,
+            contentBuilder.ToString()
+        );
+    }
+}

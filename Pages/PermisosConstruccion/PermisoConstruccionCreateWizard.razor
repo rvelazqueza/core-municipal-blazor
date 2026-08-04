@@ -5,6 +5,7 @@
 @using BlazorApp.Models.PermisosConstruccion
 @using BlazorApp.Services.PermisosConstruccion
 @using BlazorApp.Shared
+@using BlazorApp.Helpers
 @using System.Linq
 @using System.Threading.Tasks
 @inject NavigationManager Navigation
@@ -76,7 +77,8 @@
 </WizardShell>
 
 @code {
-    private readonly PermisosConstruccionMockService service = new();
+    [Inject] private LocalStorageHelper? LocalStorage { get; set; }
+    private PermisosConstruccionMockService service = new();
     private WizardStateDto wizardState = new();
     private PcPermitDto draft = new();
     private List<PcPermitTypeDto> permitTypes = [];
@@ -92,6 +94,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        service = LocalStorage != null ? new PermisosConstruccionMockService(LocalStorage) : service;
         permitTypes = await service.GetPermitTypesAsync();
         integrations = await service.GetIntegrationsAsync();
         requirementCatalog = await service.GetRequirementCatalogAsync();
@@ -463,18 +466,18 @@
     </MudGrid>;
 
     private RenderFragment Step2() => @<MudGrid Spacing="2">
-        <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="draft.Applicant.Identification" Label="Identificación del solicitante" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-        <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="draft.Applicant.Name" Label="Nombre del solicitante" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="draft.Applicant.Identification" Label="Identificación del solicitante" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Ingrese cédula o documento" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField T="string" @bind-Value="draft.Applicant.Name" Label="Nombre del solicitante" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Ingrese nombre completo o razón social" /></MudItem>
         <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Applicant.PersonType" Label="Tipo de persona" Variant="Variant.Outlined" Margin="Margin.Dense"><MudSelectItem T="string" Value="@("Jurídica")">Jurídica</MudSelectItem><MudSelectItem T="string" Value="@("Física")">Física</MudSelectItem></MudSelect></MudItem>
-        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Applicant.Email" Label="Correo" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Applicant.Phone" Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-        <MudItem xs="12" md="8"><MudTextField T="string" @bind-Value="draft.Applicant.Address" Label="Dirección" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Applicant.Email" Label="Correo" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="correo@dominio.com" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Applicant.Phone" Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="####-####" /></MudItem>
+        <MudItem xs="12" md="8"><MudTextField T="string" @bind-Value="draft.Applicant.Address" Label="Dirección" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Dirección completa" /></MudItem>
         <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Applicant.RucStatus" Label="Estado RUC" Variant="Variant.Outlined" Margin="Margin.Dense"><MudSelectItem T="string" Value="@("Validado")">Validado</MudSelectItem><MudSelectItem T="string" Value="@("Pendiente validar")">Pendiente validar</MudSelectItem></MudSelect></MudItem>
-        <MudItem xs="12" md="4"><MudSelect T="string" @bind-Value="draft.Owner.Identification" Label="Propietario desde RUC" Variant="Variant.Outlined" Margin="Margin.Dense"><MudSelectItem T="string" Value="@("2-1111-1111")">2-1111-1111</MudSelectItem><MudSelectItem T="string" Value="@("2-2222-2222")">2-2222-2222</MudSelectItem><MudSelectItem T="string" Value="@("2-3333-3333")">2-3333-3333</MudSelectItem><MudSelectItem T="string" Value="@("2-4444-4444")">2-4444-4444</MudSelectItem></MudSelect></MudItem>
-        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Owner.Name" Label="Nombre del propietario" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Owner.Relationship" Label="Relación solicitante/propietario" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Owner.Identification" Label="Identificación del propietario" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Ingrese cédula o documento" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Owner.Name" Label="Nombre del propietario" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Ingrese nombre completo o razón social" /></MudItem>
+        <MudItem xs="12" md="4"><MudTextField T="string" @bind-Value="draft.Owner.Relationship" Label="Relación solicitante/propietario" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Propietario, Copropietario, Apoderado" /></MudItem>
         <MudItem xs="12" md="4"><MudTextField T="decimal" @bind-Value="draft.Owner.OwnershipPercentage" Label="Porcentaje de derecho" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-        <MudItem xs="12" md="12"><MudTextField T="string" @bind-Value="draft.Owner.AuthorizationMock" Label="Autorización" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+        <MudItem xs="12" md="12"><MudTextField T="string" @bind-Value="draft.Owner.AuthorizationMock" Label="Autorización" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="Número de autorización si aplica" /></MudItem>
     </MudGrid>;
 
     private RenderFragment Step3() => @<MudGrid Spacing="2">
